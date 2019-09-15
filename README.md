@@ -3,7 +3,7 @@ DAO Simple Solution
 The API provides three simple solutions:
 * DAO Factory API
 * Statement Builder
-* Simple DAO Builder
+* DTO File Generator
 
 Datebases the API supports are:
 * PostgreSQL
@@ -117,6 +117,7 @@ The API provides DAO objects to access database using `java.sql` package.
     ```
 
 ## Statement Builder
+
 ### AND
 Example: *c1=? __and__ (c2 between ? and ?) __and__ c3 like ? __and__ c4<>?*
 ```java
@@ -186,49 +187,28 @@ try (PreparedStatement ps = select.prepare(conn)) {
 }
 ```
 
-## Simple DAO Builder
-You can also do same things below using `DatabaseTool` class.
+## DTO File Generator
+The tool can generate the Java file based on table and view schema in the database.
 
-### Generate from Table
 ```java
+String dtoPackage = "a.b.c";                        // package name
+String tableName = "job_dtail";                     // table name
+String viewName = "view_job_dtail";                 // view name
+
+// PostgreSQL
 Database db = new PostgreSQL(host, port, dbName, user, password);
-String dtoPath = "src/java/main/project/db/";     // save path
-String daoPath = dtoPath + "dao/";
 
-// table
-String tableName = "user_profile";              // table name
-String dtoName = CamelNaming.upper(tableName);  // 'UserProfile'
-String dtoPackage = "project.db";               // package name
-String daoPackage = dtoPackage + ".dao";
+// output stirng only
+String clzTable = DaoFactoryClassPrinter(db, tableName).generateDTO(
+        dtoPackage,
+        CamelNaming.upper(tableName));
+String clzView = DaoFactoryClassPrinter(db, viewName).generateDTO(
+        dtoPackage,
+        CamelNaming.upper(tableName));
 
-// printer
-SimpleDaoClassPrinter printer = new SimpleDaoClassPrinter(db, tableName);
-String dto = printer.generateDTO(dtoPackage, dtoName);
-String dao = printer.generateDAO4Table(daoPackage, dtoPackage, dtoName);
-
-// save
-Files.write(Paths.get(dtoPath + dtoName + ".java"), dto.getBytes());
-Files.write(Paths.get(daoPath + dtoName + "Dao.java"), dao.getBytes());
-```
-
-### Generate from View
-```java
-Database db = new PostgreSQL(host, port, dbName, user, password);
-String dtoPath = "src/java/main/project/db/";     // save path
-String daoPath = dtoPath + "dao/";
-
-// view
-String viewName = "view_user_profile";          // view path
-String dtoName = CamelNaming.upper(viewName);   // 'ViewUserProfile'
-String dtoPackage = "project.db";               // package name
-String daoPackage = dtoPackage + ".dao";
-
-// printer
-SimpleDaoClassPrinter printer = new SimpleDaoClassPrinter(db, viewName);
-String dto = printer.generateDTO(dtoPackage, dtoName);
-String dao = printer.generateDAO4View(daoPackage, dtoPackage, dtoName);
-
-// save
-Files.write(Paths.get(dtoPath + dtoName + ".java"), dto.getBytes());
-Files.write(Paths.get(daoPath + dtoName + "Dao.java"), dao.getBytes());
+// save to files
+String sourceDir = "d:/my_project/src/main/java";   // save path
+DaoFactoryTool tool = new DaoFactoryTool(db);
+tool.toDTO(sourceDir, dtoPackage, tableName)
+tool.toDTO(sourceDir, dtoPackage, tableName)
 ```
