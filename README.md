@@ -1,7 +1,9 @@
 DAO Simple Solution
 ================
-The API provides three simple solutions:
-* DAO Factory API
+The main purpose of the API is to simplify development while using `java.sql` package.
+
+There are three topics:
+* DAO Pattern
 * Statement Builder
 * DTO File Generator
 
@@ -10,23 +12,26 @@ Datebases the API supports are:
 * Oracle
 * HANA
 
-## DAO Factory API
+## DAO Pattern
 
-The API provides DAO objects to access database using `java.sql` package.
+The DAO pattern accesses database using `java.sql` package. You can use pre-implemtated DAO class or inherit it and use `java.sql.Connection` for full control.
 
-* Focus on the design of DTO classes wihtout any XML file.
-* Prebuild CRUD SQL statements based on anntations in the DTO class.
-* No need to implement standard CRUD methods.
-* Least implementation.
+* Focus on the design of DTO classes without any XML file.
+* Built-in CRUD SQL statements based on annotations in the DTO class.
+* No need to implement the standard CRUD methods.
+* Minimum implementation, maximum functionality.
 
 ### Key Points
-* @TableInfo - annotate a class for a table.
-* @ViewInfo - annotate a class for a view.
-* @ColumnInfo - annotate attributes for the columns.
+#### classes
 * TableDao<T> - The generic DAO for a table.
 * ViewDao<T> - The generic DAO for a view.
 * TableDaoHelper<T> - The DAO helper for a table.
 * ViewDaoHelper<T> - The DAO helper for a view.
+
+#### annotations
+* TableInfo - annotate a class for a table.
+* ViewInfo - annotate a class for a view.
+* ColumnInfo - annotate attributes for the columns.
 
 ### How To Use
 1. Define a DTO for a table.
@@ -49,11 +54,12 @@ The API provides DAO objects to access database using `java.sql` package.
     ```
 
 2. Define a DTO for a view.
+    Setup __inherit__ levels if the class inherits from some class.
 
     ```java
     package a.b.c;
 
-    @ViewName(name = "view_job_detail")
+    @ViewName(name = "view_job_detail", inherit = 1)
     public class ViewJobDetail extends JobDetail {
 
         @ColumnName(name = "job_name")
@@ -61,14 +67,14 @@ The API provides DAO objects to access database using `java.sql` package.
     }
     ```
 
-3. Load definition of DTO classes into the factory.
+3. Creat a fatory and load definition of DTO classes.
 
     ```java
     DaoFactory factory = new DaoFactory();
     factory.load("a.b.c");
     ```
 
-4. CRUD on a table
+4. Run __CRUD__ on a table
 
     ```java
     TableDao<JobDetail> dao = new TableDao(conn, factory.forTable(JobDetail.class));
@@ -79,7 +85,7 @@ The API provides DAO objects to access database using `java.sql` package.
     JobDetail one = dao.selectByPK(...);
     ```
 
-3. Query on a view
+3. Run a __SELECT__ on a view
 
     ```java
     ViewDao<ViewJobDetail> dao = new ViewDao(conn, factory.forView(ViewJobDetail.class));
@@ -87,7 +93,9 @@ The API provides DAO objects to access database using `java.sql` package.
     ```
 
 ### Custom DAO
-1. Inherit from `TableDao` class
+Use simple SQL statements instead of writing __Spaghetti SQL__ as this is the worst design.
+
+1. Inherit `TableDao` class
 
     ```java
     public class JobDetailDao exttends TableDao<JobDetail> {
@@ -102,14 +110,20 @@ The API provides DAO objects to access database using `java.sql` package.
     }
     ```
 
-2. Implement a custom __SELECT__ statement
+2. Implement a method for a custom __SELECT__ statement
 
     ```java
     public List<JobDtail> selectByName(String name) {
+        // Get the SELECT method
         DaoMethod<JobDtail> method = this.tableHelper.forSelect();
+
+        // Prepare a statment with custom WHERE criteria.
         try(PreparedStatement ps = this.conn.prepareStatement(method.getSql() + "WHERE job_detail_name=? ORDER BY id")) {
             ps.setString(1, name);
+
+            // Execute
             try(ResultSet rs = ps.executeQuery()) {
+                // Convert result to DTO object list
                 return method.toList(rs);
             }
         }
@@ -165,8 +179,8 @@ SimpleWhere or2 = Where.simpleOr()
 WhereAnd where = Where.and(or1, or2);
 ```
 
-## Select Statement
-Create a __READY TO EXECUTE__ PreparedStatement object.
+### Select Statement
+Create a __READY TO EXECUTE__ `PreparedStatement` object.
 
 Example: __*SELECT id,revision,sch_name FROM pms_schedule WHERE state_name=? ORDER BY id*__
 ```java
