@@ -1,0 +1,49 @@
+package {DTO_PACKAGE};
+
+import java.util.Date;
+import java.util.UUID;
+
+import uia.utils.dao.annotation.ColumnInfo;
+import uia.utils.dao.annotation.TableInfo;
+import uia.utils.dao.annotation.ViewInfo;
+
+/**
+ * Table or View: {TABLE_NAME}.
+ * 
+ * @author UIA
+ */
+{CLASS_ANNOTATION}
+public class {DTO} {
+    
+    public static final String KEY = "{TABLE_NAME}";
+{MEMBER}
+    /**
+     * Constructor.
+     *
+     */
+    public {DTO}() {
+    }	
+
+    /**
+     * Constructor.
+     *
+     * @param data A instance to be cloned.
+     */
+    public {DTO}({DTO} data) {
+{CODE_INITIAL}
+    }	
+{CODE_GETSET}
+    /**
+     * Copies this instance.
+     *
+     * @return A new instance.
+     */
+    public {DTO} copy() {
+    	return new {DTO}(this);
+    }
+
+    @Override
+    public String toString() {
+        return {TOSTRING};
+    }
+}
