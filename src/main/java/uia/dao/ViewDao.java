@@ -81,7 +81,7 @@ public class ViewDao<T> {
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
-    public List<T> select(Where where, String... orders) throws SQLException, DaoException {
+    public List<T> select(Where where, String orders) throws SQLException, DaoException {
         DaoMethod<T> method = this.viewHelper.forSelect();
         SelectStatement sql = new SelectStatement(method.getSql())
                 .where(where);

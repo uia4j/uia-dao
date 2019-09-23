@@ -140,7 +140,6 @@ public class TableDao<T> {
      * @param pks Values of primary keys.
      * @return Result.
      * @throws SQLException Failed to update.
-     * @throws DaoException Failed or ORM.
      */
     public int deleteByPK(Object... pks) throws SQLException {
         if (pks.length == 0) {
@@ -205,7 +204,7 @@ public class TableDao<T> {
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
-    public List<T> select(Where where, String... orders) throws SQLException, DaoException {
+    public List<T> select(Where where, String orders) throws SQLException, DaoException {
         DaoMethod<T> method = this.tableHelper.forSelect();
         SelectStatement sql = new SelectStatement(method.getSql())
                 .where(where)

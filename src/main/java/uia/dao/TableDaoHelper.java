@@ -32,6 +32,8 @@ import uia.dao.annotation.TableInfo;
  */
 public final class TableDaoHelper<T> {
 
+    private final String tableClassName;
+
     private final String tableName;
 
     private final DaoMethod<T> insert;
@@ -47,7 +49,11 @@ public final class TableDaoHelper<T> {
     TableDaoHelper(DaoFactory factory, Class<T> clz) {
         TableInfo ti = clz.getDeclaredAnnotation(TableInfo.class);
 
-        this.tableName = ti.name();
+        this.tableClassName = clz.getName();
+        this.tableName = ti.schema().isEmpty()
+                ? ti.name()
+                : ti.schema() + "." + ti.name();
+
         this.insert = new DaoMethod<>(clz);
         this.update = new DaoMethod<>(clz);
         this.delete = new DaoMethod<>(clz);
@@ -110,6 +116,15 @@ public final class TableDaoHelper<T> {
                 String.join(",", selectColNames),
                 this.tableName));
         this.wherePK = String.join(" AND ", prikeyColNames);
+    }
+
+    /**
+     * Returns the class name of the table..
+     *
+     * @return The class name.
+     */
+    public String getTableClassName() {
+        return this.tableClassName;
     }
 
     /**

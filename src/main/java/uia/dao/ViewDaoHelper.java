@@ -32,14 +32,18 @@ import uia.dao.annotation.ViewInfo;
  */
 public final class ViewDaoHelper<T> {
 
+    private final String viewClassName;
+
     private final String viewName;
 
     private final DaoMethod<T> select;
 
     ViewDaoHelper(DaoFactory factory, Class<T> clz) {
         ViewInfo ti = clz.getDeclaredAnnotation(ViewInfo.class);
-
-        this.viewName = ti.name();
+        this.viewClassName = clz.getName();
+        this.viewName = ti.schema().isEmpty()
+                ? ti.name()
+                : ti.schema() + "." + ti.name();
         this.select = new DaoMethod<>(clz);
 
         ArrayList<String> selectColNames = new ArrayList<>();
@@ -70,6 +74,15 @@ public final class ViewDaoHelper<T> {
         this.select.setSql(String.format("SELECT %s FROM %s ",
                 String.join(",", selectColNames),
                 this.viewName));
+    }
+
+    /**
+     * Returns the class name of the view..
+     *
+     * @return The class name.
+     */
+    public String getViewClassName() {
+        return this.viewClassName;
     }
 
     /**

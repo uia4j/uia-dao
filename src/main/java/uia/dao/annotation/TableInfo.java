@@ -25,4 +25,6 @@ import java.lang.annotation.RetentionPolicy;
 public @interface TableInfo {
 
     String name();
+
+    String schema() default "";
 }

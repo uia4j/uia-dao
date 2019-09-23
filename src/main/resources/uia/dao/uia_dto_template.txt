@@ -3,9 +3,9 @@ package {DTO_PACKAGE};
 import java.util.Date;
 import java.util.UUID;
 
-import uia.utils.dao.annotation.ColumnInfo;
-import uia.utils.dao.annotation.TableInfo;
-import uia.utils.dao.annotation.ViewInfo;
+import uia.dao.annotation.ColumnInfo;
+import uia.dao.annotation.TableInfo;
+import uia.dao.annotation.ViewInfo;
 
 /**
  * Table or View: {TABLE_NAME}.

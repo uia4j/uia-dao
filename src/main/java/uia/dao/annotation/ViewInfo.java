@@ -27,4 +27,6 @@ public @interface ViewInfo {
     String name();
 
     int inherit() default 0;
+
+    String schema() default "";
 }

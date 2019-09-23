@@ -23,11 +23,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -144,6 +146,7 @@ public final class DaoFactory {
      * Returns DAO helper for a table.
      *
      * @param clz The DTO class type of a table.
+     * @param <T> The type of DTO class.
      * @return The DAO helper for the table.
      */
     @SuppressWarnings("unchecked")
@@ -155,6 +158,7 @@ public final class DaoFactory {
      * Returns DAO helper for a view.
      *
      * @param clz The DTO class type of a vie.
+     * @param <T> The type of DTO class.
      * @return The DAO helper for the view.
      */
     @SuppressWarnings("unchecked")
@@ -180,6 +184,32 @@ public final class DaoFactory {
      */
     public void addColumnWriter(String typeName, DaoColumnWriter writer) {
         this.writers.put(typeName.toLowerCase(), writer);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Map<String, String> test(Connection conn) {
+        Map<String, String> result = new TreeMap<>();
+        for (TableDaoHelper<?> helper : this.daoTables.values()) {
+            result.put(helper.getTableName(), helper.getTableClassName());
+            System.out.println(helper.forSelect().getSql());
+            try {
+                System.out.println("  rows:" + new TableDao(conn, helper).selectAll().size());
+            }
+            catch (Exception ex) {
+                System.out.println("  failed:" + ex.getMessage());
+            }
+        }
+        for (ViewDaoHelper<?> helper : this.daoViews.values()) {
+            result.put(helper.getViewName(), helper.getViewClassName());
+            System.out.println(helper.forSelect().getSql());
+            try {
+                System.out.println("  rows:" + new ViewDao(conn, helper).selectAll().size());
+            }
+            catch (Exception ex) {
+                System.out.println("  failed:" + ex.getMessage());
+            }
+        }
+        return result;
     }
 
     DaoColumnReader getColumnReader(String typeName) {

@@ -26,8 +26,6 @@ import java.util.Date;
 import org.junit.Assert;
 import org.junit.Test;
 
-import uia.dao.Database;
-import uia.dao.SelectStatement;
 import uia.dao.sqlite.SQLite;
 import uia.dao.where.SimpleWhere;
 import uia.dao.where.Where;
@@ -82,7 +80,7 @@ public class SelectStatementTest {
         try (Database db = createDB()) {
             SelectStatement select = new SelectStatement("SELECT equip_group_id FROM equip")
                     .groupBy("equip_group_id")
-                    .orderBy("equip_group_id", false);
+                    .orderBy("equip_group_id desc");
             try (PreparedStatement ps = select.prepare(db.getConnection())) {
                 try (ResultSet rs = ps.executeQuery()) {
                     Assert.assertFalse(rs.next());

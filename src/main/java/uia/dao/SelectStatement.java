@@ -21,8 +21,6 @@ package uia.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import uia.dao.where.Where;
 
@@ -37,19 +35,17 @@ public class SelectStatement {
 
     private Where where;
 
-    private final List<String> groups;
+    private String groups;
 
-    private final List<String> orders;
+    private String orders;
 
     public SelectStatement(String selectSql) {
         this.selectSql = selectSql;
-        this.groups = new ArrayList<>();
-        this.orders = new ArrayList<>();
     }
 
     public void reset() {
-        this.groups.clear();
-        this.orders.clear();
+        this.groups = null;
+        this.orders = null;
     }
 
     public SelectStatement where(Where where) {
@@ -57,25 +53,13 @@ public class SelectStatement {
         return this;
     }
 
-    public SelectStatement groupBy(String columnName) {
-        this.groups.add(columnName);
+    public SelectStatement groupBy(String groups) {
+        this.groups = groups;
         return this;
     }
 
-    public SelectStatement orderBy(String... columns) {
-        for (String col : columns) {
-            orderBy(col, true);
-        }
-        return this;
-    }
-
-    public SelectStatement orderBy(String columnName, boolean asc) {
-        if (asc) {
-            this.orders.add(columnName);
-        }
-        else {
-            this.orders.add(columnName + " desc");
-        }
+    public SelectStatement orderBy(String orders) {
+        this.orders = orders;
         return this;
     }
 
@@ -104,11 +88,15 @@ public class SelectStatement {
     }
 
     protected String groupBy() {
-        return this.groups.isEmpty() ? "" : " group by " + String.join(",", this.groups);
+        return this.groups == null || this.groups.isEmpty()
+                ? ""
+                : " group by " + this.groups;
     }
 
     protected String orderBy() {
-        return this.orders.isEmpty() ? "" : " order by " + String.join(",", this.orders);
+        return this.orders == null || this.orders.isEmpty()
+                ? ""
+                : " order by " + this.orders;
     }
 
     protected boolean isEmpty(Object value) {
