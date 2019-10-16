@@ -212,6 +212,25 @@ public final class DaoFactory {
         return result;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public boolean test(Connection conn, Class<?> clz) throws SQLException, DaoException {
+        TableDaoHelper<?> helper1 = this.daoTables.get(clz.getName());
+        if (helper1 != null) {
+            System.out.println(helper1.forSelect().getSql());
+            System.out.println("  rows:" + new TableDao(conn, helper1).selectAll().size());
+            return true;
+        }
+
+        ViewDaoHelper<?> helper2 = this.daoViews.get(clz.getName());
+        if (helper2 != null) {
+            System.out.println(helper2.forSelect().getSql());
+            System.out.println("  rows:" + new ViewDao(conn, helper2).selectAll().size());
+            return true;
+        }
+
+        return false;
+    }
+
     DaoColumnReader getColumnReader(String typeName) {
         DaoColumnReader reader = this.readers.get(typeName.toLowerCase());
         return reader == null ? this.objectReader : reader;

@@ -76,6 +76,25 @@ public class ViewDao<T> {
      * Selects some rows with a criteria.
      *
      * @param where The where statement.
+     * @return Rows meet the criteria.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> select(Where where) throws SQLException, DaoException {
+        DaoMethod<T> method = this.viewHelper.forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toList(rs);
+            }
+        }
+    }
+
+    /**
+     * Selects some rows with a criteria.
+     *
+     * @param where The where statement.
      * @param orders The orders.
      * @return Rows meet the criteria.
      * @throws SQLException Failed to execute the SQL statement.
@@ -84,12 +103,24 @@ public class ViewDao<T> {
     public List<T> select(Where where, String orders) throws SQLException, DaoException {
         DaoMethod<T> method = this.viewHelper.forSelect();
         SelectStatement sql = new SelectStatement(method.getSql())
-                .where(where);
-        sql.orderBy(orders);
+                .where(where)
+                .orderBy(orders);
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
                 return method.toList(rs);
             }
         }
+    }
+
+    protected String getSql() {
+        return this.viewHelper.forSelect().getSql();
+    }
+
+    protected List<T> toList(ResultSet rs) throws SQLException, DaoException {
+        return this.viewHelper.forSelect().toList(rs);
+    }
+
+    protected T toOne(ResultSet rs) throws SQLException, DaoException {
+        return this.viewHelper.forSelect().toOne(rs);
     }
 }
