@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Database tool.
@@ -46,11 +48,12 @@ public class DatabaseTool {
      * Output a script to generate all tables.
      *
      * @param file The file name.
+     * @param tableNames Names of tables.
      * @throws SQLException Failed to execute SQL statements.
      * @throws IOException Failed to save files.
      */
-    public void toTableScript(String file) throws IOException, SQLException {
-        toTableScript(file, this.source);
+    public void toTableScript(String file, String... tableNames) throws IOException, SQLException {
+        toTableScript(file, this.source, tableNames);
     }
 
     /**
@@ -58,12 +61,17 @@ public class DatabaseTool {
      *
      * @param file The file name.
      * @param target The database the script is executed on.
+     * @param tableNames Names of tables.
      * @throws SQLException Failed to execute SQL statements.
      * @throws IOException Failed to save files.
      */
-    public void toTableScript(String file, Database target) throws IOException, SQLException {
+    public void toTableScript(String file, Database target, String... tableNames) throws IOException, SQLException {
         StringBuilder scripts = new StringBuilder();
-        for (String t : this.source.selectTableNames()) {
+        List<String> ts = Arrays.asList(tableNames);
+        if (ts.isEmpty()) {
+            ts = this.source.selectTableNames();
+        }
+        for (String t : ts) {
             String sql1 = target.generateCreateTableSQL(this.source.selectTable(t, false));
             scripts.append(sql1).append(";\n\n");
         }
@@ -74,11 +82,12 @@ public class DatabaseTool {
      * Output a script to generate all view.
      *
      * @param file The file name.
+     * @param viewNames Names of views.
      * @throws SQLException Failed to execute SQL statements.
      * @throws IOException Failed to save files.
      */
-    public void toViewScript(String file) throws IOException, SQLException {
-        toViewScript(file, this.source);
+    public void toViewScript(String file, String... viewNames) throws IOException, SQLException {
+        toViewScript(file, this.source, viewNames);
     }
 
     /**
@@ -86,12 +95,18 @@ public class DatabaseTool {
      *
      * @param file The file name.
      * @param target The database the script is executed on.
+     * @param viewNames Names of views.
      * @throws SQLException Failed to execute SQL statements.
      * @throws IOException Failed to save files.
      */
-    public void toViewScript(String file, Database target) throws IOException, SQLException {
+    public void toViewScript(String file, Database target, String... viewNames) throws IOException, SQLException {
+        List<String> vs = Arrays.asList(viewNames);
+        if (vs.isEmpty()) {
+            vs = this.source.selectViewNames();
+        }
+
         StringBuilder scripts = new StringBuilder();
-        for (String v : this.source.selectViewNames()) {
+        for (String v : vs) {
             String sql = this.source.selectViewScript(v);
             String script = target.generateCreateViewSQL(v, sql);
             scripts.append(script).append(";\n\n");

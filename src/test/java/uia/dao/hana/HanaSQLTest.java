@@ -18,13 +18,13 @@
  *******************************************************************************/
 package uia.dao.hana;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import org.junit.Test;
 
 import uia.dao.Database;
 import uia.dao.TableType;
-import uia.dao.hana.Hana;
 import uia.dao.ora.Oracle;
 import uia.dao.pg.PostgreSQL;
 
@@ -36,29 +36,22 @@ import uia.dao.pg.PostgreSQL;
 public class HanaSQLTest {
 
     @Test
-    public void testConn() throws Exception {
-        Database db = new Hana("10.160.2.23", "31015", null, "WIP_ARCHIVE", "Sap54321");
-        db.close();
-    }
-
-    @Test
     public void testSelectTableNames() throws Exception {
-        Database db = new Hana("10.160.2.23", "31015", "WIP_ARCHIVE", "WIP_ARCHIVE", "Sap54321");
-        db.selectTableNames().forEach(t -> System.out.println(t));
+        Database db = db();
+        db.selectTableNames().forEach(System.out::println);
         db.close();
     }
 
     @Test
     public void testSelectViewNames() throws Exception {
-        Database db = new Hana("10.160.1.52", "39015", null, "WIP", "Hdb12345");
-        db.selectViewNames("VIEW_").forEach(t -> System.out.println(t));
+        Database db = db();
+        db.selectViewNames("VIEW_").forEach(System.out::println);
         db.close();
     }
 
     @Test
     public void testSelectTable() throws Exception {
-        Database db = new Hana("10.160.1.52", "39015", null, "WIP", "Hdb12345");
-
+        Database db = db();
         TableType table = db.selectTable("ZD_TEST", true);
         System.out.println(table.getTableName());
         table.getColumns().forEach(System.out::println);
@@ -71,8 +64,7 @@ public class HanaSQLTest {
 
     @Test
     public void testSelectView() throws Exception {
-        Database db = new Hana("10.160.1.52", "39015", null, "WIP", "Hdb12345");
-
+        Database db = db();
         TableType table = db.selectTable("VIEW_DISPATCH_SFC", false);
         System.out.println(table.getTableName());
         table.getColumns().forEach(System.out::println);
@@ -83,26 +75,26 @@ public class HanaSQLTest {
 
     @Test
     public void testSelectViewScript() throws Exception {
-        Database db = new Hana("10.160.1.52", "39015", null, "WIP", "Hdb12345");
+        Database db = db();
         System.out.println(db.selectViewScript("VIEW_DISPATCH_SFC"));
         db.close();
     }
 
     @Test
     public void testGenerateCreateTableSQL() throws Exception {
-        Database db = new Hana("10.160.1.52", "39015", null, "WIP", "Hdb12345");
-        TableType table = db.selectTable("ZR_CARRIER_CLEAN", false);
+        Database db = db();
+        TableType table = db.selectTable("SHOP_ORDER", false);
 
         System.out.println("=== Hana ===");
         System.out.println(db.generateCreateTableSQL(table));
 
         System.out.println("=== Oracle ===");
-        try (Database ora = new Oracle("WIP", null, null, null, null)) {
+        try (Database ora = new Oracle()) {
             System.out.println(ora.generateCreateTableSQL(table));
         }
 
         System.out.println("=== PogtgreSQL ===");
-        try (PostgreSQL pg = new PostgreSQL("public", null, null, null, null)) {
+        try (PostgreSQL pg = new PostgreSQL()) {
             System.out.println(pg.generateCreateTableSQL(table));
         }
 
@@ -111,7 +103,7 @@ public class HanaSQLTest {
 
     @Test
     public void testCase1() throws Exception {
-        Database db = new Hana("10.160.2.23", "31015", null, "WIP", "Sap12345");
+        Database db = db();
         List<String> tns = db.selectTableNames("Z_");
         for (String tn : tns) {
             TableType table = db.selectTable(tn, false);
@@ -119,5 +111,9 @@ public class HanaSQLTest {
         }
 
         db.close();
+    }
+
+    private Hana db() throws SQLException {
+        return new Hana("192.168.137.245", "39015", null, "WIP", "Sap12345");
     }
 }

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.uia.solution</groupId>
 	<artifactId>uia-dao</artifactId>
-	<version>0.1.0</version>
+	<version>0.1.1</version>
 	<packaging>jar</packaging>
 	<name>uia-dao</name>
 	<url>https://github.com/uia4j/uia-dao</url>
@@ -39,6 +39,18 @@
 		    <groupId>org.xerial</groupId>
 		    <artifactId>sqlite-jdbc</artifactId>
 		    <version>3.28.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+		    <groupId>ngdbc</groupId>
+		    <artifactId>ngdbc</artifactId>
+		    <version>2.1.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+		    <groupId>ojdbc6</groupId>
+		    <artifactId>ojdbc6</artifactId>
+		    <version>11.2.0.4</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
