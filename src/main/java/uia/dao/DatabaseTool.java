@@ -133,7 +133,7 @@ public class DatabaseTool {
      *
      * @param file The file name.
      * @param compareTarget Target database used to compare.
-     * @param outoutTarget Target database used to output the script file.
+     * @param outputTarget Target database used to output the script file.
      * @param tableNames Table names to be checked.
      * @return True if some tables need to be altered.
      * @throws SQLException Failed to execute SQL statements.
