@@ -22,6 +22,7 @@ import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.NClob;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 /**
  * The structure of a column.
@@ -131,6 +132,17 @@ public abstract class ColumnType {
     protected int decimalDigits;
 
     protected String remark;
+
+    private final ArrayList<ColumnType.Compare> cs;
+
+    public ColumnType() {
+        this.cs = new ArrayList<>();
+        this.cs.add(this::checkNullable);
+        this.cs.add(this::checkPK);
+        this.cs.add(this::checkString);
+        this.cs.add(this::checkNumber);
+        this.cs.add(this::checkTimestamp);
+    }
 
     /**
      * Tests if this column is a primary key.
@@ -317,98 +329,20 @@ public abstract class ColumnType {
 
     public boolean sameAs(ColumnType targetColumn, ComparePlan plan, CompareResult cr) {
         if (targetColumn == null) {
+            cr.getDiff().add(new ColumnDiff(this, ColumnDiff.ActionType.ADD, null));
             cr.setPassed(false);
             cr.addMessage(this.columnName + " not found");
             return false;
         }
 
-        // column name
         if (!this.columnName.equalsIgnoreCase(targetColumn.getColumnName())) {
             cr.setPassed(false);
             cr.addMessage(this.columnName + " columnName not the same");
             return false;
         }
 
-        // null
-        if (plan.checkNullable && this.nullable != targetColumn.isNullable()) {
-            cr.setPassed(false);
-            cr.addMessage(String.format("%s nullable not the same: (%s,%s)",
-                    this.columnName,
-                    this.nullable,
-                    targetColumn.isNullable()));
-            return false;
-        }
-
-        // primary key
-        if (this.pk != targetColumn.isPk()) {
-            cr.setPassed(false);
-            cr.addMessage(String.format("%s pk not the same: (%s,%s)",
-                    this.columnName,
-                    this.pk,
-                    targetColumn.isPk()));
-            return false;
-        }
-
-        // string
-        if (!plan.strictVarchar &&
-
-                isStringType() && targetColumn.isStringType()) {
-            return true;
-        }
-
-        // numeric
-        if (!plan.strictNumeric && isNumericType() && targetColumn.isNumericType()) {
-            return true;
-        }
-
-        // data, time, timestamp
-        if (!plan.strictDateTime && isDateTimeType() && targetColumn.isDateTimeType()) {
-            return true;
-        }
-
-        // data type
-        if (this.dataType != targetColumn.getDataType()) {
-            cr.setPassed(false);
-            cr.addMessage(String.format("%s dataType not the same: (%s,%s)",
-                    this.columnName,
-                    this.dataType,
-                    targetColumn.getDataType()));
-            return false;
-        }
-
-        // date/time
-        if (isDateTimeType() && targetColumn.isDateTimeType()) {
-            return true;
-        }
-
-        // BLOB, CLOB, NCLOB
-        if (this.dataType == DataType.BLOB || this.dataType == DataType.CLOB || this.dataType == DataType.NCLOB) {
-            return true;
-        }
-
-        // decimal digit
-        if (this.decimalDigits != targetColumn.getDecimalDigits()) {
-            cr.setPassed(false);
-            cr.addMessage(String.format("%s decimalDigits not the same, (%s:%s,%s:%s)",
-                    this.columnName,
-                    this.dataTypeName,
-                    this.decimalDigits,
-                    targetColumn.getDataTypeName(),
-                    targetColumn.getDecimalDigits()));
-            return false;
-        }
-
-        // column size
-        if (plan.checkDataSize && this.columnSize != targetColumn.getColumnSize()) {
-            cr.setPassed(false);
-            cr.addMessage(String.format("%s columnSize not the same: (%s,%s)",
-                    this.columnName,
-                    this.columnSize,
-                    targetColumn.getColumnSize()));
-            return false;
-        }
-
-        return true;
+        this.cs.forEach(c -> c.check(targetColumn, plan, cr));
+        return cr.isPassed();
     }
 
     String genPsSet(int index) {
@@ -545,4 +479,120 @@ public abstract class ColumnType {
                 this.columnSize,
                 this.remark);
     }
+
+    public boolean checkNullable(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (plan.checkNullable && this.nullable == targetColumn.isNullable()) {
+            return true;
+        }
+
+        ctx.getDiff().add(new ColumnDiff(this, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.NULLABLE));
+        ctx.setPassed(false);
+        ctx.addMessage(String.format("%s nullable not the same: (%s,%s)",
+                this.columnName,
+                this.nullable,
+                targetColumn.isNullable()));
+        return false;
+    }
+
+    public boolean checkPK(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (this.pk == targetColumn.isPk()) {
+            return true;
+        }
+
+        ctx.setPassed(false);
+        ctx.addMessage(String.format("%s pk not the same: (%s,%s)",
+                this.columnName,
+                this.pk,
+                targetColumn.isPk()));
+        return false;
+    }
+
+    public boolean checkString(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (!isStringType()) {
+            return true;
+        }
+
+        boolean result = targetColumn.isStringType();
+        if (plan.strictVarchar) {
+            result = chdckDataType(targetColumn, plan, ctx);
+        }
+
+        return result ? checkSize(targetColumn, plan, ctx) : result;
+    }
+
+    public boolean checkNumber(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (!isNumericType()) {
+            return true;
+        }
+
+        if (!plan.strictNumeric) {
+            return targetColumn.isNumericType();
+        }
+
+        boolean result = chdckDataType(targetColumn, plan, ctx);
+        return result ? checkSize(targetColumn, plan, ctx) : result;
+    }
+
+    public boolean checkTimestamp(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (!isDateTimeType()) {
+            return true;
+        }
+
+        if (plan.strictDateTime) {
+            return chdckDataType(targetColumn, plan, ctx);
+        }
+        else {
+            return targetColumn.isDateTimeType();
+        }
+    }
+
+    public boolean chdckDataType(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        // data type
+        if (this.dataType != targetColumn.getDataType()) {
+            ctx.getDiff().add(new ColumnDiff(this, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.DATA_TYPE));
+            ctx.setPassed(false);
+            ctx.addMessage(String.format("%s dataType not the same: (%s,%s)",
+                    this.columnName,
+                    this.dataType,
+                    targetColumn.getDataType()));
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    public boolean checkDigit(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (this.decimalDigits == targetColumn.getDecimalDigits()) {
+            return true;
+        }
+
+        ctx.setPassed(false);
+        ctx.addMessage(String.format("%s decimalDigits not the same, (%s:%s,%s:%s)",
+                this.columnName,
+                this.dataTypeName,
+                this.decimalDigits,
+                targetColumn.getDataTypeName(),
+                targetColumn.getDecimalDigits()));
+        return false;
+    }
+
+    public boolean checkSize(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+        if (!plan.checkDataSize || this.columnSize == targetColumn.getColumnSize()) {
+            return true;
+        }
+
+        ctx.setPassed(false);
+        ctx.addMessage(String.format("%s columnSize not the same: (%s,%s)",
+                this.columnName,
+                this.columnSize,
+                targetColumn.getColumnSize()));
+        return false;
+    }
+
+    static interface Compare {
+
+        public boolean check(ColumnType targetColumn, ComparePlan plan, CompareResult ctx);
+    }
+
 }

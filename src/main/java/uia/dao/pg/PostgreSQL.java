@@ -25,9 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uia.dao.AbstractDatabase;
+import uia.dao.ColumnDiff;
 import uia.dao.ColumnType;
-import uia.dao.TableType;
 import uia.dao.ColumnType.DataType;
+import uia.dao.TableType;
 
 /**
  *
@@ -41,7 +42,7 @@ public class PostgreSQL extends AbstractDatabase {
             Class.forName("org.postgresql.Driver").newInstance();
         }
         catch (Exception e) {
-            e.printStackTrace();
+
         }
     }
 
@@ -90,9 +91,9 @@ public class PostgreSQL extends AbstractDatabase {
             return null;
         }
 
-        ArrayList<String> pks = new ArrayList<String>();
-        ArrayList<String> cols = new ArrayList<String>();
-        ArrayList<String> comments = new ArrayList<String>();
+        ArrayList<String> pks = new ArrayList<>();
+        ArrayList<String> cols = new ArrayList<>();
+        ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
             comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
                     table.getTableName().toLowerCase(),
@@ -134,17 +135,42 @@ public class PostgreSQL extends AbstractDatabase {
     }
 
     @Override
-    public String generateAlterTableSQL(String tableName, List<ColumnType> columns) {
-        ArrayList<String> cols = new ArrayList<String>();
-        for (ColumnType column : columns) {
-            cols.add(prepareColumnDef(column));
+    public String generateAlterTableSQL(String tableName, List<ColumnDiff> details) {
+        ArrayList<String> cmd = new ArrayList<>();
+        for (ColumnDiff detail : details) {
+            switch (detail.actionType) {
+                case ADD:
+                    cmd.add("ADD COLUMN " + this.prepareColumnDef(detail.column));
+                    break;
+                case ALTER:
+                    if (detail.alterType == ColumnDiff.AlterType.DATA_TYPE) {
+                        cmd.add(String.format("ALTER COLUMN %s TYPE %s", detail.column.getColumnName(), dbType(detail.column)));
+                    }
+                    else {
+                        if (detail.column.isNullable()) {
+                            cmd.add(String.format("ALTER COLUMN %s DROP NOT NULL", detail.column.getColumnName()));
+                        }
+                        else {
+                            cmd.add(String.format("ALTER COLUMN %s SET NOT NULL", detail.column.getColumnName()));
+                        }
+                    }
+                    break;
+                case DROP:
+                    cmd.add("DROP COLUMN " + detail.column.getColumnName());
+                    break;
+            }
         }
-        return "ALTER TABLE " + tableName + " ADD (\n" + String.join(",\n", cols) + "\n)";
+        return "ALTER TABLE " + tableName + "\n  " + String.join(",\n  ", cmd) + ";\n";
+    }
+
+    @Override
+    public String generateDropTableSQL(String tableName) {
+        return "DROP TABLE " + tableName;
     }
 
     @Override
     public List<ColumnType> selectColumns(String tableName, boolean firstAsPK) throws SQLException {
-        ArrayList<String> pks = new ArrayList<String>();
+        ArrayList<String> pks = new ArrayList<>();
         try (ResultSet rs = this.conn.getMetaData().getPrimaryKeys(null, null, tableName)) {
             while (rs.next()) {
                 pks.add(rs.getString("COLUMN_NAME"));
@@ -176,7 +202,7 @@ public class PostgreSQL extends AbstractDatabase {
          * SOURCE_DATA_TYPE
          * IS_AUTOINCREMENT         *
          */
-        List<ColumnType> cts = new ArrayList<ColumnType>();
+        List<ColumnType> cts = new ArrayList<>();
         try (ResultSet rs = this.conn.getMetaData().getColumns(null, null, tableName, null)) {
             while (rs.next()) {
                 if (tableName.equalsIgnoreCase(rs.getString("TABLE_NAME"))) {
@@ -245,7 +271,7 @@ public class PostgreSQL extends AbstractDatabase {
                 }
             }
         }
-        if (pks.size() == 0 && firstAsPK && cts.size() > 0) {
+        if (pks.isEmpty() && firstAsPK && !cts.isEmpty()) {
             cts.get(0).setPk(true);
             pks.add(cts.get(0).getColumnName());
         }
@@ -259,6 +285,16 @@ public class PostgreSQL extends AbstractDatabase {
     }
 
     private String prepareColumnDef(ColumnType ct) {
+        String type = dbType(ct);
+        String nullable = "";
+        if (ct.isPk() || !ct.isNullable()) {
+            nullable = " NOT NULL";
+        }
+
+        return " \"" + ct.getColumnName().toLowerCase() + "\" " + type + nullable;
+    }
+
+    private String dbType(ColumnType ct) {
         String type = "";
         switch (ct.getDataType()) {
             case LONG:
@@ -302,12 +338,6 @@ public class PostgreSQL extends AbstractDatabase {
                 throw new NullPointerException(ct.getColumnName() + " type not found");
 
         }
-
-        String nullable = "";
-        if (ct.isPk() || !ct.isNullable()) {
-            nullable = " NOT NULL";
-        }
-
-        return " \"" + ct.getColumnName().toLowerCase() + "\" " + type + nullable;
+        return type;
     }
 }

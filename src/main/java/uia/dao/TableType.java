@@ -116,11 +116,11 @@ public class TableType {
     /**
      * Compares two tables.
      *
-     * @param table The table to be compared.
+     * @param targetTable The table to be compared.
      * @return Result.
      */
-    public CompareResult sameAs(TableType table) {
-        return sameAs(table, ComparePlan.table());
+    public CompareResult sameAs(TableType targetTable) {
+        return sameAs(targetTable, ComparePlan.table());
     }
 
     /**
@@ -139,19 +139,19 @@ public class TableType {
             return cr;
         }
 
-        if (this.columns.size() != table.columns.size()) {
-            cr.setPassed(false);
-            cr.addMessage("columnCount mismatch");
-            return cr;
-        }
-
         try {
-            Map<String, ColumnType> source = this.columns.stream().collect(Collectors.toMap(c -> c.getColumnName().toUpperCase(), c -> c));
-            Map<String, ColumnType> target = table.columns.stream().collect(Collectors.toMap(c -> c.getColumnName().toUpperCase(), c -> c));
-            for (Map.Entry<String, ColumnType> kv : source.entrySet()) {
+            Map<String, ColumnType> sourceColumns = this.columns.stream().collect(Collectors.toMap(c -> c.getColumnName().toUpperCase(), c -> c));
+            Map<String, ColumnType> targetColumns = table.columns.stream().collect(Collectors.toMap(c -> c.getColumnName().toUpperCase(), c -> c));
+            for (Map.Entry<String, ColumnType> kv : sourceColumns.entrySet()) {
                 ColumnType ct1 = kv.getValue();
-                ColumnType ct2 = target.get(kv.getKey());
+                ColumnType ct2 = targetColumns.remove(kv.getKey());
                 ct1.sameAs(ct2, plan, cr);
+            }
+            if (targetColumns.size() > 0) {
+                cr.setPassed(false);
+            }
+            for (Map.Entry<String, ColumnType> kv : targetColumns.entrySet()) {
+                cr.getDiff().add(new ColumnDiff(kv.getValue(), ColumnDiff.ActionType.DROP, null));
             }
         }
         catch (Exception ex) {

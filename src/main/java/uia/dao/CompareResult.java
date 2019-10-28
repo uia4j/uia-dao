@@ -36,19 +36,14 @@ public class CompareResult {
 
     private final List<String> messages;
 
+    private final List<ColumnDiff> diff;
+
     public CompareResult(String tableName) {
         this.tableName = tableName;
         this.missing = false;
         this.passed = true;
         this.messages = new ArrayList<>();
-    }
-
-    public CompareResult(String tableName, boolean passed, String message) {
-        this.tableName = tableName;
-        this.missing = false;
-        this.passed = passed;
-        this.messages = new ArrayList<>();
-        this.messages.add(message);
+        this.diff = new ArrayList<>();
     }
 
     public boolean isMissing() {
@@ -73,6 +68,10 @@ public class CompareResult {
 
     public List<String> getMessages() {
         return this.messages;
+    }
+
+    public List<ColumnDiff> getDiff() {
+        return this.diff;
     }
 
     public void print(boolean printAll) {

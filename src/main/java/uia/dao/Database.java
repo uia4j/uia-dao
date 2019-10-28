@@ -147,14 +147,9 @@ public interface Database extends AutoCloseable {
      */
     public String generateCreateTableSQL(TableType table);
 
-    /**
-     * Generate script to alter a table.
-     *
-     * @param tableName Table name.
-     * @param cols Column model.
-     * @return Update script.
-     */
-    public String generateAlterTableSQL(String tableName, List<ColumnType> cols);
+    public String generateAlterTableSQL(String tableName, List<ColumnDiff> details);
+
+    public String generateDropTableSQL(String tableName);
 
     /**
      * Create a table.
@@ -164,16 +159,6 @@ public interface Database extends AutoCloseable {
      * @throws SQLException Failed to execute.
      */
     public int createTable(TableType table) throws SQLException;
-
-    /**
-     * Alter columns.
-     *
-     * @param tableName Table name.
-     * @param columns Column model.
-     * @return Result.
-     * @throws SQLException Failed to execute.
-     */
-    public int alterTableColumns(String tableName, List<ColumnType> columns) throws SQLException;
 
     /**
      * Drop a table.
@@ -204,12 +189,21 @@ public interface Database extends AutoCloseable {
     public int dropView(String viewName) throws SQLException;
 
     /**
-     * Execute SQL commands.
-     *
-     * @param sqls SQL commands.
-     * @return Result.
-     * @throws SQLException Failed to execute.
-     */
+    * Execute a SQL command.
+    *
+    * @param sql A SQL command.
+    * @return Result.
+    * @throws SQLException Failed to execute.
+    */
+    public boolean execute(String sql) throws SQLException;
+
+    /**
+    * Execute SQL commands.
+    *
+    * @param sqls SQL commands.
+    * @return Result.
+    * @throws SQLException Failed to execute.
+    */
     public int[] executeBatch(List<String> sqls) throws SQLException;
 
     /**

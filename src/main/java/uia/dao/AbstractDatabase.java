@@ -42,6 +42,8 @@ public abstract class AbstractDatabase implements Database {
 
     private static final String VIEW = "VIEW";
 
+    private final String url;
+
     protected final Connection conn;
 
     protected String schema;
@@ -59,6 +61,7 @@ public abstract class AbstractDatabase implements Database {
      * @throws SQLException Failed to initial.
      */
     protected AbstractDatabase(String driverName, String url, String user, String pwd, String schema) throws SQLException {
+        this.url = url;
         if (url != null) {
             this.conn = DriverManager.getConnection(url, user, pwd);
             this.dataSource = createDataSource(driverName, url, user, pwd);
@@ -188,14 +191,6 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public int alterTableColumns(String tableName, List<ColumnType> columns) throws SQLException {
-        String script = generateAlterTableSQL(tableName, columns);
-        try (PreparedStatement ps = this.conn.prepareStatement(script)) {
-            return ps.executeUpdate();
-        }
-    }
-
-    @Override
     public int dropTable(String tableName) throws SQLException {
         try (PreparedStatement ps = this.conn.prepareStatement("DROP TABLE " + upperOrLower(tableName))) {
             return ps.executeUpdate();
@@ -216,6 +211,13 @@ public abstract class AbstractDatabase implements Database {
     public int dropView(String viewName) throws SQLException {
         try (PreparedStatement ps = this.conn.prepareStatement("DROP VIEW " + upperOrLower(viewName))) {
             return ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public boolean execute(String sql) throws SQLException {
+        try (java.sql.Statement state = this.conn.createStatement()) {
+            return state.execute(sql);
         }
     }
 
@@ -241,6 +243,11 @@ public abstract class AbstractDatabase implements Database {
             }
             return ps.executeBatch();
         }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " url:" + this.url;
     }
 
     /**

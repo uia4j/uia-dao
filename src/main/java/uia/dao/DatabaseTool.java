@@ -50,7 +50,7 @@ public class DatabaseTool {
      * @param file The file name.
      * @param tableNames Names of tables.
      * @throws SQLException Failed to execute SQL statements.
-     * @throws IOException Failed to save files.
+     * @throws IOException Failed to save the file.
      */
     public void toTableScript(String file, String... tableNames) throws IOException, SQLException {
         toTableScript(file, this.source, tableNames);
@@ -63,7 +63,7 @@ public class DatabaseTool {
      * @param target The database the script is executed on.
      * @param tableNames Names of tables.
      * @throws SQLException Failed to execute SQL statements.
-     * @throws IOException Failed to save files.
+     * @throws IOException Failed to save the file.
      */
     public void toTableScript(String file, Database target, String... tableNames) throws IOException, SQLException {
         StringBuilder scripts = new StringBuilder();
@@ -84,7 +84,7 @@ public class DatabaseTool {
      * @param file The file name.
      * @param viewNames Names of views.
      * @throws SQLException Failed to execute SQL statements.
-     * @throws IOException Failed to save files.
+     * @throws IOException Failed to save the file.
      */
     public void toViewScript(String file, String... viewNames) throws IOException, SQLException {
         toViewScript(file, this.source, viewNames);
@@ -97,7 +97,7 @@ public class DatabaseTool {
      * @param target The database the script is executed on.
      * @param viewNames Names of views.
      * @throws SQLException Failed to execute SQL statements.
-     * @throws IOException Failed to save files.
+     * @throws IOException Failed to save the file.
      */
     public void toViewScript(String file, Database target, String... viewNames) throws IOException, SQLException {
         List<String> vs = Arrays.asList(viewNames);
@@ -112,5 +112,56 @@ public class DatabaseTool {
             scripts.append(script).append(";\n\n");
         }
         Files.write(Paths.get(file), scripts.toString().getBytes());
+    }
+
+    /**
+     * Output a script to alter tables.
+     *
+     * @param file The file name.
+     * @param target Target database.
+     * @param tableNames Table names to be checked.
+     * @return True if some tables need to be altered.
+     * @throws SQLException Failed to execute SQL statements.
+     * @throws IOException Failed to save the file.
+     */
+    public boolean toAlterScript(String file, Database target, String... tableNames) throws SQLException, IOException {
+        return toAlterScript(file, target, target, tableNames);
+    }
+
+    /**
+     * Output a script to alter tables.
+     *
+     * @param file The file name.
+     * @param compareTarget Target database used to compare.
+     * @param outoutTarget Target database used to output the script file.
+     * @param tableNames Table names to be checked.
+     * @return True if some tables need to be altered.
+     * @throws SQLException Failed to execute SQL statements.
+     * @throws IOException Failed to save the file.
+     */
+    public boolean toAlterScript(String file, Database compareTarget, Database outputTarget, String... tableNames) throws SQLException, IOException {
+        StringBuilder scripts = new StringBuilder();
+        List<String> ts = tableNames.length == 0 ? this.source.selectTableNames() : Arrays.asList(tableNames);
+        boolean alter = false;
+        for (String t : ts) {
+            TableType tableNew = this.source.selectTable(t, false);
+            TableType tableOld = compareTarget.selectTable(t, false);
+            CompareResult cr = tableNew.sameAs(tableOld, new ComparePlan(true, false, true, true, true));
+            if (!cr.isPassed()) {
+                alter = true;
+                scripts.append("-- ").append(t).append("\n");
+                if (cr.isMissing()) {
+                    scripts.append(outputTarget.generateCreateTableSQL(tableNew)).append("\n");
+                }
+                else {
+                    scripts.append(outputTarget.generateAlterTableSQL(tableOld.getTableName(), cr.getDiff())).append("\n");
+                }
+            }
+        }
+
+        if (alter) {
+            Files.write(Paths.get(file), scripts.toString().getBytes());
+        }
+        return alter;
     }
 }

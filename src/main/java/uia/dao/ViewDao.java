@@ -116,6 +116,10 @@ public class ViewDao<T> {
         return this.viewHelper.forSelect().getSql();
     }
 
+    protected String getSql(String where) {
+        return this.viewHelper.forSelect().getSql() + where;
+    }
+
     protected List<T> toList(ResultSet rs) throws SQLException, DaoException {
         return this.viewHelper.forSelect().toList(rs);
     }

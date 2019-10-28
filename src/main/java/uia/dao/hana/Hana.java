@@ -25,9 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uia.dao.AbstractDatabase;
+import uia.dao.ColumnDiff;
 import uia.dao.ColumnType;
-import uia.dao.TableType;
 import uia.dao.ColumnType.DataType;
+import uia.dao.TableType;
 
 /**
  *
@@ -89,13 +90,15 @@ public class Hana extends AbstractDatabase {
             return null;
         }
 
-        ArrayList<String> pks = new ArrayList<String>();
-        ArrayList<String> cols = new ArrayList<String>();
-        ArrayList<String> comments = new ArrayList<String>();
+        ArrayList<String> pks = new ArrayList<>();
+        ArrayList<String> cols = new ArrayList<>();
+        ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
-                    table.getTableName().toLowerCase(),
+            /**
+            comments.add(String.format("COMMENT ON TABLE %s IS '%s';%n",
+                    table.getTableName().toUpperCase(),
                     table.getRemark()));
+             */
         }
 
         for (ColumnType ct : table.getColumns()) {
@@ -105,10 +108,12 @@ public class Hana extends AbstractDatabase {
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null &&
                     ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';%n",
+                /**
+                comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';%n",
                         table.getTableName().toUpperCase(),
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
+                 */
             }
         }
 
@@ -130,17 +135,47 @@ public class Hana extends AbstractDatabase {
     }
 
     @Override
-    public String generateAlterTableSQL(String tableName, List<ColumnType> columns) {
-        ArrayList<String> cols = new ArrayList<String>();
-        for (ColumnType column : columns) {
-            cols.add(prepareColumnDef(column));
+    public String generateAlterTableSQL(String tableName, List<ColumnDiff> details) {
+        ArrayList<String> add = new ArrayList<>();
+        ArrayList<String> alter = new ArrayList<>();
+        ArrayList<String> drop = new ArrayList<>();
+        for (ColumnDiff detail : details) {
+            switch (detail.actionType) {
+                case ADD:
+                    add.add(prepareColumnDef(detail.column));
+                    break;
+                case ALTER:
+                    alter.add(prepareColumnDef(detail.column));
+                    break;
+                case DROP:
+                    drop.add(detail.column.getColumnName());
+                    break;
+            }
         }
-        return "ALTER TABLE " + tableName + " ADD (\n" + String.join(",\n", cols) + "\n)";
+
+        String cmd = "";
+        if (!add.isEmpty()) {
+            cmd += ("ALTER TABLE " + tableName + "\n ADD(" + String.join(",", add) + ");\n");
+        }
+        if (!alter.isEmpty()) {
+            cmd += ("ALTER TABLE " + tableName + "\n ALTER(" + String.join(",", alter) + ");\n");
+        }
+        if (!drop.isEmpty()) {
+            cmd += ("ALTER TABLE " + tableName + "\n DROP(" + String.join(",", drop) + ");\n");
+        }
+
+        return cmd;
+
+    }
+
+    @Override
+    public String generateDropTableSQL(String tableName) {
+        return "DROP TABLE " + tableName;
     }
 
     @Override
     public List<ColumnType> selectColumns(String tableName, boolean firstAsPK) throws SQLException {
-        ArrayList<String> pks = new ArrayList<String>();
+        ArrayList<String> pks = new ArrayList<>();
         try (ResultSet rs = this.conn.getMetaData().getPrimaryKeys(null, null, tableName)) {
             while (rs.next()) {
                 pks.add(rs.getString("COLUMN_NAME"));
@@ -172,7 +207,7 @@ public class Hana extends AbstractDatabase {
          * SOURCE_DATA_TYPE
          * IS_AUTOINCREMENT         *
          */
-        List<ColumnType> cts = new ArrayList<ColumnType>();
+        List<ColumnType> cts = new ArrayList<>();
         try (ResultSet rs = this.conn.getMetaData().getColumns(null, null, tableName, null)) {
             while (rs.next()) {
                 if (tableName.equalsIgnoreCase(rs.getString("TABLE_NAME"))) {
@@ -238,7 +273,7 @@ public class Hana extends AbstractDatabase {
                 }
             }
         }
-        if (pks.size() == 0 && firstAsPK && cts.size() > 0) {
+        if (pks.isEmpty() && firstAsPK && !cts.isEmpty()) {
             cts.get(0).setPk(true);
             pks.add(cts.get(0).getColumnName());
         }
@@ -252,6 +287,23 @@ public class Hana extends AbstractDatabase {
     }
 
     private String prepareColumnDef(ColumnType ct) {
+        String type = dbType(ct);
+        String nullable = "";
+        if (ct.isPk()) {
+            nullable = " NOT NULL";
+        }
+        else if (!ct.isNullable()) {
+            nullable = " NOT NULL";
+        }
+        else {
+            nullable = " NULL";
+        }
+
+        return " \"" + ct.getColumnName().toUpperCase() + "\" " + type + nullable;
+
+    }
+
+    private String dbType(ColumnType ct) {
         String type = "";
         switch (ct.getDataType()) {
             case INTEGER:
@@ -292,14 +344,8 @@ public class Hana extends AbstractDatabase {
                 break;
             default:
                 throw new NullPointerException(ct.getColumnName() + " type not found");
-
         }
 
-        String nullable = "";
-        if (ct.isPk() || !ct.isNullable()) {
-            nullable = " NOT NULL";
-        }
-
-        return " \"" + ct.getColumnName().toUpperCase() + "\" " + type + nullable;
+        return type;
     }
 }

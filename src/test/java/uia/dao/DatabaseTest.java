@@ -21,9 +21,6 @@ package uia.dao;
 import org.junit.Assert;
 import org.junit.Test;
 
-import uia.dao.CompareResult;
-import uia.dao.Database;
-import uia.dao.TableType;
 import uia.dao.sqlite.SQLite;
 
 /**

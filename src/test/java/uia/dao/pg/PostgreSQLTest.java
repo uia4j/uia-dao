@@ -21,11 +21,12 @@ package uia.dao.pg;
 import org.junit.Test;
 
 import uia.dao.ColumnType;
+import uia.dao.CompareResult;
 import uia.dao.Database;
+import uia.dao.DatabaseTool;
 import uia.dao.TableType;
 import uia.dao.hana.Hana;
 import uia.dao.ora.Oracle;
-import uia.dao.pg.PostgreSQL;
 
 /**
  *
@@ -35,95 +36,73 @@ import uia.dao.pg.PostgreSQL;
 public class PostgreSQLTest {
 
     @Test
-    public void testSelectTableNames() throws Exception {
-        Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede");
-        db.selectTableNames("ivp").forEach(t -> System.out.println(t));
-        db.close();
-    }
-
-    @Test
-    public void testSelectViewNames() throws Exception {
-        Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede");
-        db.selectViewNames("ivp_").forEach(t -> System.out.println(t));
-        db.close();
+    public void testSelect() throws Exception {
+        try (Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede")) {
+            db.selectTableNames().forEach(System.out::println);
+            db.selectViewNames().forEach(System.out::println);
+        }
     }
 
     @Test
     public void testSelectTable() throws Exception {
-        Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede");
-
-        print(db.selectTable("hspt", true));
-        print(db.selectTable("hspt_area", true));
-        print(db.selectTable("ivp_dtu", true));
-        print(db.selectTable("ivp_event_def", true));
-        print(db.selectTable("ivp", true));
-        print(db.selectTable("ivp_agent", true));
-        print(db.selectTable("ivp_run", true));
-        print(db.selectTable("ivp_raw", true));
-        print(db.selectTable("ivp_raw_event", true));
-        print(db.selectTable("login_log", true));
-
-        db.close();
+        try (Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede")) {
+            print(db.selectTable("hspt", true));
+            print(db.selectTable("hspt_area", true));
+            print(db.selectTable("ivp_dtu", true));
+            print(db.selectTable("ivp_event_def", true));
+            print(db.selectTable("ivp", true));
+            print(db.selectTable("ivp_agent", true));
+            print(db.selectTable("ivp_run", true));
+            print(db.selectTable("ivp_raw", true));
+            print(db.selectTable("ivp_raw_event", true));
+            print(db.selectTable("login_log", true));
+        }
     }
 
     @Test
-    public void testPMS() throws Exception {
-        final Database db = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms");
-
-        db.selectTableNames().forEach(tn -> {
-            try {
-                TableType t = db.selectTable(tn, true);
-                System.out.println(db.generateCreateTableSQL(t));
-                print(t);
+    public void testAlter() throws Exception {
+        try (Hana hana = new Hana()) {
+            try (PostgreSQL db1 = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
+                try (PostgreSQL db2 = new PostgreSQL("localhost", "5432", "pmsdbv1", "postgres", "pgAdmin")) {
+                    new DatabaseTool(db2).toAlterScript("d:/temp/pmsdbv1_v2restore_pg.sql", db1);
+                    new DatabaseTool(db2).toAlterScript("d:/temp/pmsdbv1_v2restore_hana.sql", db1, hana);
+                }
             }
-            catch (Exception e) {
+        }
+    }
 
+    @Test
+    public void testOne() throws Exception {
+        try (PostgreSQL db1 = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
+            try (PostgreSQL db2 = new PostgreSQL("localhost", "5432", "pmsdb2", "pms", "pms")) {
+                TableType curr = db1.selectTable("ma_schedule_item", false);
+                TableType prev = db2.selectTable("ma_schedule_item", false);
+                CompareResult cr = curr.sameAs(prev);
+                if (!cr.isPassed()) {
+                    System.out.println(cr);
+                }
             }
-        });
-
-        db.close();
-    }
-
-    @Test
-    public void testSelectView() throws Exception {
-        Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede");
-
-        TableType table = db.selectTable("ivp_raw_event_view", false);
-        System.out.println(table.getTableName());
-        table.getColumns().forEach(System.out::println);
-        System.out.println(table.generateInsertSQL());
-        System.out.println(table.generateUpdateSQL());
-        System.out.println(table.generateSelectSQL());
-
-        db.close();
-    }
-
-    @Test
-    public void testSelectViewScript() throws Exception {
-        Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede");
-        System.out.println(db.selectViewScript("ivp_raw_event_view"));
-        db.close();
+        }
     }
 
     @Test
     public void testGenerateCreateTableSQL() throws Exception {
-        Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede");
-        TableType table = db.selectTable("ivp", false);
+        try (Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede")) {
+            TableType table = db.selectTable("ivp", false);
 
-        System.out.println("=== PostgreSQL ===");
-        System.out.println(db.generateCreateTableSQL(table));
+            System.out.println("=== PostgreSQL ===");
+            System.out.println(db.generateCreateTableSQL(table));
 
-        System.out.println("=== Oracle ===");
-        try (Database ora = new Oracle("WIP", null, null, null, null)) {
-            System.out.println(ora.generateCreateTableSQL(table));
+            System.out.println("=== Oracle ===");
+            try (Database ora = new Oracle()) {
+                System.out.println(ora.generateCreateTableSQL(table));
+            }
+
+            System.out.println("=== Hana ===");
+            try (Database hana = new Hana()) {
+                System.out.println(hana.generateCreateTableSQL(table));
+            }
         }
-
-        System.out.println("=== Hana ===");
-        try (Database hana = new Hana("WIP", null, null, null, null)) {
-            System.out.println(hana.generateCreateTableSQL(table));
-        }
-
-        db.close();
     }
 
     private void print(TableType table) {

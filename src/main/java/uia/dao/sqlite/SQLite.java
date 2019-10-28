@@ -26,9 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uia.dao.AbstractDatabase;
+import uia.dao.ColumnDiff;
 import uia.dao.ColumnType;
-import uia.dao.TableType;
 import uia.dao.ColumnType.DataType;
+import uia.dao.TableType;
 import uia.dao.pg.PostgreSQLColumnType;
 
 public class SQLite extends AbstractDatabase {
@@ -131,12 +132,14 @@ public class SQLite extends AbstractDatabase {
     }
 
     @Override
-    public String generateAlterTableSQL(String tableName, List<ColumnType> columns) {
-        ArrayList<String> cols = new ArrayList<>();
-        for (ColumnType column : columns) {
-            cols.add(prepareColumnDef(column));
-        }
-        return "ALTER TABLE " + tableName + " ADD (\n" + String.join(",\n", cols) + "\n)";
+    public String generateAlterTableSQL(String tableName, List<ColumnDiff> details) {
+        return null;
+
+    }
+
+    @Override
+    public String generateDropTableSQL(String tableName) {
+        return "DROP TABLE " + tableName;
     }
 
     @Override

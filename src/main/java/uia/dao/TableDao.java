@@ -80,9 +80,9 @@ public class TableDao<T> {
      * @throws SQLException Failed to insert.
      * @throws DaoException Failed or ORM.
      */
-    public int insert(List<T> data) throws SQLException, DaoException {
+    public int[] insert(List<T> data) throws SQLException, DaoException {
         if (data.isEmpty()) {
-            return 0;
+            return new int[0];
         }
 
         DaoMethod<T> method = this.tableHelper.forInsert();
@@ -91,7 +91,7 @@ public class TableDao<T> {
                 method.fromOne(ps, t);
                 ps.addBatch();
             }
-            return ps.executeUpdate();
+            return ps.executeBatch();
         }
     }
 
@@ -119,9 +119,9 @@ public class TableDao<T> {
      * @throws SQLException Failed to update.
      * @throws DaoException Failed or ORM.
      */
-    public int update(List<T> data) throws SQLException, DaoException {
+    public int[] update(List<T> data) throws SQLException, DaoException {
         if (data.isEmpty()) {
-            return 0;
+            return new int[0];
         }
 
         DaoMethod<T> method = this.tableHelper.forUpdate();
@@ -130,7 +130,7 @@ public class TableDao<T> {
                 method.fromOne(ps, t);
                 ps.addBatch();
             }
-            return ps.executeUpdate();
+            return ps.executeBatch();
         }
     }
 
