@@ -146,7 +146,7 @@ public class DatabaseTool {
         for (String t : ts) {
             TableType tableNew = this.source.selectTable(t, false);
             TableType tableOld = compareTarget.selectTable(t, false);
-            CompareResult cr = tableNew.sameAs(tableOld, new ComparePlan(true, false, true, true, true));
+            CompareResult cr = tableNew.sameAs(tableOld, new ComparePlan(false, false, false, false, true));
             if (!cr.isPassed()) {
                 alter = true;
                 scripts.append("-- ").append(t).append("\n");

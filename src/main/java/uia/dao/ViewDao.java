@@ -64,10 +64,9 @@ public class ViewDao<T> {
      * @throws DaoException Failed to map to the DTO object.
      */
     public List<T> selectAll() throws SQLException, DaoException {
-        DaoMethod<T> method = this.viewHelper.forSelect();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql())) {
+        try (PreparedStatement ps = this.conn.prepareStatement(getSql())) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs);
+                return toList(rs);
             }
         }
     }
@@ -81,12 +80,20 @@ public class ViewDao<T> {
      * @throws DaoException Failed to map to the DTO object.
      */
     public List<T> select(Where where) throws SQLException, DaoException {
-        DaoMethod<T> method = this.viewHelper.forSelect();
-        SelectStatement sql = new SelectStatement(method.getSql())
+        System.out.println(getSql());
+        SelectStatement sql = new SelectStatement(getSql())
                 .where(where);
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs);
+                return toList(rs);
+            }
+            catch (SQLException ex) {
+                ex.printStackTrace();
+                throw ex;
+            }
+            catch (DaoException ex2) {
+                ex2.printStackTrace();
+                throw ex2;
             }
         }
     }
@@ -101,13 +108,12 @@ public class ViewDao<T> {
      * @throws DaoException Failed to map to the DTO object.
      */
     public List<T> select(Where where, String orders) throws SQLException, DaoException {
-        DaoMethod<T> method = this.viewHelper.forSelect();
-        SelectStatement sql = new SelectStatement(method.getSql())
+        SelectStatement sql = new SelectStatement(getSql())
                 .where(where)
                 .orderBy(orders);
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs);
+                return toList(rs);
             }
         }
     }

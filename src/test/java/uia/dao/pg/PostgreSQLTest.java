@@ -18,6 +18,8 @@
  *******************************************************************************/
 package uia.dao.pg;
 
+import java.sql.SQLException;
+
 import org.junit.Test;
 
 import uia.dao.ColumnType;
@@ -61,11 +63,11 @@ public class PostgreSQLTest {
 
     @Test
     public void testAlter() throws Exception {
-        try (Hana hana = new Hana()) {
+        try (Hana hana = fwks()) {
             try (PostgreSQL db1 = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
                 try (PostgreSQL db2 = new PostgreSQL("localhost", "5432", "pmsdbv1", "postgres", "pgAdmin")) {
-                    new DatabaseTool(db2).toAlterScript("d:/temp/pmsdbv1_v2restore_pg.sql", db1);
-                    new DatabaseTool(db2).toAlterScript("d:/temp/pmsdbv1_v2restore_hana.sql", db1, hana);
+                    new DatabaseTool(db1).toAlterScript("d:/temp/pmsdbv2_pg.sql", db2);
+                    new DatabaseTool(db1).toAlterScript("d:/temp/pmsdbv2_hana.sql", hana);
                 }
             }
         }
@@ -115,5 +117,9 @@ public class PostgreSQLTest {
                     ct.isPk() ? ", PK" : ""));
         }
         System.out.println();
+    }
+
+    private Hana fwks() throws SQLException {
+        return new Hana("192.168.137.245", "39015", null, "WIP", "Sap12345");
     }
 }

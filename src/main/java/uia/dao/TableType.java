@@ -151,6 +151,7 @@ public class TableType {
                 cr.setPassed(false);
             }
             for (Map.Entry<String, ColumnType> kv : targetColumns.entrySet()) {
+                cr.addMessage(kv.getKey() + " exists in the target database");
                 cr.getDiff().add(new ColumnDiff(kv.getValue(), ColumnDiff.ActionType.DROP, null));
             }
         }

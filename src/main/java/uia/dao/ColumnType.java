@@ -481,7 +481,7 @@ public abstract class ColumnType {
     }
 
     public boolean checkNullable(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
-        if (plan.checkNullable && this.nullable == targetColumn.isNullable()) {
+        if (!plan.checkNullable || this.nullable == targetColumn.isNullable()) {
             return true;
         }
 
