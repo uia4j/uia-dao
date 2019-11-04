@@ -1,16 +1,25 @@
 DAO Simple Solution
 ================
-The main purpose of the API is to simplify development while using `java.sql` package.
+The main purpose of the API is to implement DAO pattern simplify using `java.sql` package.
 
 There are three topics:
+* DTO File Generator
 * DAO Pattern
 * Statement Builder
-* DTO File Generator
 
 Datebases the API supports are:
 * PostgreSQL
 * Oracle
 * HANA
+
+### Maven
+```xml
+<dependency>
+	<groupId>org.uia.solution</groupId>
+	<artifactId>uia-dao</artifactId>
+	<version>0.2.1</version>
+</dependency>
+```
 
 ## DAO Pattern
 
@@ -93,42 +102,57 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
     ```
 
 ### Custom DAO
-Use simple SQL statements instead of writing __Spaghetti SQL__ as this is the worst design.
+Use simple SQL statements instead of writing __Spaghetti SQL__.
 
-1. Inherit `TableDao` class
+#### Inherit from uia.dao.TableDao to access a table
 
-    ```java
-    public class JobDetailDao exttends TableDao<JobDetail> {
+```java
+public class JobDetailDao exttends TableDao<JobDetail> {
 
-        public JobDetailDetail(Connection conn) {
-            super(conn, factory.forTable(JobDetail.class));
-        }
-
-        public List<JobDtail> selectByName(String name) {
-            ...
-        }
+    public JobDetailDetail(Connection conn) {
+        super(conn, factory.forTable(JobDetail.class));
     }
-    ```
 
-2. Implement a method for a custom __SELECT__ statement
-
-    ```java
     public List<JobDtail> selectByName(String name) {
         // Get the SELECT method
-        DaoMethod<JobDtail> method = this.tableHelper.forSelect();
+        DaoMethod<JobDetail> method = this.tableHelper.forSelect();
 
         // Prepare a statment with custom WHERE criteria.
-        try(PreparedStatement ps = this.conn.prepareStatement(method.getSql() + "WHERE job_detail_name=? ORDER BY id")) {
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + "WHERE job_detail_name like ?")) {
             ps.setString(1, name);
 
             // Execute
-            try(ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                 // Convert result to DTO object list
                 return method.toList(rs);
             }
         }
     }
-    ```
+}
+```
+
+#### Inherit from uia.dao.ViewDao for access a view
+
+```java
+public class ViewJobDetailDao exttends ViewTableDao<ViewJobDetail> {
+
+    public ViewJobDetailDetail(Connection conn) {
+        super(conn, factory.forTable(ViewJobDetail.class));
+    }
+
+    public List<ViewJobDetail> selectByName(String name) {
+        // Prepare a statment with custom WHERE criteria.
+        try (PreparedStatement ps = this.conn.prepareStatement(getSql() + "WHERE job_detail_name like ?")) {
+            ps.setString(1, name);
+
+            // Execute
+            try (ResultSet rs = ps.executeQuery()) {
+                return toList(rs);
+            }
+        }
+    }
+}
+```
 
 ## Statement Builder
 
