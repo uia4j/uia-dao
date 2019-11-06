@@ -41,9 +41,7 @@ public final class ViewDaoHelper<T> {
     ViewDaoHelper(DaoFactory factory, Class<T> clz) {
         ViewInfo ti = clz.getDeclaredAnnotation(ViewInfo.class);
         this.viewClassName = clz.getName();
-        this.viewName = ti.schema().isEmpty()
-                ? ti.name()
-                : ti.schema() + "." + ti.name();
+        this.viewName = factory.readSchema(ti.schema()) + ti.name();
         this.select = new DaoMethod<>(clz);
 
         ArrayList<String> selectColNames = new ArrayList<>();

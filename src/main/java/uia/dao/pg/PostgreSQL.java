@@ -21,6 +21,7 @@ package uia.dao.pg;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,9 +51,12 @@ public class PostgreSQL extends AbstractDatabase {
         super(null, null, null, null, null);
     }
 
-    public PostgreSQL(String host, String port, String service, String user, String pwd) throws SQLException {
-        // jdbc:postgresql://host:port/database
-        super("org.postgresql.Driver", String.format("jdbc:postgresql://%s:%s/%s", host, port, service), user, pwd, "public");
+    public PostgreSQL(String host, String port, String database, String user, String pwd) throws SQLException {
+        super("org.postgresql.Driver", String.format("jdbc:postgresql://%s:%s/%s", host, port, database), user, pwd, "public");
+    }
+
+    public PostgreSQL(String host, String port, String database, String user, String pwd, String schema) throws SQLException {
+        super("org.postgresql.Driver", String.format("jdbc:postgresql://%s:%s/%s", host, port, database), user, pwd, schema);
     }
 
     @Override
@@ -218,13 +222,11 @@ public class PostgreSQL extends AbstractDatabase {
                     ct.setRemark(rs.getString("REMARKS"));
 
                     switch (rs.getInt("DATA_TYPE")) {
-                        case -5:    // int8,oid(?)
-                            ct.setDataType(DataType.LONG);
-                            break;
-                        case -2:    // bytea
+                        case Types.BINARY:      // bytea
+                        case Types.VARBINARY:   // bytea
                             ct.setDataType(DataType.BLOB);
                             break;
-                        case 1:     // bpchar
+                        case Types.CHAR:        // bpchar
                             if (ct.getColumnSize() > Integer.MAX_VALUE / 2) {
                                 ct.setDataType(DataType.CLOB);
                             }
@@ -232,20 +234,26 @@ public class PostgreSQL extends AbstractDatabase {
                                 ct.setDataType(DataType.VARCHAR2);
                             }
                             break;
-                        case 2:     // numeric
+                        case Types.DECIMAL:     // numeric
+                        case Types.NUMERIC:     // decimal
                             ct.setDataType(DataType.NUMERIC);
                             break;
-                        case 4:     // int4
-                        case 5:     // int2
+                        case Types.TINYINT:     // int2
+                        case Types.SMALLINT:    // int2
                             ct.setDataType(DataType.INTEGER);
                             break;
-                        case 7:     // float4
-                            ct.setDataType(DataType.FLOAT);
+                        case Types.INTEGER:     // int4
+                        case Types.BIGINT:      // int8, oid(?)
+                            ct.setDataType(DataType.LONG);
                             break;
-                        case 8:     // float8
+                        case Types.REAL:        // float4
+                            break;
+                        case Types.FLOAT:       // float4
+                        case Types.DOUBLE:      // float8
                             ct.setDataType(DataType.DOUBLE);
                             break;
-                        case 12:    // character varying,text
+                        case Types.VARCHAR:
+                        case Types.LONGVARCHAR: // character varying,text
                             if (ct.getColumnSize() > Integer.MAX_VALUE / 2) {
                                 ct.setDataType(DataType.CLOB);
                             }
@@ -253,13 +261,13 @@ public class PostgreSQL extends AbstractDatabase {
                                 ct.setDataType(DataType.VARCHAR2);
                             }
                             break;
-                        case 91:    // date
+                        case Types.DATE:        // date
                             ct.setDataType(DataType.DATE);
                             break;
-                        case 92:    // time, timez
+                        case Types.TIME:        // time, timez
                             ct.setDataType(DataType.TIME);
                             break;
-                        case 93:    // timestamp
+                        case Types.TIMESTAMP:   // timestamp, timestampz
                             ct.setDataType(DataType.TIMESTAMP);
                             break;
                         default:
@@ -296,12 +304,18 @@ public class PostgreSQL extends AbstractDatabase {
 
     private String dbType(ColumnType ct) {
         String type = "";
+        long columnSize = ct.getColumnSize() == 0 ? 32L : ct.getColumnSize();
         switch (ct.getDataType()) {
             case LONG:
                 type = "bigint";
                 break;
             case NUMERIC:
-                type = "numeric";
+                if (ct.getDecimalDigits() == 0) {
+                    type = "numeric";
+                }
+                else {
+                    type = "numeric(" + columnSize + "," + ct.getDecimalDigits() + ")";
+                }
                 break;
             case FLOAT:
                 type = "real";
@@ -325,7 +339,7 @@ public class PostgreSQL extends AbstractDatabase {
             case NVARCHAR2:
             case VARCHAR:
             case VARCHAR2:
-                type = "character varying(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
+                type = "character varying(" + columnSize + ")";
                 break;
             case CLOB:
             case NCLOB:
@@ -335,8 +349,7 @@ public class PostgreSQL extends AbstractDatabase {
                 type = "bytea";
                 break;
             default:
-                throw new NullPointerException(ct.getColumnName() + " type not found");
-
+                throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());
         }
         return type;
     }

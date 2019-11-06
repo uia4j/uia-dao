@@ -66,6 +66,9 @@ public abstract class AbstractDatabase implements Database {
             this.conn = DriverManager.getConnection(url, user, pwd);
             this.dataSource = createDataSource(driverName, url, user, pwd);
             this.schema = schema;
+            if (this.schema != null) {
+                this.conn.setSchema(schema);
+            }
         }
         else {
             this.conn = null;
@@ -242,6 +245,13 @@ public abstract class AbstractDatabase implements Database {
                 ps.addBatch();
             }
             return ps.executeBatch();
+        }
+    }
+
+    @Override
+    public ResultSet executeQuery(String sql) throws SQLException {
+        try (java.sql.Statement state = this.conn.createStatement()) {
+            return state.executeQuery(sql);
         }
     }
 

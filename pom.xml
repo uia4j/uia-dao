@@ -34,7 +34,13 @@
 		    <version>42.2.6</version>
 			<scope>provided</scope>
 		</dependency> 
-		<dependency>
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>7.0.0.jre8</version>
+			<scope>provided</scope>
+        </dependency>
+        <dependency>
 		    <groupId>org.xerial</groupId>
 		    <artifactId>sqlite-jdbc</artifactId>
 		    <version>3.28.0</version>
@@ -129,5 +135,5 @@
 			<url>https://api.bintray.com/maven/uia4j/maven/uia-dao/;publish=1</url>
 		</repository>
 	</distributionManagement>
-	<version>0.2.1</version>
+	<version>0.2.2</version>
 </project>

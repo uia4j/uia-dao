@@ -287,7 +287,7 @@ public class Oracle extends AbstractDatabase {
                 type = "NCLOB";
                 break;
             default:
-                throw new NullPointerException(ct.getColumnName() + " type not found");
+                throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());
 
         }
 

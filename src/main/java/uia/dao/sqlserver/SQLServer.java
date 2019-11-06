@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package uia.dao.sqlite;
+package uia.dao.sqlserver;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,29 +32,23 @@ import uia.dao.ColumnType.DataType;
 import uia.dao.TableType;
 import uia.dao.pg.PostgreSQLColumnType;
 
-public class SQLite extends AbstractDatabase {
+public class SQLServer extends AbstractDatabase {
 
-    static {
-        try {
-            Class.forName("org.sqlite.JDBC").newInstance();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public SQLite() throws SQLException {
+    public SQLServer() throws SQLException {
         super(null, null, null, null, null);
     }
 
-    public SQLite(String file) throws SQLException {
-        /** jdbc:sqlite:{file} */
-        super("org.sqlite.JDBC", "jdbc:sqlite:" + file, null, null, null);
+    public SQLServer(String host, String port, String databaseName, String user, String pwd) throws SQLException {
+        super("com.microsoft.sqlserver.jdbc.SQLServerDriver", String.format("jdbc:sqlserver://%s:%s;databaseName=%s", host, port, databaseName), user, pwd, null);
+    }
+
+    public SQLServer(String host, String port, String databaseName, String user, String pwd, String schema) throws SQLException {
+        super("com.microsoft.sqlserver.jdbc.SQLServerDriver", String.format("jdbc:sqlserver://%s:%s;databaseName=%s", host, port, databaseName), user, pwd, schema);
     }
 
     @Override
     public int createView(String viewName, String sql) throws SQLException {
-        String script = String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toLowerCase(), sql);
+        String script = String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
         try (PreparedStatement ps = this.conn.prepareStatement(script)) {
             return ps.executeUpdate();
         }
@@ -79,7 +73,14 @@ public class SQLite extends AbstractDatabase {
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toLowerCase(), sql);
+        String pref = this.getSchema();
+        if (pref == null) {
+            pref = "";
+        }
+        else {
+            pref += ".";
+        }
+        return String.format("CREATE VIEW %s%s AS %n%s", pref, viewName.toUpperCase(), sql);
     }
 
     @Override
@@ -91,35 +92,46 @@ public class SQLite extends AbstractDatabase {
         ArrayList<String> pks = new ArrayList<>();
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
+        /**
         if (table.getRemark() != null) {
             comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
-                    table.getTableName().toLowerCase(),
+                    table.getTableName().toUpperCase(),
                     table.getRemark()));
         }
+        */
 
         for (ColumnType ct : table.getColumns()) {
             if (ct.isPk()) {
-                pks.add(ct.getColumnName().toLowerCase());
+                pks.add(ct.getColumnName().toUpperCase());
             }
             cols.add(prepareColumnDef(ct));
+            /**
             if (ct.getRemark() != null &&
                     ct.getRemark().trim().length() > 0) {
                 comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';%n",
-                        table.getTableName().toLowerCase(),
-                        ct.getColumnName().toLowerCase(),
+                        table.getTableName().toUpperCase(),
+                        ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
             }
+            */
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE \"" + table.getTableName().toLowerCase() + "\"\n(\n");
-        sb.append(String.join(",\n", cols));
+        String pref = this.getSchema();
+        if (pref == null) {
+            pref = "";
+        }
+        else {
+            pref += ".";
+        }
+        sb.append("CREATE TABLE " + pref + table.getTableName().toUpperCase() + " (\n ");
+        sb.append(String.join(",\n ", cols));
         if (pks.isEmpty()) {
             sb.append("\n);\n");
         }
         else {
-            String pkSQL = String.format(",%n CONSTRAINT %s_pkey PRIMARY KEY (%s)%n",
-                    table.getTableName().toLowerCase(),
+            String pkSQL = String.format(",%n CONSTRAINT PK_%s PRIMARY KEY (%s)%n",
+                    table.getTableName().toUpperCase(),
                     String.join(",", pks));
             sb.append(pkSQL).append(");\n");
         }
@@ -198,11 +210,20 @@ public class SQLite extends AbstractDatabase {
                         case Types.BIGINT:
                             ct.setDataType(DataType.INTEGER);
                             break;
+                        case Types.CHAR:
                         case Types.VARCHAR:
+                            ct.setDataType(DataType.VARCHAR);
+                            break;
+                        case Types.NCHAR:
                         case Types.NVARCHAR:
+                            ct.setDataType(DataType.NVARCHAR);
+                            break;
+                        case Types.LONGNVARCHAR:
                         case Types.CLOB:
+                            ct.setDataType(DataType.CLOB);
+                            break;
                         case Types.NCLOB:
-                            ct.setDataType(DataType.VARCHAR2);
+                            ct.setDataType(DataType.NCLOB);
                             break;
                         case Types.BLOB:
                             ct.setDataType(DataType.BLOB);
@@ -215,6 +236,15 @@ public class SQLite extends AbstractDatabase {
                         case Types.DECIMAL:
                         case Types.NUMERIC:
                             ct.setDataType(DataType.NUMERIC);
+                            break;
+                        case Types.DATE:
+                            ct.setDataType(DataType.DATE);
+                            break;
+                        case Types.TIME:
+                            ct.setDataType(DataType.TIME);
+                            break;
+                        case Types.TIMESTAMP:
+                            ct.setDataType(DataType.TIMESTAMP);
                             break;
                         default:
                             ct.setDataType(DataType.OTHERS);
@@ -234,45 +264,51 @@ public class SQLite extends AbstractDatabase {
 
     @Override
     protected String upperOrLower(String value) {
-        return value.toLowerCase();
+        return value.toUpperCase();
     }
 
     private String prepareColumnDef(ColumnType ct) {
         String type = "";
+        long columnSize = ct.getColumnSize() == 0 ? 32L : ct.getColumnSize();
         switch (ct.getDataType()) {
             case LONG:
-                type = "INT";
+                type = "bigint";
                 break;
             case NUMERIC:
-                type = "NUMERIC";
-                break;
             case FLOAT:
             case DOUBLE:
-                type = "REAL";
+                if (ct.getDecimalDigits() == 0) {
+                    type = "numeric";
+                }
+                else {
+                    type = "numeric(" + columnSize + "," + ct.getDecimalDigits() + ")";
+                }
                 break;
             case INTEGER:
-                type = "INT";
+                type = "int";
                 break;
             case DATE:
             case TIME:
             case TIMESTAMP:
-                type = "TEXT";
-                break;
-            case NVARCHAR:
-            case NVARCHAR2:
-            case VARCHAR:
-            case VARCHAR2:
-                type = "TEXT";
+                type = "datetime";
                 break;
             case CLOB:
+            case NVARCHAR:
+            case NVARCHAR2:
+                type = "nvarchar(" + columnSize + ")";
+                break;
+            case VARCHAR:
+            case VARCHAR2:
+                type = "nvarchar(" + columnSize + ")";
+                break;
             case NCLOB:
-                type = "TEXT";
+                type = "ntext";
                 break;
             case BLOB:
-                type = "BLOB";
+                type = "varbinary";
                 break;
             default:
-                throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());
+                throw new NullPointerException(ct.getColumnName() + " type not found");
 
         }
 
@@ -281,6 +317,6 @@ public class SQLite extends AbstractDatabase {
             nullable = " NOT NULL";
         }
 
-        return " \"" + ct.getColumnName().toLowerCase() + "\" " + type + nullable;
+        return ct.getColumnName().toUpperCase() + " " + type + nullable;
     }
 }

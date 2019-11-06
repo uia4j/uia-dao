@@ -231,6 +231,15 @@ public final class DaoFactory {
         return false;
     }
 
+    String readSchema(String schema) {
+        if (schema == null || schema.isEmpty()) {
+            return "";
+        }
+        else {
+            return schema + ".";
+        }
+    }
+
     DaoColumnReader getColumnReader(String typeName) {
         DaoColumnReader reader = this.readers.get(typeName.toLowerCase());
         return reader == null ? this.objectReader : reader;

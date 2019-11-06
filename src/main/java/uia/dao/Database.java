@@ -19,6 +19,7 @@
 package uia.dao;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -216,4 +217,11 @@ public interface Database extends AutoCloseable {
      */
     public int[] executeBatch(String sql, List<List<Object>> rows) throws SQLException;
 
+    /**
+     *
+     * @param sql
+     * @return
+     * @throws SQLException
+     */
+    public ResultSet executeQuery(String sql) throws SQLException;
 }

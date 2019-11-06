@@ -50,9 +50,7 @@ public final class TableDaoHelper<T> {
         TableInfo ti = clz.getDeclaredAnnotation(TableInfo.class);
 
         this.tableClassName = clz.getName();
-        this.tableName = ti.schema().isEmpty()
-                ? ti.name()
-                : ti.schema() + "." + ti.name();
+        this.tableName = factory.readSchema(ti.schema()) + ti.name();
 
         this.insert = new DaoMethod<>(clz);
         this.update = new DaoMethod<>(clz);
