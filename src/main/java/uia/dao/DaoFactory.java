@@ -190,23 +190,28 @@ public final class DaoFactory {
     public Map<String, String> test(Connection conn) {
         Map<String, String> result = new TreeMap<>();
         for (TableDaoHelper<?> helper : this.daoTables.values()) {
-            result.put(helper.getTableName(), helper.getTableClassName());
             System.out.println(helper.forSelect().getSql());
             try {
-                System.out.println("  rows:" + new TableDao(conn, helper).selectAll().size());
+                int size = new TableDao(conn, helper).selectAll().size();
+                System.out.println("  rows:" + size);
+                result.put(helper.getTableName(), helper.getTableClassName() + ", rows:" + size);
             }
             catch (Exception ex) {
                 System.out.println("  failed:" + ex.getMessage());
+                result.put(helper.getTableName(), helper.getTableClassName() + ", failed:" + ex.getMessage());
             }
         }
         for (ViewDaoHelper<?> helper : this.daoViews.values()) {
             result.put(helper.getViewName(), helper.getViewClassName());
             System.out.println(helper.forSelect().getSql());
             try {
-                System.out.println("  rows:" + new ViewDao(conn, helper).selectAll().size());
+                int size = new ViewDao(conn, helper).selectAll().size();
+                System.out.println("  rows:" + size);
+                result.put(helper.getViewName(), helper.getViewClassName() + ", rows:" + size);
             }
             catch (Exception ex) {
                 System.out.println("  failed:" + ex.getMessage());
+                result.put(helper.getViewName(), helper.getViewClassName() + ", failed:" + ex.getMessage());
             }
         }
         return result;
