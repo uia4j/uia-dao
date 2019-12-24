@@ -152,6 +152,8 @@ public interface Database extends AutoCloseable {
 
     public String generateDropTableSQL(String tableName);
 
+    public String generateDropViewSQL(String viewName);
+
     /**
      * Create a table.
      *
@@ -218,10 +220,10 @@ public interface Database extends AutoCloseable {
     public int[] executeBatch(String sql, List<List<Object>> rows) throws SQLException;
 
     /**
-     *
-     * @param sql
-     * @return
-     * @throws SQLException
+     * Execute a SELECT query.
+     * @param sql SQL statement.
+     * @return Result.
+     * @throws SQLException Failed to execute.
      */
     public ResultSet executeQuery(String sql) throws SQLException;
 }

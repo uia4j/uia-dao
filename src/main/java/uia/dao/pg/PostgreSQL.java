@@ -86,7 +86,7 @@ public class PostgreSQL extends AbstractDatabase {
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toLowerCase(), sql);
+        return String.format("CREATE VIEW \"%s\" AS %n%s;", viewName.toLowerCase(), sql);
     }
 
     @Override
@@ -169,7 +169,12 @@ public class PostgreSQL extends AbstractDatabase {
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE " + tableName;
+        return "DROP TABLE IF EXISTS " + tableName.toLowerCase() + ";";
+    }
+
+    @Override
+    public String generateDropViewSQL(String viewName) {
+        return "DROP VIEW IF EXISTS " + viewName.toLowerCase() + ";";
     }
 
     @Override

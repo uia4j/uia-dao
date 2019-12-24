@@ -29,4 +29,6 @@ public @interface ViewInfo {
     int inherit() default 0;
 
     String schema() default "";
+
+    String orderBy() default "";
 }

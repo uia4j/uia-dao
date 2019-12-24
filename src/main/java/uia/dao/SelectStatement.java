@@ -88,13 +88,13 @@ public class SelectStatement {
     }
 
     protected String groupBy() {
-        return this.groups == null || this.groups.isEmpty()
+        return this.groups == null || this.groups.trim().isEmpty()
                 ? ""
                 : " group by " + this.groups;
     }
 
     protected String orderBy() {
-        return this.orders == null || this.orders.isEmpty()
+        return this.orders == null || this.orders.trim().isEmpty()
                 ? ""
                 : " order by " + this.orders;
     }

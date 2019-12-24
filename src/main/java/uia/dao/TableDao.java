@@ -164,7 +164,11 @@ public class TableDao<T> {
      */
     public List<T> selectAll() throws SQLException, DaoException {
         DaoMethod<T> method = this.tableHelper.forSelect();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql())) {
+        String orderBy = this.tableHelper.getOrderBy();
+        if (!orderBy.isEmpty()) {
+            orderBy = " ORDER BY " + orderBy;
+        }
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + orderBy)) {
             try (ResultSet rs = ps.executeQuery()) {
                 return method.toList(rs);
             }
@@ -206,7 +210,8 @@ public class TableDao<T> {
     public List<T> select(Where where) throws SQLException, DaoException {
         DaoMethod<T> method = this.tableHelper.forSelect();
         SelectStatement sql = new SelectStatement(method.getSql())
-                .where(where);
+                .where(where)
+                .orderBy(this.tableHelper.getOrderBy());
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
                 return method.toList(rs);

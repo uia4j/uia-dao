@@ -38,11 +38,14 @@ public final class ViewDaoHelper<T> {
 
     private final DaoMethod<T> select;
 
+    private final String orderBy;
+
     ViewDaoHelper(DaoFactory factory, Class<T> clz) {
         ViewInfo ti = clz.getDeclaredAnnotation(ViewInfo.class);
         this.viewClassName = clz.getName();
         this.viewName = factory.readSchema(ti.schema()) + ti.name();
         this.select = new DaoMethod<>(clz);
+        this.orderBy = ti.orderBy().trim().isEmpty() ? "" : ti.orderBy();
 
         ArrayList<String> selectColNames = new ArrayList<>();
         Class<?> curr = clz;
@@ -100,6 +103,10 @@ public final class ViewDaoHelper<T> {
      */
     public DaoMethod<T> forSelect() {
         return this.select;
+    }
+
+    public String getOrderBy() {
+        return this.orderBy;
     }
 
     @Override

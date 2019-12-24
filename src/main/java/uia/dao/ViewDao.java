@@ -64,6 +64,10 @@ public class ViewDao<T> {
      * @throws DaoException Failed to map to the DTO object.
      */
     public List<T> selectAll() throws SQLException, DaoException {
+        String orderBy = this.viewHelper.getOrderBy();
+        if (!orderBy.isEmpty()) {
+            orderBy = " ORDER BY " + orderBy;
+        }
         try (PreparedStatement ps = this.conn.prepareStatement(getSql())) {
             try (ResultSet rs = ps.executeQuery()) {
                 return toList(rs);
@@ -80,19 +84,17 @@ public class ViewDao<T> {
      * @throws DaoException Failed to map to the DTO object.
      */
     public List<T> select(Where where) throws SQLException, DaoException {
-        System.out.println(getSql());
         SelectStatement sql = new SelectStatement(getSql())
-                .where(where);
+                .where(where)
+                .orderBy(this.viewHelper.getOrderBy());
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
                 return toList(rs);
             }
             catch (SQLException ex) {
-                ex.printStackTrace();
                 throw ex;
             }
             catch (DaoException ex2) {
-                ex2.printStackTrace();
                 throw ex2;
             }
         }
@@ -124,6 +126,10 @@ public class ViewDao<T> {
 
     protected String getSql(String where) {
         return this.viewHelper.forSelect().getSql() + where;
+    }
+
+    protected String getSql(String where, String orderBy) {
+        return this.viewHelper.forSelect().getSql() + where + " ORDER BY " + orderBy;
     }
 
     protected List<T> toList(ResultSet rs) throws SQLException, DaoException {

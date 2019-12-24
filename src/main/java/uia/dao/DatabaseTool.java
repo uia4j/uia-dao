@@ -72,8 +72,8 @@ public class DatabaseTool {
             ts = this.source.selectTableNames();
         }
         for (String t : ts) {
-            String sql1 = target.generateCreateTableSQL(this.source.selectTable(t, false));
-            scripts.append(sql1).append(";\n\n");
+            String sql = target.generateCreateTableSQL(this.source.selectTable(t, false));
+            scripts.append(sql).append("\n");
         }
         Files.write(Paths.get(file), scripts.toString().getBytes());
     }
@@ -99,6 +99,29 @@ public class DatabaseTool {
      * @throws SQLException Failed to execute SQL statements.
      * @throws IOException Failed to save the file.
      */
+    public void toDropViewScript(String file, Database target, String... viewNames) throws IOException, SQLException {
+        List<String> vs = Arrays.asList(viewNames);
+        if (vs.isEmpty()) {
+            vs = this.source.selectViewNames();
+        }
+
+        StringBuilder scripts = new StringBuilder();
+        for (String v : vs) {
+            String script = target.generateDropViewSQL(v);
+            scripts.append(script).append("\n\n");
+        }
+        Files.write(Paths.get(file), scripts.toString().getBytes());
+    }
+
+    /**
+     * Output a script to generate all tables.
+     *
+     * @param file The file name.
+     * @param target The database the script is executed on.
+     * @param viewNames Names of views.
+     * @throws SQLException Failed to execute SQL statements.
+     * @throws IOException Failed to save the file.
+     */
     public void toViewScript(String file, Database target, String... viewNames) throws IOException, SQLException {
         List<String> vs = Arrays.asList(viewNames);
         if (vs.isEmpty()) {
@@ -108,8 +131,9 @@ public class DatabaseTool {
         StringBuilder scripts = new StringBuilder();
         for (String v : vs) {
             String sql = this.source.selectViewScript(v);
+
             String script = target.generateCreateViewSQL(v, sql);
-            scripts.append(script).append(";\n\n");
+            scripts.append(script).append("\n\n");
         }
         Files.write(Paths.get(file), scripts.toString().getBytes());
     }

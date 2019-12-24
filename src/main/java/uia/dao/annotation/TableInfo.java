@@ -27,4 +27,6 @@ public @interface TableInfo {
     String name();
 
     String schema() default "";
+
+    String orderBy() default "";
 }

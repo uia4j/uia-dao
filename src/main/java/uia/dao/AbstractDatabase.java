@@ -195,7 +195,7 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public int dropTable(String tableName) throws SQLException {
-        try (PreparedStatement ps = this.conn.prepareStatement("DROP TABLE " + upperOrLower(tableName))) {
+        try (PreparedStatement ps = this.conn.prepareStatement(generateDropTableSQL(tableName))) {
             return ps.executeUpdate();
         }
     }
@@ -212,7 +212,7 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public int dropView(String viewName) throws SQLException {
-        try (PreparedStatement ps = this.conn.prepareStatement("DROP VIEW " + upperOrLower(viewName))) {
+        try (PreparedStatement ps = this.conn.prepareStatement(generateDropViewSQL(viewName))) {
             return ps.executeUpdate();
         }
     }

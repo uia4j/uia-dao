@@ -88,7 +88,7 @@ public class TableType {
      */
     public List<ColumnType> selectPk() {
         return this.columns.stream()
-                .filter(c -> c.isPk())
+                .filter(ColumnType::isPk)
                 .collect(Collectors.toList());
     }
 

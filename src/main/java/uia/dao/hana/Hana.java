@@ -81,7 +81,7 @@ public class Hana extends AbstractDatabase {
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
+        return String.format("CREATE VIEW \"%s\" AS %n%s;", viewName.toUpperCase(), sql);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class Hana extends AbstractDatabase {
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE %s IS '%s';%n",
+            comments.add(String.format("COMMENT ON TABLE '%s' IS '%s';%n",
                     table.getTableName().toUpperCase(),
                     table.getRemark()));
         }
@@ -104,9 +104,8 @@ public class Hana extends AbstractDatabase {
                 pks.add(ct.getColumnName().toUpperCase());
             }
             cols.add(prepareColumnDef(ct));
-            if (ct.getRemark() != null &&
-                    ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';%n",
+            if (ct.getRemark() != null && ct.getRemark().trim().length() > 0) {
+                comments.add(String.format("COMMENT ON COLUMN '%s'.'%s' IS '%s';%n",
                         table.getTableName().toUpperCase(),
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
@@ -123,9 +122,11 @@ public class Hana extends AbstractDatabase {
             sb.append(",\n PRIMARY KEY (\"" + String.join("\",\"", pks) + "\")\n);\n");
         }
 
+        /**
         for (String comment : comments) {
             sb.append(comment);
         }
+        */
 
         return sb.toString();
     }
@@ -166,7 +167,12 @@ public class Hana extends AbstractDatabase {
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE " + tableName;
+        return "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
+    }
+
+    @Override
+    public String generateDropViewSQL(String viewName) {
+        return "DROP VIEW IF EXISTS " + viewName.toUpperCase() + ";";
     }
 
     @Override

@@ -46,11 +46,14 @@ public final class TableDaoHelper<T> {
 
     private final String wherePK;
 
+    private final String orderBy;
+
     TableDaoHelper(DaoFactory factory, Class<T> clz) {
         TableInfo ti = clz.getDeclaredAnnotation(TableInfo.class);
 
         this.tableClassName = clz.getName();
         this.tableName = factory.readSchema(ti.schema()) + ti.name();
+        this.orderBy = ti.orderBy().trim().isEmpty() ? "" : ti.orderBy();
 
         this.insert = new DaoMethod<>(clz);
         this.update = new DaoMethod<>(clz);
@@ -175,6 +178,10 @@ public final class TableDaoHelper<T> {
      */
     public DaoMethod<T> forSelect() {
         return this.select;
+    }
+
+    public String getOrderBy() {
+        return this.orderBy;
     }
 
     String forWherePK() {

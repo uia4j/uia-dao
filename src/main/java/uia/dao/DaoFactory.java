@@ -125,6 +125,24 @@ public final class DaoFactory {
     }
 
     /**
+     * Loads definitions of DAO.
+     *
+     * @param t Table class.
+     */
+    public void addTable(Class<?> t) {
+        this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
+    }
+
+    /**
+     * Loads definitions of DAO.
+     *
+     * @param v View class.
+     */
+    public void addView(Class<?> v) {
+        this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
+    }
+
+    /**
      * Returns table names.
      *
      * @return The table names.

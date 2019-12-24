@@ -80,7 +80,7 @@ public class SQLServer extends AbstractDatabase {
         else {
             pref += ".";
         }
-        return String.format("CREATE VIEW %s%s AS %n%s", pref, viewName.toUpperCase(), sql);
+        return String.format("CREATE VIEW %s%s AS %n%s;", pref, viewName.toUpperCase(), sql);
     }
 
     @Override
@@ -151,7 +151,12 @@ public class SQLServer extends AbstractDatabase {
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE " + tableName;
+        return "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
+    }
+
+    @Override
+    public String generateDropViewSQL(String viewName) {
+        return "DROP VIEW IF EXISTS " + viewName.toUpperCase() + ";";
     }
 
     @Override
