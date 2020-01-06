@@ -212,8 +212,10 @@ public class SQLServer extends AbstractDatabase {
                         case Types.TINYINT:
                         case Types.SMALLINT:
                         case Types.INTEGER:
-                        case Types.BIGINT:
                             ct.setDataType(DataType.INTEGER);
+                            break;
+                        case Types.BIGINT:
+                            ct.setDataType(DataType.LONG);
                             break;
                         case Types.CHAR:
                         case Types.VARCHAR:

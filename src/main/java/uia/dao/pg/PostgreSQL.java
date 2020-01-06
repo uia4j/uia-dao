@@ -248,6 +248,8 @@ public class PostgreSQL extends AbstractDatabase {
                             ct.setDataType(DataType.INTEGER);
                             break;
                         case Types.INTEGER:     // int4
+                            ct.setDataType(DataType.INTEGER);
+                            break;
                         case Types.BIGINT:      // int8, oid(?)
                             ct.setDataType(DataType.LONG);
                             break;

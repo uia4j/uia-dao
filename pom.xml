@@ -135,5 +135,5 @@
 			<url>https://api.bintray.com/maven/uia4j/maven/uia-dao/;publish=1</url>
 		</repository>
 	</distributionManagement>
-	<version>0.2.7</version>
+	<version>0.2.8</version>
 </project>

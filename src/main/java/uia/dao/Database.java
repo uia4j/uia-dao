@@ -30,6 +30,10 @@ import java.util.List;
  */
 public interface Database extends AutoCloseable {
 
+    public void setAlwaysNVarchar(boolean alwaysNVarchar);
+
+    public boolean isAlwaysNVarchar();
+
     /**
      * Returns schema name.
      *

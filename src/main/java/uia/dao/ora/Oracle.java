@@ -52,7 +52,7 @@ public class Oracle extends AbstractDatabase {
 
     public Oracle(String host, String port, String service, String user, String pwd) throws SQLException {
         // jdbc:oracle:thin:@host:port:SID
-        super("oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@" + host + ":" + port + ":" + service, user, pwd, user);
+        super("oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@" + host + ":" + port + "/" + service, user, pwd, null);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class Oracle extends AbstractDatabase {
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" (%n%s%n);", upperOrLower(viewName), sql);
+        return String.format("CREATE VIEW \"%s\" AS (%n%s%n);", upperOrLower(viewName), sql);
     }
 
     @Override
@@ -82,12 +82,18 @@ public class Oracle extends AbstractDatabase {
             return null;
         }
 
+        String tableName = "\"" + table.getTableName() + "\"";
+        if (this.schema != null) {
+            tableName = "\"" + this.schema + "\"." + tableName;
+        }
+        tableName = tableName.toUpperCase();
+
         ArrayList<String> pks = new ArrayList<>();
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
             comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
-                    table.getTableName().toLowerCase(),
+                    tableName,
                     table.getRemark()));
         }
 
@@ -98,20 +104,20 @@ public class Oracle extends AbstractDatabase {
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null && ct.getRemark().trim().length() > 0) {
                 comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';%n",
-                        table.getTableName().toUpperCase(),
+                        tableName,
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
             }
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE " + this.schema + "." + table.getTableName().toUpperCase() + "\n(\n");
+        sb.append("CREATE TABLE " + tableName + "\n(\n");
         sb.append(String.join(",\n", cols));
         if (pks.isEmpty()) {
             sb.append("\n);\n");
         }
         else {
-            String pkSQL = String.format(",%n CONSTRAINT %s_pkey PRIMARY KEY (\"%s\")%n",
+            String pkSQL = String.format(",%n CONSTRAINT \"%s_PKEY\" PRIMARY KEY (\"%s\")%n",
                     table.getTableName().toUpperCase(),
                     String.join("\",\"", pks));
             sb.append(pkSQL).append(");\n");
@@ -255,11 +261,18 @@ public class Oracle extends AbstractDatabase {
             case DOUBLE:
             case NUMERIC:
                 long cs = ct.getColumnSize();
-                type = "NUMBER("
-                        + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
-                        + ","
-                        + ct.getDecimalDigits()
-                        + ")";
+                if (ct.getDecimalDigits() == 0) {
+                    type = "NUMBER("
+                            + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
+                            + ")";
+                }
+                else {
+                    type = "NUMBER("
+                            + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
+                            + ","
+                            + ct.getDecimalDigits()
+                            + ")";
+                }
                 break;
             case FLOAT:
                 type = "FLOAT(126)";
@@ -276,11 +289,15 @@ public class Oracle extends AbstractDatabase {
                 break;
             case NVARCHAR:
             case NVARCHAR2:
-                type = "NVARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
                 break;
             case VARCHAR:
             case VARCHAR2:
-                type = "VARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + " BYTE)";
+                if (isAlwaysNVarchar()) {
+                    type = "NVARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
+                }
+                else {
+                    type = "VARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + " BYTE)";
+                }
                 break;
             case BLOB:
                 type = "BLOB";

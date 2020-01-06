@@ -64,6 +64,16 @@ public class TableType {
     }
 
     /**
+     * Returns table name.
+     *
+     * @param schema The schema name.
+     * @return Table name.
+     */
+    public String getTableName(String schema) {
+        return schema == null ? this.tableName : schema + "." + this.tableName;
+    }
+
+    /**
      * Returns table comment.
      *
      * @return Table comment.

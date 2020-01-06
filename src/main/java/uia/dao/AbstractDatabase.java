@@ -50,6 +50,8 @@ public abstract class AbstractDatabase implements Database {
 
     private DataSource dataSource;
 
+    private boolean alwaysNVarchar;
+
     /**
      * Constructor.
      *
@@ -62,6 +64,7 @@ public abstract class AbstractDatabase implements Database {
      */
     protected AbstractDatabase(String driverName, String url, String user, String pwd, String schema) throws SQLException {
         this.url = url;
+        this.alwaysNVarchar = false;
         if (url != null) {
             this.conn = DriverManager.getConnection(url, user, pwd);
             this.dataSource = createDataSource(driverName, url, user, pwd);
@@ -75,6 +78,16 @@ public abstract class AbstractDatabase implements Database {
             this.dataSource = null;
             this.schema = schema;
         }
+    }
+
+    @Override
+    public boolean isAlwaysNVarchar() {
+        return this.alwaysNVarchar;
+    }
+
+    @Override
+    public void setAlwaysNVarchar(boolean alwaysNVarchar) {
+        this.alwaysNVarchar = alwaysNVarchar;
     }
 
     @Override
