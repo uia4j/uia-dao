@@ -42,7 +42,7 @@ public class Hana extends AbstractDatabase {
             Class.forName("com.sap.db.jdbc.Driver");
         }
         catch (Exception e) {
-            e.printStackTrace();
+
         }
     }
 
@@ -152,13 +152,13 @@ public class Hana extends AbstractDatabase {
 
         String cmd = "";
         if (!add.isEmpty()) {
-            cmd += ("ALTER TABLE " + tableName + "\n ADD(" + String.join(",", add) + ");\n");
+            cmd += ("ALTER TABLE \"" + tableName.toUpperCase() + "\"\n ADD(" + String.join(",", add) + ");\n");
         }
         if (!alter.isEmpty()) {
-            cmd += ("ALTER TABLE " + tableName + "\n ALTER(" + String.join(",", alter) + ");\n");
+            cmd += ("ALTER TABLE \"" + tableName.toUpperCase() + "\"\n ALTER(" + String.join(",", alter) + ");\n");
         }
         if (!drop.isEmpty()) {
-            cmd += ("ALTER TABLE " + tableName + "\n DROP(" + String.join(",", drop) + ");\n");
+            cmd += ("ALTER TABLE \"" + tableName.toUpperCase() + "\"\n DROP(" + String.join(",", drop) + ");\n");
         }
 
         return cmd;
@@ -167,12 +167,12 @@ public class Hana extends AbstractDatabase {
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
+        return "DROP TABLE IF EXISTS \"" + tableName.toUpperCase() + "\";";
     }
 
     @Override
     public String generateDropViewSQL(String viewName) {
-        return "DROP VIEW IF EXISTS " + viewName.toUpperCase() + ";";
+        return "DROP VIEW IF EXISTS \"" + viewName.toUpperCase() + "\";";
     }
 
     @Override

@@ -36,6 +36,8 @@ public final class TableDaoHelper<T> {
 
     private final String tableName;
 
+    private final ArrayList<String> primaryKeys;
+
     private final DaoMethod<T> insert;
 
     private final DaoMethod<T> update;
@@ -59,6 +61,7 @@ public final class TableDaoHelper<T> {
         this.update = new DaoMethod<>(clz);
         this.delete = new DaoMethod<>(clz);
         this.select = new DaoMethod<>(clz);
+        this.primaryKeys = new ArrayList<>();
 
         ArrayList<String> prikeyColNames = new ArrayList<>();
         ArrayList<String> insertColNames = new ArrayList<>();
@@ -81,6 +84,7 @@ public final class TableDaoHelper<T> {
                         factory.getColumnWriter(typeName));
 
                 if (ci.primaryKey()) {
+                    this.primaryKeys.add(ci.name());
                     this.delete.addColumn(column);
                     prikeyColNames.add(ci.name() + "=?");
                     pks.add(column);
@@ -135,6 +139,10 @@ public final class TableDaoHelper<T> {
      */
     public String getTableName() {
         return this.tableName;
+    }
+
+    public String[] getPrimaryKeys() {
+        return this.primaryKeys.toArray(new String[0]);
     }
 
     /**

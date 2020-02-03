@@ -262,13 +262,6 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public ResultSet executeQuery(String sql) throws SQLException {
-        try (java.sql.Statement state = this.conn.createStatement()) {
-            return state.executeQuery(sql);
-        }
-    }
-
-    @Override
     public String toString() {
         return getClass().getSimpleName() + " url:" + this.url;
     }

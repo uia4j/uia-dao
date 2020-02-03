@@ -65,10 +65,12 @@ public class ViewDao<T> {
      */
     public List<T> selectAll() throws SQLException, DaoException {
         String orderBy = this.viewHelper.getOrderBy();
+        String sql = getSql();
         if (!orderBy.isEmpty()) {
-            orderBy = " ORDER BY " + orderBy;
+        	sql = sql + " ORDER BY " + orderBy;
         }
-        try (PreparedStatement ps = this.conn.prepareStatement(getSql())) {
+        
+        try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
                 return toList(rs);
             }

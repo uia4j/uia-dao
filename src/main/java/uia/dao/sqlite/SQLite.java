@@ -144,7 +144,7 @@ public class SQLite extends AbstractDatabase {
 
     @Override
     public String generateDropViewSQL(String viewName) {
-        return "DROP TABLE " + viewName + ";";
+        return "DROP VIEW " + viewName + ";";
     }
 
     @Override

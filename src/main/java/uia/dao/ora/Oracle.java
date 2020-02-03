@@ -39,7 +39,7 @@ public class Oracle extends AbstractDatabase {
 
     static {
         try {
-            Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
+            Class.forName("oracle.jdbc.OracleDriver").newInstance();
         }
         catch (Exception e) {
 
@@ -52,7 +52,8 @@ public class Oracle extends AbstractDatabase {
 
     public Oracle(String host, String port, String service, String user, String pwd) throws SQLException {
         // jdbc:oracle:thin:@host:port:SID
-        super("oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@" + host + ":" + port + "/" + service, user, pwd, null);
+        super("oracle.jdbc.OracleDriver", "jdbc:oracle:thin:@" + host + ":" + port + "/" + service, user, pwd, null);
+        setSchema(user.toUpperCase());
     }
 
     @Override
@@ -103,7 +104,7 @@ public class Oracle extends AbstractDatabase {
             }
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null && ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';%n",
+                comments.add(String.format("COMMENT ON COLUMN %s.\"%s\" is '%s';%n",
                         tableName,
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
@@ -111,7 +112,7 @@ public class Oracle extends AbstractDatabase {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE " + tableName + "\n(\n");
+        sb.append("CREATE TABLE " + tableName + " \n(\n");
         sb.append(String.join(",\n", cols));
         if (pks.isEmpty()) {
             sb.append("\n);\n");

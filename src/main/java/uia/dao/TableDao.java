@@ -57,6 +57,15 @@ public class TableDao<T> {
     }
 
     /**
+     * Returns the primary keys.
+     *
+     * @return The primary keys.
+     */
+    public String[] getPrimaryKeys() {
+        return this.tableHelper.getPrimaryKeys();
+    }
+
+    /**
      * Inserts a row.
      *
      * @param data The row.
@@ -131,6 +140,19 @@ public class TableDao<T> {
                 ps.addBatch();
             }
             return ps.executeBatch();
+        }
+    }
+
+    /**
+     * Deletes all rows.
+     *
+     * @return Result.
+     * @throws SQLException Failed to delete.
+     */
+    public int deleteAll() throws SQLException {
+        DaoMethod<T> method = this.tableHelper.forDelete();
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql())) {
+            return ps.executeUpdate();
         }
     }
 
