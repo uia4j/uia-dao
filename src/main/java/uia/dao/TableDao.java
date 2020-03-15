@@ -56,6 +56,14 @@ public class TableDao<T> {
         this.tableHelper = tableHelper;
     }
 
+    public String getInsertSql() {
+        return this.tableHelper.forInsert().getSql();
+    }
+
+    public String getUpdateSql() {
+        return this.tableHelper.forUpdate().getSql();
+    }
+
     /**
      * Returns the primary keys.
      *
@@ -259,6 +267,56 @@ public class TableDao<T> {
             try (ResultSet rs = ps.executeQuery()) {
                 return method.toList(rs);
             }
+        }
+    }
+
+    /**
+     * Deletes some rows with a criteria.
+     *
+     * @param where The where statement.
+     * @return Record count to be deleted.
+     * @throws SQLException Failed to execute the SQL statement.
+     */
+    public int delete(Where where) throws SQLException {
+        DaoMethod<T> method = this.tableHelper.forDelete();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            return ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Updates all rows.
+     *
+     * @param cvs Values of columns.
+     * @return Record count to be updated.
+     * @throws SQLException Failed to execute the SQL statement.
+     */
+    public int update(TableColumnValues cvs) throws SQLException {
+        String sql = String.format("update %s set %s", this.tableHelper.getTableName(), cvs.generate());
+        try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+            cvs.accept(ps, 1);
+            return ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Updates some rows with a criteria.
+     *
+     * @param cvs Values of columns.
+     * @param where The where statement.
+     * @return Record count to be updated.
+     * @throws SQLException Failed to execute the SQL statement.
+     */
+    public int update(TableColumnValues cvs, Where where) throws SQLException {
+        String sql = String.format("update %s set %s", this.tableHelper.getTableName(), cvs.generate());
+        if (where.hasConditions()) {
+            sql += (" where " + where.generate());
+        }
+        try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+            where.accept(ps, cvs.accept(ps, 1));
+            return ps.executeUpdate();
         }
     }
 }

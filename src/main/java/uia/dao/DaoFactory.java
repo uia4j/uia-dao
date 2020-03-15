@@ -60,7 +60,7 @@ public final class DaoFactory {
      * Constructor.
      *
      */
-    public DaoFactory() {
+    public DaoFactory(boolean useTz) {
         this.readers = new TreeMap<>();
         this.readers.put("short", this::readShort);
         this.readers.put("int", this::readInt);
@@ -69,7 +69,7 @@ public final class DaoFactory {
         this.readers.put("string", this::readString);
         this.readers.put("stringE2N", DaoColumnReader::empty2Null);
         this.readers.put("stirngN2E", DaoColumnReader::null2Empty);
-        this.readers.put("date", this::readDate);
+        this.readers.put("date", useTz ? this::readDateTz : this::readDate);
         this.readers.put("clob", this::readString);
         this.readers.put("byte[]", this::readBytes);
         this.objectReader = this::readObject;
@@ -81,7 +81,7 @@ public final class DaoFactory {
         this.writers.put("bigdecimal", this::writeBigDecimal);
         this.writers.put("string", this::writeString);
         this.writers.put("stringE2N", DaoColumnWriter::empty2Null);
-        this.writers.put("date", this::writeDate);
+        this.writers.put("date", useTz ? this::writeDateTz : this::writeDate);
         this.writers.put("clob", this::writeClob);
         this.writers.put("byte[]", this::writeBytes);
         this.objectWriter = this::writeObject;
@@ -297,6 +297,10 @@ public final class DaoFactory {
         return DateUtils.getDate(rs, index);
     }
 
+    private Date readDateTz(ResultSet rs, int index) throws SQLException {
+        return DateUtils.getDateTz(rs, index);
+    }
+
     private Object readObject(ResultSet rs, int index) throws SQLException {
         return rs.getObject(index);
     }
@@ -329,6 +333,10 @@ public final class DaoFactory {
         DateUtils.setDate(ps, index, (Date) value);
     }
 
+    private void writeDateTz(PreparedStatement ps, int index, Object value) throws SQLException {
+        DateUtils.setDateTz(ps, index, (Date) value);
+    }
+
     private void writeObject(PreparedStatement ps, int index, Object value) throws SQLException {
         ps.setObject(index, value);
     }
@@ -343,7 +351,7 @@ public final class DaoFactory {
     private void writeBytes(PreparedStatement ps, int index, Object value) throws SQLException {
         byte[] content = (byte[]) value;
         try (InputStream is = new ByteArrayInputStream(content)) {
-            ps.setBinaryStream(index, is);
+            ps.setBinaryStream(index, is, content.length);
         }
         catch (IOException e) {
             throw new SQLException("Column:" + index + " failed to convert to InputStream");

@@ -21,6 +21,8 @@ package uia.dao;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -32,6 +34,15 @@ import java.util.TimeZone;
 public final class DateUtils {
 
     private DateUtils() {
+    }
+
+    public static Date toGMT(Date timeIngoreTz) {
+        if (timeIngoreTz == null) {
+            return null;
+        }
+
+        Instant instant = timeIngoreTz.toInstant().atZone(ZoneId.of("Z")).minusHours(8).toInstant();
+        return Date.from(instant);
     }
 
     public static void setDate(PreparedStatement ps, int index, Date value) throws SQLException {

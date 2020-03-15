@@ -60,14 +60,6 @@ public class PostgreSQL extends AbstractDatabase {
     }
 
     @Override
-    public int createView(String viewName, String sql) throws SQLException {
-        String script = String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toLowerCase(), sql);
-        try (PreparedStatement ps = this.conn.prepareStatement(script)) {
-            return ps.executeUpdate();
-        }
-    }
-
-    @Override
     public String selectViewScript(String viewName) throws SQLException {
         String script = null;
 
@@ -79,14 +71,14 @@ public class PostgreSQL extends AbstractDatabase {
                     script = script.replace("::text", "").trim();
                     script = script.substring(0, script.length() - 1);
                 }
-                return script;
+                return script != null && script.startsWith("\n") ? script.substring(1) : script;
             }
         }
     }
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS %n%s;", viewName.toLowerCase(), sql);
+        return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toLowerCase(), sql);
     }
 
     @Override
@@ -144,37 +136,37 @@ public class PostgreSQL extends AbstractDatabase {
         for (ColumnDiff detail : details) {
             switch (detail.actionType) {
                 case ADD:
-                    cmd.add("ADD COLUMN " + this.prepareColumnDef(detail.column));
+                    cmd.add("ADD COLUMN " + this.prepareColumnDef(detail.source));
                     break;
                 case ALTER:
                     if (detail.alterType == ColumnDiff.AlterType.DATA_TYPE) {
-                        cmd.add(String.format("ALTER COLUMN %s TYPE %s", detail.column.getColumnName(), dbType(detail.column)));
+                        cmd.add(String.format("ALTER COLUMN %s TYPE %s", detail.source.getColumnName(), dbType(detail.source)));
                     }
                     else {
-                        if (detail.column.isNullable()) {
-                            cmd.add(String.format("ALTER COLUMN %s DROP NOT NULL", detail.column.getColumnName()));
+                        if (detail.source.isNullable()) {
+                            cmd.add(String.format("ALTER COLUMN %s DROP NOT NULL", detail.source.getColumnName()));
                         }
                         else {
-                            cmd.add(String.format("ALTER COLUMN %s SET NOT NULL", detail.column.getColumnName()));
+                            cmd.add(String.format("ALTER COLUMN %s SET NOT NULL", detail.source.getColumnName()));
                         }
                     }
                     break;
                 case DROP:
-                    cmd.add("DROP COLUMN " + detail.column.getColumnName());
+                    cmd.add("DROP COLUMN " + detail.target.getColumnName());
                     break;
             }
         }
-        return "ALTER TABLE " + tableName + "\n  " + String.join(",\n  ", cmd) + ";\n";
+        return "ALTER TABLE " + tableName + "\n  " + String.join(",\n  ", cmd) + ";";
     }
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE IF EXISTS " + tableName.toLowerCase() + ";";
+        return "DROP TABLE IF EXISTS " + tableName.toLowerCase();
     }
 
     @Override
     public String generateDropViewSQL(String viewName) {
-        return "DROP VIEW IF EXISTS " + viewName.toLowerCase() + ";";
+        return "DROP VIEW IF EXISTS " + viewName.toLowerCase();
     }
 
     @Override
@@ -225,13 +217,14 @@ public class PostgreSQL extends AbstractDatabase {
                     ct.setNullable("1".equals(rs.getString("NULLABLE")));
                     ct.setColumnSize(rs.getInt("COLUMN_SIZE"));
                     ct.setRemark(rs.getString("REMARKS"));
+                    ct.setDefaultValue(rs.getString("COLUMN_DEF"));
 
-                    switch (rs.getInt("DATA_TYPE")) {
-                        case Types.BINARY:      // bytea
-                        case Types.VARBINARY:   // bytea
+                    switch (rs.getInt("DATA_TYPE")) {   // PostgreSQL TYPE
+                        case Types.BINARY:              // bytea
+                        case Types.VARBINARY:           // bytea
                             ct.setDataType(DataType.BLOB);
                             break;
-                        case Types.CHAR:        // bpchar
+                        case Types.CHAR:                // bpchar
                             if (ct.getColumnSize() > Integer.MAX_VALUE / 2) {
                                 ct.setDataType(DataType.CLOB);
                             }
@@ -239,28 +232,28 @@ public class PostgreSQL extends AbstractDatabase {
                                 ct.setDataType(DataType.VARCHAR2);
                             }
                             break;
-                        case Types.DECIMAL:     // numeric
-                        case Types.NUMERIC:     // decimal
+                        case Types.DECIMAL:             // numeric
+                        case Types.NUMERIC:             // decimal
                             ct.setDataType(DataType.NUMERIC);
                             break;
-                        case Types.TINYINT:     // int2
-                        case Types.SMALLINT:    // int2
+                        case Types.TINYINT:             // int2
+                        case Types.SMALLINT:            // int2
                             ct.setDataType(DataType.INTEGER);
                             break;
-                        case Types.INTEGER:     // int4
+                        case Types.INTEGER:             // int4
                             ct.setDataType(DataType.INTEGER);
                             break;
-                        case Types.BIGINT:      // int8, oid(?)
+                        case Types.BIGINT:              // int8, oid(?)
                             ct.setDataType(DataType.LONG);
                             break;
-                        case Types.REAL:        // float4
+                        case Types.REAL:                // float4
                             break;
-                        case Types.FLOAT:       // float4
-                        case Types.DOUBLE:      // float8
+                        case Types.FLOAT:               // float4
+                        case Types.DOUBLE:              // float8
                             ct.setDataType(DataType.DOUBLE);
                             break;
                         case Types.VARCHAR:
-                        case Types.LONGVARCHAR: // character varying,text
+                        case Types.LONGVARCHAR:         // character varying,text
                             if (ct.getColumnSize() > Integer.MAX_VALUE / 2) {
                                 ct.setDataType(DataType.CLOB);
                             }
@@ -268,14 +261,22 @@ public class PostgreSQL extends AbstractDatabase {
                                 ct.setDataType(DataType.VARCHAR2);
                             }
                             break;
-                        case Types.DATE:        // date
+                        case Types.DATE:                // date
                             ct.setDataType(DataType.DATE);
                             break;
-                        case Types.TIME:        // time, timez
+                        case Types.TIME:                // time, timez
                             ct.setDataType(DataType.TIME);
                             break;
-                        case Types.TIMESTAMP:   // timestamp, timestampz
-                            ct.setDataType(DataType.TIMESTAMP);
+                        case Types.TIMESTAMP:           // timestamp, timestamp with timezone
+                            if (isAlwaysTimestampZ()) {
+                                ct.setDataType(DataType.TIMESTAMPZ);
+                            }
+                            else {
+                                ct.setDataType(DataType.TIMESTAMP);
+                            }
+                            break;
+                        case Types.TIME_WITH_TIMEZONE:  // timestamp with timezone
+                            ct.setDataType(DataType.TIMESTAMPZ);
                             break;
                         default:
                             ct.setDataType(DataType.OTHERS);
@@ -306,7 +307,13 @@ public class PostgreSQL extends AbstractDatabase {
             nullable = " NOT NULL";
         }
 
-        return " \"" + ct.getColumnName().toLowerCase() + "\" " + type + nullable;
+        String result = " \"" + ct.getColumnName().toLowerCase() + "\" " + type + nullable;
+        if (ct.getDefaultValue() != null) {
+            result = String.format("%s default '%s'",
+                    result,
+                    ct.getDefaultValue());
+        }
+        return result;
     }
 
     private String dbType(ColumnType ct) {
@@ -318,7 +325,7 @@ public class PostgreSQL extends AbstractDatabase {
                 break;
             case NUMERIC:
                 if (ct.getDecimalDigits() == 0) {
-                    type = "numeric";
+                    type = "numeric(" + columnSize + ")";
                 }
                 else {
                     type = "numeric(" + columnSize + "," + ct.getDecimalDigits() + ")";
@@ -341,6 +348,9 @@ public class PostgreSQL extends AbstractDatabase {
                 break;
             case TIMESTAMP:
                 type = "timestamp without time zone";
+                break;
+            case TIMESTAMPZ:
+                type = "timestamp with time zone";
                 break;
             case NVARCHAR:
             case NVARCHAR2:

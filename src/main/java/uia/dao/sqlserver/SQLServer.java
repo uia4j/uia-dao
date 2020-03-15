@@ -47,14 +47,6 @@ public class SQLServer extends AbstractDatabase {
     }
 
     @Override
-    public int createView(String viewName, String sql) throws SQLException {
-        String script = String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
-        try (PreparedStatement ps = this.conn.prepareStatement(script)) {
-            return ps.executeUpdate();
-        }
-    }
-
-    @Override
     public String selectViewScript(String viewName) throws SQLException {
         String script = null;
 
@@ -151,12 +143,12 @@ public class SQLServer extends AbstractDatabase {
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
+        return "DROP TABLE IF EXISTS " + tableName.toUpperCase();
     }
 
     @Override
     public String generateDropViewSQL(String viewName) {
-        return "DROP VIEW IF EXISTS " + viewName.toUpperCase() + ";";
+        return "DROP VIEW IF EXISTS " + viewName.toUpperCase();
     }
 
     @Override
@@ -253,6 +245,9 @@ public class SQLServer extends AbstractDatabase {
                         case Types.TIMESTAMP:
                             ct.setDataType(DataType.TIMESTAMP);
                             break;
+                        case Types.TIME_WITH_TIMEZONE:
+                            ct.setDataType(DataType.TIMESTAMPZ);
+                            break;
                         default:
                             ct.setDataType(DataType.OTHERS);
                             break;
@@ -297,7 +292,10 @@ public class SQLServer extends AbstractDatabase {
             case DATE:
             case TIME:
             case TIMESTAMP:
-                type = "datetime";
+                type = "datetime2";
+                break;
+            case TIMESTAMPZ:
+                type = "datetimeoffset";
                 break;
             case CLOB:
             case NVARCHAR:

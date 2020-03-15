@@ -10,18 +10,21 @@ public class ColumnDiff {
         DATA_TYPE, NULLABLE,
     }
 
-    public final ColumnType column;
+    public final ColumnType source;
+
+    public final ColumnType target;
 
     public final ActionType actionType;
 
     public final AlterType alterType;
 
-    public ColumnDiff(ColumnType column, ActionType actionType) {
-        this(column, actionType, null);
+    public ColumnDiff(ColumnType source, ColumnType target, ActionType actionType) {
+        this(source, target, actionType, null);
     }
 
-    public ColumnDiff(ColumnType column, ActionType actionType, AlterType alterType) {
-        this.column = column;
+    public ColumnDiff(ColumnType source, ColumnType target, ActionType actionType, AlterType alterType) {
+        this.source = source;
+        this.target = target;;
         this.actionType = actionType;
         this.alterType = alterType;
     }

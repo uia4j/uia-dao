@@ -74,12 +74,20 @@ public abstract class ColumnType {
          */
         FLOAT,
 
+        /**
+         * double
+         */
         DOUBLE,
 
         /**
          * timestamp
          */
         TIMESTAMP,
+
+        /**
+         * timestamp with time zone
+         */
+        TIMESTAMPZ,
 
         /**
          * date
@@ -132,6 +140,8 @@ public abstract class ColumnType {
     protected int decimalDigits;
 
     protected String remark;
+
+    protected Object defaultValue;
 
     private final ArrayList<ColumnType.Compare> cs;
 
@@ -230,6 +240,14 @@ public abstract class ColumnType {
         this.remark = remark;
     }
 
+    public Object getDefaultValue() {
+        return this.defaultValue;
+    }
+
+    public void setDefaultValue(Object defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
     /**
      * Tests if this column is string type, including NVARCHAR, NVARCHAR2, VARCHAR, VARCHAR2.
      *
@@ -283,6 +301,21 @@ public abstract class ColumnType {
     }
 
     /**
+     * Tests if this column is numeric including INTEGER, LONG, NUMERIC, FLOAT, DOUBLE.
+     *
+     * @return Result.
+     */
+    public boolean isInteger() {
+        switch (this.dataType) {
+            case INTEGER:
+            case LONG:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Returns the Java type for this column.
      *
      * @return Type name of Java.
@@ -329,7 +362,7 @@ public abstract class ColumnType {
 
     public boolean sameAs(ColumnType targetColumn, ComparePlan plan, CompareResult cr) {
         if (targetColumn == null) {
-            cr.getDiff().add(new ColumnDiff(this, ColumnDiff.ActionType.ADD, null));
+            cr.getDiff().add(new ColumnDiff(this, targetColumn, ColumnDiff.ActionType.ADD, null));
             cr.setPassed(false);
             cr.addMessage(this.columnName + " not found");
             return false;
@@ -485,7 +518,7 @@ public abstract class ColumnType {
             return true;
         }
 
-        ctx.getDiff().add(new ColumnDiff(this, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.NULLABLE));
+        ctx.getDiff().add(new ColumnDiff(this, targetColumn, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.NULLABLE));
         ctx.setPassed(false);
         ctx.addMessage(String.format("%s nullable not the same: (%s,%s)",
                 this.columnName,
@@ -549,7 +582,7 @@ public abstract class ColumnType {
     public boolean chdckDataType(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
         // data type
         if (this.dataType != targetColumn.getDataType()) {
-            ctx.getDiff().add(new ColumnDiff(this, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.DATA_TYPE));
+            ctx.getDiff().add(new ColumnDiff(this, targetColumn, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.DATA_TYPE));
             ctx.setPassed(false);
             ctx.addMessage(String.format("%s dataType not the same: (%s,%s)",
                     this.columnName,
@@ -567,6 +600,7 @@ public abstract class ColumnType {
             return true;
         }
 
+        ctx.getDiff().add(new ColumnDiff(this, targetColumn, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.DATA_TYPE));
         ctx.setPassed(false);
         ctx.addMessage(String.format("%s decimalDigits not the same, (%s:%s,%s:%s)",
                 this.columnName,
@@ -582,6 +616,12 @@ public abstract class ColumnType {
             return true;
         }
 
+        // Oracle always NUMBER, no INTEGER
+        if (targetColumn.isInteger() || isInteger()) {
+            return true;
+        }
+
+        ctx.getDiff().add(new ColumnDiff(this, targetColumn, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.DATA_TYPE));
         ctx.setPassed(false);
         ctx.addMessage(String.format("%s columnSize not the same: (%s,%s)",
                 this.columnName,

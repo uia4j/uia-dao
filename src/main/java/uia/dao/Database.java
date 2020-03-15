@@ -33,6 +33,10 @@ public interface Database extends AutoCloseable {
 
     public boolean isAlwaysNVarchar();
 
+    public void setAlwaysTimestampZ(boolean timestampZ);
+
+    public boolean isAlwaysTimestampZ();
+
     /**
      * Returns schema name.
      *

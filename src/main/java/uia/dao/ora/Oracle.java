@@ -21,6 +21,7 @@ package uia.dao.ora;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,21 +61,23 @@ public class Oracle extends AbstractDatabase {
     public String selectViewScript(String viewName) throws SQLException {
         String script = null;
         try (PreparedStatement ps = this.conn.prepareStatement("select DBMS_METADATA.GET_DDL('VIEW',?) from DUAL")) {
-            ps.setString(1, viewName);
+            ps.setString(1, viewName.toUpperCase());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     script = rs.getString(1);
                     int i = script.indexOf(") AS");
                     script = script.substring(i + 5, script.length()).trim();
+                    script = script.trim();
+                    script = script.substring(1, script.length() - 1);
                 }
-                return script;
+                return script != null && script.startsWith("\n") ? script.substring(1) : script;
             }
         }
     }
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS (%n%s%n);", upperOrLower(viewName), sql);
+        return String.format("CREATE VIEW \"%s\" AS (%n%s)", viewName.toUpperCase(), sql);
     }
 
     @Override
@@ -133,18 +136,45 @@ public class Oracle extends AbstractDatabase {
 
     @Override
     public String generateAlterTableSQL(String tableName, List<ColumnDiff> details) {
-        return null;
+        ArrayList<String> add = new ArrayList<>();
+        ArrayList<String> alter = new ArrayList<>();
+        ArrayList<String> drop = new ArrayList<>();
+        for (ColumnDiff detail : details) {
+            switch (detail.actionType) {
+                case ADD:
+                    add.add(prepareColumnDef(detail.source));
+                    break;
+                case ALTER:
+                    alter.add(prepareColumnDef(detail.source));
+                    break;
+                case DROP:
+                    drop.add(detail.target.getColumnName());
+                    break;
+            }
+        }
 
+        String cmd = "";
+        if (!add.isEmpty()) {
+            cmd += ("ALTER TABLE \"" + tableName.toUpperCase() + "\"\n ADD(" + String.join(",", add) + ");\n");
+        }
+        if (!alter.isEmpty()) {
+            cmd += ("ALTER TABLE \"" + tableName.toUpperCase() + "\"\n MODIFY(" + String.join(",", alter) + ");\n");
+        }
+        if (!drop.isEmpty()) {
+            cmd += ("ALTER TABLE \"" + tableName.toUpperCase() + "\"\n DROP(" + String.join(",", drop) + ");\n");
+        }
+
+        return cmd;
     }
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
+        return "DROP TABLE " + tableName.toUpperCase();
     }
 
     @Override
     public String generateDropViewSQL(String viewName) {
-        return "DROP VIEW IF EXISTS " + viewName.toUpperCase() + ";";
+        return "DROP VIEW " + viewName.toUpperCase();
     }
 
     @Override
@@ -196,40 +226,65 @@ public class Oracle extends AbstractDatabase {
                     ct.setColumnSize(rs.getInt("COLUMN_SIZE"));
                     ct.setRemark(rs.getString("REMARKS"));
 
-                    switch (rs.getInt("DATA_TYPE")) {
-                        case -9:        // NVARCHAR2
-                            ct.setDataType(DataType.NVARCHAR2);
-                            break;
-                        case -1:        // LONG
-                            ct.setDataType(DataType.LONG);
-                            break;
-                        case 1:        // CHAR
-                            ct.setDataType(DataType.NVARCHAR2);
-                            break;
-                        case 3:         // NUMBER
-                            ct.setDataType(DataType.NUMERIC);
-                            break;
-                        case 6:         // FLOAT
-                            ct.setDataType(DataType.FLOAT);
-                            break;
-                        case 12:        // VARCHAR, VARCHAR2
+                    switch (rs.getInt("DATA_TYPE")) {   // ORACLE TYPE
+                        case Types.VARCHAR:             // VARCHAR, VARCHAR2
+                        case Types.LONGVARCHAR:
                             ct.setDataType(DataType.VARCHAR2);
                             break;
-                        case 93:        // DATE,TIMESTAMP
+                        case Types.NVARCHAR:            // 
+                        case 1111:                      // NVARCHAR2
+                            ct.setDataType(DataType.NVARCHAR2);
+                            break;
+                        case Types.CHAR:                // CHAR
+                            ct.setDataType(DataType.NVARCHAR2);
+                            break;
+                        case Types.SMALLINT:
+                        case Types.TINYINT:
+                        case Types.INTEGER:             // INTEGER
+                            ct.setDataType(DataType.INTEGER);
+                            break;
+                        case Types.BIGINT:
+                            ct.setDataType(DataType.LONG);
+                            break;
+                        case Types.NUMERIC:
+                        case 3:                         // NUMBER
+                            if (ct.getDecimalDigits() <= 0 && ct.getColumnSize() < 20) {
+                                ct.setDataType(ct.getColumnSize() > 9 ? DataType.LONG : DataType.INTEGER);
+                            }
+                            else {
+                                ct.setDataType(DataType.NUMERIC);
+                            }
+                            break;
+                        case Types.FLOAT:
+                            ct.setDataType(DataType.FLOAT);
+                            break;
+                        case Types.DOUBLE:
+                            ct.setDataType(DataType.DOUBLE);
+                            break;
+                        case Types.TIMESTAMP:           // DATE, TIMESTAMP
                             if (ct.getDataTypeName().startsWith("TIMESTAMP")) {
-                                ct.setDataType(DataType.TIMESTAMP);
+                                if (isAlwaysTimestampZ()) {
+                                    ct.setDataType(DataType.TIMESTAMPZ);
+                                }
+                                else {
+                                    ct.setDataType(DataType.TIMESTAMP);
+                                }
                             }
                             else {
                                 ct.setDataType(DataType.DATE);
                             }
                             break;
-                        case 2004:      // BLOB
+                        case Types.TIME_WITH_TIMEZONE:
+                        case -101:                      // TIMESTAMP WITH TIME ZONE
+                            ct.setDataType(DataType.TIMESTAMPZ);
+                            break;
+                        case Types.BLOB:                // BLOB
                             ct.setDataType(DataType.BLOB);
                             break;
-                        case 2005:      // CLOB
+                        case Types.CLOB:                // CLOB
                             ct.setDataType(DataType.CLOB);
                             break;
-                        case 2011:      // NCLOB
+                        case Types.NCLOB:               // NCLOB
                             ct.setDataType(DataType.NCLOB);
                             break;
                         default:
@@ -257,12 +312,11 @@ public class Oracle extends AbstractDatabase {
         String type = "";
         switch (ct.getDataType()) {
             case LONG:
-                type = "LONG";
+                type = "NUMBER(19)";
                 break;
-            case DOUBLE:
             case NUMERIC:
                 long cs = ct.getColumnSize();
-                if (ct.getDecimalDigits() == 0) {
+                if (ct.getDecimalDigits() <= 0) {
                     type = "NUMBER("
                             + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
                             + ")";
@@ -275,8 +329,9 @@ public class Oracle extends AbstractDatabase {
                             + ")";
                 }
                 break;
+            case DOUBLE:
             case FLOAT:
-                type = "FLOAT(126)";
+                type = "NUMBER(38,6)";
                 break;
             case INTEGER:
                 type = "INTEGER";
@@ -288,8 +343,12 @@ public class Oracle extends AbstractDatabase {
             case TIMESTAMP:
                 type = "TIMESTAMP(6)";
                 break;
+            case TIMESTAMPZ:
+                type = "TIMESTAMP WITH TIME ZONE";
+                break;
             case NVARCHAR:
             case NVARCHAR2:
+                type = "NVARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
                 break;
             case VARCHAR:
             case VARCHAR2:
@@ -297,7 +356,7 @@ public class Oracle extends AbstractDatabase {
                     type = "NVARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
                 }
                 else {
-                    type = "VARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + " BYTE)";
+                    type = "VARCHAR2(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
                 }
                 break;
             case BLOB:
@@ -310,7 +369,10 @@ public class Oracle extends AbstractDatabase {
                 type = "NCLOB";
                 break;
             default:
-                throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());
+                throw new NullPointerException(String.format("%s type not found: %s(%s)",
+                        ct.getColumnName(),
+                        ct.getDataTypeName(),
+                        ct.getDataTypeCode()));
 
         }
 

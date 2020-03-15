@@ -23,6 +23,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +53,8 @@ public abstract class AbstractDatabase implements Database {
 
     private boolean alwaysNVarchar;
 
+    private boolean alwaysTimestampZ;
+
     /**
      * Constructor.
      *
@@ -65,6 +68,7 @@ public abstract class AbstractDatabase implements Database {
     protected AbstractDatabase(String driverName, String url, String user, String pwd, String schema) throws SQLException {
         this.url = url;
         this.alwaysNVarchar = false;
+        this.alwaysTimestampZ = false;
         if (url != null) {
             this.conn = DriverManager.getConnection(url, user, pwd);
             this.dataSource = createDataSource(driverName, url, user, pwd);
@@ -88,6 +92,16 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public void setAlwaysNVarchar(boolean alwaysNVarchar) {
         this.alwaysNVarchar = alwaysNVarchar;
+    }
+
+    @Override
+    public boolean isAlwaysTimestampZ() {
+        return this.alwaysTimestampZ;
+    }
+
+    @Override
+    public void setAlwaysTimestampZ(boolean alwaysTimestampZ) {
+        this.alwaysTimestampZ = alwaysTimestampZ;
     }
 
     @Override
@@ -200,40 +214,63 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public int createTable(TableType table) throws SQLException {
-        String script = generateCreateTableSQL(table);
-        try (PreparedStatement ps = this.conn.prepareStatement(script)) {
-            return ps.executeUpdate();
+        String[] scripts = generateCreateTableSQL(table).split(";");
+        try (Statement st = this.conn.createStatement()) {
+            for (String script : scripts) {
+                if (!script.trim().isEmpty()) {
+                    st.executeUpdate(script);
+                }
+            }
         }
+        return 0;
     }
 
     @Override
     public int dropTable(String tableName) throws SQLException {
-        try (PreparedStatement ps = this.conn.prepareStatement(generateDropTableSQL(tableName))) {
-            return ps.executeUpdate();
+        String script = generateDropTableSQL(tableName);
+        try (Statement st = this.conn.createStatement()) {
+            return st.executeUpdate(script);
+        }
+        catch (SQLException ex) {
+            System.out.println("failed to execute: " + script);
+            throw ex;
         }
     }
 
     @Override
     public int createView(String viewName, String sql) throws SQLException {
-        String script = String.format("CREATE VIEW \"%s\" (%n%s%n)",
-                upperOrLower(viewName),
-                sql);
-        try (PreparedStatement ps = this.conn.prepareStatement(script)) {
-            return ps.executeUpdate();
+        String script = this.generateCreateViewSQL(viewName, sql);
+        try (Statement st = this.conn.createStatement()) {
+            return st.executeUpdate(script);
+        }
+        catch (SQLException ex) {
+            System.out.println("failed to execute: " + script);
+            throw ex;
         }
     }
 
     @Override
     public int dropView(String viewName) throws SQLException {
-        try (PreparedStatement ps = this.conn.prepareStatement(generateDropViewSQL(viewName))) {
-            return ps.executeUpdate();
+        String script = generateDropViewSQL(viewName);
+        try (Statement st = this.conn.createStatement()) {
+            return st.executeUpdate(script);
+        }
+        catch (SQLException ex) {
+            System.out.println("failed to execute: " + script);
+            throw ex;
         }
     }
 
     @Override
     public boolean execute(String sql) throws SQLException {
         try (java.sql.Statement state = this.conn.createStatement()) {
-            return state.execute(sql);
+            sql = fix(sql);
+            if (sql != null) {
+                return state.execute(sql);
+            }
+            else {
+                return false;
+            }
         }
     }
 
@@ -241,7 +278,11 @@ public abstract class AbstractDatabase implements Database {
     public int[] executeBatch(List<String> sqls) throws SQLException {
         try (java.sql.Statement state = this.conn.createStatement()) {
             for (String sql : sqls) {
-                state.addBatch(sql);
+                sql = fix(sql);
+                if (sql != null) {
+                    System.out.println(sql);
+                    state.addBatch(sql);
+                }
             }
             return state.executeBatch();
         }
@@ -273,6 +314,18 @@ public abstract class AbstractDatabase implements Database {
      * @return Result.
      */
     protected abstract String upperOrLower(String value);
+
+    protected String fix(String sql) {
+        if (sql != null && sql.startsWith("\n")) {
+            sql = sql.substring(1);
+        }
+        if (sql == null || sql.trim().isEmpty()) {
+            return null;
+        }
+        else {
+            return sql;
+        }
+    }
 
     private DataSource createDataSource(String driverName, String connectUrl, String user, String pwd) {
         BasicDataSource bds = new BasicDataSource();

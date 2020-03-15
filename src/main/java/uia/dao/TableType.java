@@ -162,7 +162,7 @@ public class TableType {
             }
             for (Map.Entry<String, ColumnType> kv : targetColumns.entrySet()) {
                 cr.addMessage(kv.getKey() + " exists in the target database");
-                cr.getDiff().add(new ColumnDiff(kv.getValue(), ColumnDiff.ActionType.DROP, null));
+                cr.getDiff().add(new ColumnDiff(null, kv.getValue(), ColumnDiff.ActionType.DROP, null));
             }
         }
         catch (Exception ex) {

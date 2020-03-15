@@ -95,6 +95,29 @@ public class DatabaseTool {
      *
      * @param file The file name.
      * @param target The database the script is executed on.
+     * @param tableNames Names of tables.
+     * @throws SQLException Failed to execute SQL statements.
+     * @throws IOException Failed to save the file.
+     */
+    public void toDropTableScript(String file, Database target, String... tableNames) throws IOException, SQLException {
+        List<String> ts = Arrays.asList(tableNames);
+        if (ts.isEmpty()) {
+            ts = this.source.selectTableNames();
+        }
+
+        StringBuilder scripts = new StringBuilder();
+        for (String t : ts) {
+            String script = target.generateDropTableSQL(t);
+            scripts.append(script).append(";\n\n");
+        }
+        Files.write(Paths.get(file), scripts.toString().getBytes());
+    }
+
+    /**
+     * Output a script to generate all tables.
+     *
+     * @param file The file name.
+     * @param target The database the script is executed on.
      * @param viewNames Names of views.
      * @throws SQLException Failed to execute SQL statements.
      * @throws IOException Failed to save the file.
@@ -108,7 +131,7 @@ public class DatabaseTool {
         StringBuilder scripts = new StringBuilder();
         for (String v : vs) {
             String script = target.generateDropViewSQL(v);
-            scripts.append(script).append("\n\n");
+            scripts.append(script).append(";\n\n");
         }
         Files.write(Paths.get(file), scripts.toString().getBytes());
     }
@@ -130,10 +153,10 @@ public class DatabaseTool {
 
         StringBuilder scripts = new StringBuilder();
         for (String v : vs) {
+            scripts.append("-- " + v + "\n");
             String sql = this.source.selectViewScript(v);
-
             String script = target.generateCreateViewSQL(v, sql);
-            scripts.append(script).append("\n\n");
+            scripts.append(script).append(";\n\n");
         }
         Files.write(Paths.get(file), scripts.toString().getBytes());
     }
@@ -165,14 +188,14 @@ public class DatabaseTool {
      */
     public boolean toAlterScript(String file, Database compareTarget, Database outputTarget, String... tableNames) throws SQLException, IOException {
         StringBuilder scripts = new StringBuilder();
+
+        // tables
         List<String> ts = tableNames.length == 0 ? this.source.selectTableNames() : Arrays.asList(tableNames);
-        boolean alter = false;
         for (String t : ts) {
             TableType tableNew = this.source.selectTable(t, false);
             TableType tableOld = compareTarget.selectTable(t, false);
-            CompareResult cr = tableNew.sameAs(tableOld, new ComparePlan(false, false, false, false, true));
+            CompareResult cr = tableNew.sameAs(tableOld, new ComparePlan(false, true, false, true, true));
             if (!cr.isPassed()) {
-                alter = true;
                 scripts.append("-- ").append(t).append("\n");
                 if (cr.isMissing()) {
                     scripts.append(outputTarget.generateCreateTableSQL(tableNew)).append("\n");
@@ -183,9 +206,27 @@ public class DatabaseTool {
             }
         }
 
-        if (alter) {
-            Files.write(Paths.get(file), scripts.toString().getBytes());
+        // views
+        List<String> vs = this.source.selectViewNames();
+        for (String v : vs) {
+            TableType viewNew = this.source.selectTable(v, false);
+            TableType viewOld = compareTarget.selectTable(v, false);
+            CompareResult cr = viewNew.sameAs(viewOld, new ComparePlan(false, false, false, false, false));
+            if (!cr.isPassed()) {
+                scripts.append("-- ").append(v).append("\n");
+                if (cr.isMissing()) {
+                    scripts.append(outputTarget.generateCreateViewSQL(v, this.source.selectViewScript(v))).append(";\n\n");
+                }
+                else {
+                    scripts.append(outputTarget.generateDropViewSQL(v)).append(";\n");
+                    scripts.append(outputTarget.generateCreateViewSQL(v, this.source.selectViewScript(v))).append(";\n\n");
+                }
+            }
         }
-        return alter;
+
+        String sql = scripts.toString().trim();
+        Files.write(Paths.get(file), sql.getBytes());
+
+        return !sql.isEmpty();
     }
 }

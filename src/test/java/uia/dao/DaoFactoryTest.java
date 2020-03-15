@@ -18,6 +18,10 @@
  *******************************************************************************/
 package uia.dao;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,8 +32,17 @@ import uia.dao.sample.ViewOne;
 public class DaoFactoryTest {
 
     @Test
+    public void testDate() {
+        Date now1 = new Date();
+        LocalDateTime z = now1.toInstant().atZone(ZoneId.of("Z")).toLocalDateTime().minusHours(8);
+        Date now2 = Date.from(z.atZone(ZoneId.of("Z")).toInstant());
+        System.out.println(now1);
+        System.out.println(now2);
+    }
+
+    @Test
     public void testOne() throws Exception {
-        DaoFactory factory = new DaoFactory();
+        DaoFactory factory = new DaoFactory(false);
         factory.load("uia.dao.sample");
 
         TableDaoHelper<One> dao = factory.forTable(One.class);
@@ -42,7 +55,7 @@ public class DaoFactoryTest {
 
     @Test
     public void testTwo() throws Exception {
-        DaoFactory factory = new DaoFactory();
+        DaoFactory factory = new DaoFactory(false);
         factory.load("uia.dao.sample");
 
         TableDaoHelper<Two> dao = factory.forTable(Two.class);
@@ -55,7 +68,7 @@ public class DaoFactoryTest {
 
     @Test
     public void testViewOne() throws Exception {
-        DaoFactory factory = new DaoFactory();
+        DaoFactory factory = new DaoFactory(false);
         factory.load("uia.dao.sample");
 
         ViewDaoHelper<ViewOne> dao = factory.forView(ViewOne.class);

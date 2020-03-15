@@ -21,6 +21,7 @@ package uia.dao.hana;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,14 +57,6 @@ public class Hana extends AbstractDatabase {
     }
 
     @Override
-    public int createView(String viewName, String sql) throws SQLException {
-        String script = String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
-        try (PreparedStatement ps = this.conn.prepareStatement(script)) {
-            return ps.executeUpdate();
-        }
-    }
-
-    @Override
     public String selectViewScript(String viewName) throws SQLException {
         String script = null;
         try (PreparedStatement ps = this.conn.prepareStatement("SELECT definition FROM VIEWS WHERE schema_name=? AND view_name=?")) {
@@ -74,14 +67,14 @@ public class Hana extends AbstractDatabase {
                 if (rs.next()) {
                     script = rs.getString(1);
                 }
-                return script;
+                return script != null && script.startsWith("\n") ? script.substring(1) : script;
             }
         }
     }
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS %n%s;", viewName.toUpperCase(), sql);
+        return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
     }
 
     @Override
@@ -139,13 +132,13 @@ public class Hana extends AbstractDatabase {
         for (ColumnDiff detail : details) {
             switch (detail.actionType) {
                 case ADD:
-                    add.add(prepareColumnDef(detail.column));
+                    add.add(prepareColumnDef(detail.source));
                     break;
                 case ALTER:
-                    alter.add(prepareColumnDef(detail.column));
+                    alter.add(prepareColumnDef(detail.source));
                     break;
                 case DROP:
-                    drop.add(detail.column.getColumnName());
+                    drop.add(detail.target.getColumnName());
                     break;
             }
         }
@@ -162,17 +155,16 @@ public class Hana extends AbstractDatabase {
         }
 
         return cmd;
-
     }
 
     @Override
     public String generateDropTableSQL(String tableName) {
-        return "DROP TABLE IF EXISTS \"" + tableName.toUpperCase() + "\";";
+        return "DROP TABLE \"" + tableName.toUpperCase() + "\"";
     }
 
     @Override
     public String generateDropViewSQL(String viewName) {
-        return "DROP VIEW IF EXISTS \"" + viewName.toUpperCase() + "\";";
+        return "DROP VIEW \"" + viewName.toUpperCase() + "\"";
     }
 
     @Override
@@ -224,47 +216,49 @@ public class Hana extends AbstractDatabase {
                     ct.setColumnSize(rs.getInt("COLUMN_SIZE"));
                     ct.setRemark(rs.getString("REMARKS"));
 
-                    switch (rs.getInt("DATA_TYPE")) {
-                        case -9:    // NVARCHAR
-                            ct.setDataType(DataType.NVARCHAR);
-                            break;
-                        case -6:    // TINYINT
-                            ct.setDataType(DataType.INTEGER);
-                            break;
-                        case -5:    // BIGINT
-                            ct.setDataType(DataType.LONG);
-                            break;
-                        case 3:     // DECIMAL, SMALLDECIMAL
-                            ct.setDataType(DataType.NUMERIC);
-                            break;
-                        case 4:     // INTEGER
-                            ct.setDataType(DataType.INTEGER);
-                            break;
-                        case 5:     // SMALLINT
-                            ct.setDataType(DataType.INTEGER);
-                            break;
-                        case 7:     // REAL
-                            ct.setDataType(DataType.NUMERIC);
-                            break;
-                        case 12:    // VARCHAR
+                    switch (rs.getInt("DATA_TYPE")) {       // HANA TYPE
+                        case Types.VARCHAR:                 // VARCHAR
                             ct.setDataType(DataType.VARCHAR);
                             break;
-                        case 91:    // DATE
+                        case Types.NVARCHAR:                // NVARCHAR
+                            ct.setDataType(DataType.NVARCHAR);
+                            break;
+                        case Types.FLOAT:                   // FLOAT
+                            ct.setDataType(DataType.FLOAT);
+                            break;
+                        case Types.DOUBLE:                  // DOUBLE
+                            ct.setDataType(DataType.DOUBLE);
+                            break;
+                        case Types.REAL:                    // REAL
+                        case Types.DECIMAL:                 // DECIMAL, SMALLDECIMAL
+                            ct.setDataType(DataType.NUMERIC);
+                            break;
+                        case Types.SMALLINT:                // SMALLINT
+                        case Types.TINYINT:                 // TINYINT
+                        case Types.INTEGER:                 // INTEGER
+                            ct.setDataType(DataType.INTEGER);
+                            break;
+                        case Types.BIGINT:                  // BIGINT
+                            ct.setDataType(DataType.LONG);
+                            break;
+                        case Types.DATE:                    // DATE
                             ct.setDataType(DataType.DATE);
                             break;
-                        case 92:    // TIME
+                        case Types.TIME:                    // TIME
+                        case Types.TIME_WITH_TIMEZONE:
                             ct.setDataType(DataType.TIME);
                             break;
-                        case 93:    // SECONDDATE, TIMESTAMP
+                        case Types.TIMESTAMP:               // SECONDDATE, TIMESTAMP
+                        case Types.TIMESTAMP_WITH_TIMEZONE:
                             ct.setDataType(DataType.TIMESTAMP);
                             break;
-                        case 2004:  // BLOB
+                        case Types.BLOB:                    // BLOB
                             ct.setDataType(DataType.BLOB);
                             break;
-                        case 2005:  // CLOB
+                        case Types.CLOB:                    // CLOB
                             ct.setDataType(DataType.CLOB);
                             break;
-                        case 2011:  // NCLOB, TEXT
+                        case Types.NCLOB:                   // NCLOB, TEXT
                             ct.setDataType(DataType.NCLOB);
                             break;
                         default:
@@ -289,7 +283,64 @@ public class Hana extends AbstractDatabase {
     }
 
     private String prepareColumnDef(ColumnType ct) {
-        String type = dbType(ct);
+        String type = "";
+        switch (ct.getDataType()) {
+            case INTEGER:       // INTEGER, TINYINT, SMALLINT
+                type = "INTEGER";
+                break;
+            case LONG:          // BIGINT
+                type = "BIGINT";
+                break;
+            case NUMERIC:       // DECIMAL, SMALLDECIMAL
+                long cs = ct.getColumnSize();
+                type = "DECIMAL("
+                        + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
+                        + ","
+                        + ct.getDecimalDigits()
+                        + ")";
+                break;
+            case FLOAT:
+                type = "FLOAT";
+                break;
+            case DOUBLE:
+                type = "DOUBLE";
+                break;
+            case DATE:          // DATE
+                type = "DATE";
+                break;
+            case TIME:
+                type = "TIME";
+                break;
+            case TIMESTAMP:     // TIMESTEMP
+            case TIMESTAMPZ:
+                type = "TIMESTAMP";
+                break;
+            case NVARCHAR:      // NVARCHAR
+            case NVARCHAR2:     // NVARCHAR
+                type = "NVARCHAR(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
+                break;
+            case VARCHAR:       // VARCHAR
+            case VARCHAR2:      // VARCHAR
+                if (isAlwaysNVarchar()) {
+                    type = "NVARCHAR(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
+                }
+                else {
+                    type = "VARCHAR(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
+                }
+                break;
+            case BLOB:          // BLOB
+                type = "BLOB";
+                break;
+            case CLOB:          // CLOB
+                type = "CLOB";
+                break;
+            case NCLOB:         // NCLOB
+                type = "NCLOB";
+                break;
+            default:
+                throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());
+        }
+
         String nullable = "";
         if (ct.isPk()) {
             nullable = " NOT NULL";
@@ -302,52 +353,5 @@ public class Hana extends AbstractDatabase {
         }
 
         return " \"" + ct.getColumnName().toUpperCase() + "\" " + type + nullable;
-
-    }
-
-    private String dbType(ColumnType ct) {
-        String type = "";
-        switch (ct.getDataType()) {
-            case INTEGER:
-            case LONG:
-            case NUMERIC:
-            case FLOAT:
-            case DOUBLE:
-                long cs = ct.getColumnSize();
-                type = "DECIMAL("
-                        + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
-                        + ","
-                        + ct.getDecimalDigits()
-                        + ")";
-                break;
-            case DATE:
-                type = "SECONDDATE";
-                break;
-            case TIME:
-            case TIMESTAMP:
-                type = "TIMESTAMP";
-                break;
-            case NVARCHAR:
-            case NVARCHAR2:
-                type = "VARCHAR(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
-                break;
-            case VARCHAR:
-            case VARCHAR2:
-                type = "NVARCHAR(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
-                break;
-            case BLOB:
-                type = "BLOB";
-                break;
-            case CLOB:
-                type = "CLOB";
-                break;
-            case NCLOB:
-                type = "NCLOB";
-                break;
-            default:
-                throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());
-        }
-
-        return type;
     }
 }

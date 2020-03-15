@@ -53,9 +53,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-		    <groupId>ojdbc6</groupId>
-		    <artifactId>ojdbc6</artifactId>
-		    <version>11.2.0.4</version>
+			<groupId>com.oracle</groupId>
+			<artifactId>ojdbc6</artifactId>
+			<version>11.2.0.3</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -135,5 +135,5 @@
 			<url>https://api.bintray.com/maven/uia4j/maven/uia-dao/;publish=1</url>
 		</repository>
 	</distributionManagement>
-	<version>0.2.10</version>
+	<version>0.2.11-SNAPSHOT</version>
 </project>

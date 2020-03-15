@@ -29,9 +29,10 @@ public class OracleSQLTest {
 
     @Test
     public void testExists() throws Exception {
-        try(Oracle db = new Oracle("localhost", "1521", "orcl.localdomain", "pms", "pms")) {
+        try (Oracle db = new Oracle("localhost", "1521", "ORCLCDB.localdomain", "PMS", "PMS")) {
             System.out.println(db.exists("calendar_ex"));
             db.selectTableNames().forEach(System.out::println);
+            db.selectViewNames().forEach(System.out::println);
         }
     }
 }
