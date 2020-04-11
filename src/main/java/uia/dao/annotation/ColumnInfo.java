@@ -21,6 +21,8 @@ package uia.dao.annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import uia.dao.ColumnType.DataType;;
+
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ColumnInfo {
 
@@ -30,5 +32,14 @@ public @interface ColumnInfo {
 
     String typeName() default "";
 
+    DataType sqlType() default DataType.OTHERS;
+
     boolean inView() default true;
+
+    int length() default 128;
+
+    int scale() default 0;
+
+    String remark() default "";
+
 }

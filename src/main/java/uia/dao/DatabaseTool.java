@@ -53,7 +53,7 @@ public class DatabaseTool {
      * @throws IOException Failed to save the file.
      */
     public void toTableScript(String file, String... tableNames) throws IOException, SQLException {
-        toTableScript(file, this.source, tableNames);
+        toTableScript(file, this.source, false, tableNames);
     }
 
     /**
@@ -66,13 +66,27 @@ public class DatabaseTool {
      * @throws IOException Failed to save the file.
      */
     public void toTableScript(String file, Database target, String... tableNames) throws IOException, SQLException {
+    	toTableScript(file, target, false, tableNames);
+    }
+
+    /**
+     * Output a script to generate all tables.
+     *
+     * @param file The file name.
+     * @param target The database the script is executed on.
+     * @param firstAsPK Set the first column as primary key or not.
+     * @param tableNames Names of tables.
+     * @throws SQLException Failed to execute SQL statements.
+     * @throws IOException Failed to save the file.
+     */
+    public void toTableScript(String file, Database target, boolean firstAsPK, String... tableNames) throws IOException, SQLException {
         StringBuilder scripts = new StringBuilder();
         List<String> ts = Arrays.asList(tableNames);
         if (ts.isEmpty()) {
             ts = this.source.selectTableNames();
         }
         for (String t : ts) {
-            String sql = target.generateCreateTableSQL(this.source.selectTable(t, false));
+            String sql = target.generateCreateTableSQL(this.source.selectTable(t, firstAsPK));
             scripts.append(sql).append("\n");
         }
         Files.write(Paths.get(file), scripts.toString().getBytes());

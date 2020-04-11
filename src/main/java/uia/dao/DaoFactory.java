@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import uia.dao.ColumnType.DataType;
 import uia.dao.annotation.TableInfo;
 import uia.dao.annotation.ViewInfo;
 
@@ -43,6 +44,8 @@ import uia.dao.annotation.ViewInfo;
 *
 */
 public final class DaoFactory {
+
+    private final TreeMap<String, DataType> dataTypes;
 
     private final TreeMap<String, DaoColumnReader> readers;
 
@@ -61,6 +64,16 @@ public final class DaoFactory {
      *
      */
     public DaoFactory(boolean useTz) {
+        this.dataTypes = new TreeMap<>();
+        this.dataTypes.put("short", DataType.INTEGER);
+        this.dataTypes.put("int", DataType.INTEGER);
+        this.dataTypes.put("long", DataType.LONG);
+        this.dataTypes.put("bigdecimal", DataType.NUMERIC);
+        this.dataTypes.put("string", DataType.NVARCHAR2);
+        this.dataTypes.put("date", useTz ? DataType.TIMESTAMPZ : DataType.TIMESTAMP);
+        this.dataTypes.put("clob", DataType.CLOB);
+        this.dataTypes.put("byte[]", DataType.BLOB);
+
         this.readers = new TreeMap<>();
         this.readers.put("short", this::readShort);
         this.readers.put("int", this::readInt);
@@ -100,6 +113,16 @@ public final class DaoFactory {
         load(packageName, null);
     }
 
+    public TableType getTableType(Class<?> clz) {
+        TableDaoHelper<?> helper = forTable(clz);
+        return helper == null ? null : helper.getTableType();
+    }
+
+    public String getViewCode(Class<?> clz) {
+        ViewDaoHelper<?> helper = this.forView(clz);
+        return helper == null ? null : helper.getCode();
+    }
+
     /**
      * Loads definitions of DAO.
      *
@@ -128,18 +151,24 @@ public final class DaoFactory {
      * Loads definitions of DAO.
      *
      * @param t Table class.
+     * @throws DaoException
      */
     public void addTable(Class<?> t) {
-        this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
+        if (!this.daoTables.containsKey(t.getName())) {
+            this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
+        }
     }
 
     /**
      * Loads definitions of DAO.
      *
      * @param v View class.
+     * @throws DaoException
      */
     public void addView(Class<?> v) {
-        this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
+        if (!this.daoViews.containsKey(v.getName())) {
+            this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
+        }
     }
 
     /**
@@ -169,18 +198,20 @@ public final class DaoFactory {
      */
     @SuppressWarnings("unchecked")
     public <T> TableDaoHelper<T> forTable(Class<T> clz) {
+        addTable(clz);
         return (TableDaoHelper<T>) this.daoTables.get(clz.getName());
     }
 
     /**
      * Returns DAO helper for a view.
      *
-     * @param clz The DTO class type of a vie.
+     * @param clz The DTO class type of a view.
      * @param <T> The type of DTO class.
      * @return The DAO helper for the view.
      */
     @SuppressWarnings("unchecked")
     public <T> ViewDaoHelper<T> forView(Class<T> clz) {
+        addView(clz);
         return (ViewDaoHelper<T>) this.daoViews.get(clz.getName());
     }
 
@@ -204,31 +235,55 @@ public final class DaoFactory {
         this.writers.put(typeName.toLowerCase(), writer);
     }
 
+    /**
+     * Create a DAO for a table.
+     *
+     * @param conn The connection.
+     * @param clz The DTO class type of a table.
+     * @param <T> The type of DTO class.
+     * @return The TableDao object.
+     */
+    public <T> TableDao<T> createTableDao(Connection conn, Class<T> clz) {
+        TableDaoHelper<T> helper = forTable(clz);
+        return helper == null
+                ? null
+                : new TableDao<T>(conn, helper);
+    }
+
+    /**
+     * Create a DAO for a view.
+     *
+     * @param conn The connection.
+     * @param clz The DTO class type of a view.
+     * @param <T> The type of DTO class.
+     * @return The ViewDao object.
+     */
+    public <T> ViewDao<T> createViewDao(Connection conn, Class<T> clz) {
+        ViewDaoHelper<T> helper = forView(clz);
+        return helper == null
+                ? null
+                : new ViewDao<T>(conn, helper);
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Map<String, String> test(Connection conn) {
         Map<String, String> result = new TreeMap<>();
         for (TableDaoHelper<?> helper : this.daoTables.values()) {
-            System.out.println(helper.forSelect().getSql());
             try {
                 int size = new TableDao(conn, helper).selectAll().size();
-                System.out.println("  rows:" + size);
                 result.put(helper.getTableName(), helper.getTableClassName() + ", rows:" + size);
             }
             catch (Exception ex) {
-                System.out.println("  failed:" + ex.getMessage());
                 result.put(helper.getTableName(), helper.getTableClassName() + ", failed:" + ex.getMessage());
             }
         }
         for (ViewDaoHelper<?> helper : this.daoViews.values()) {
             result.put(helper.getViewName(), helper.getViewClassName());
-            System.out.println(helper.forSelect().getSql());
             try {
                 int size = new ViewDao(conn, helper).selectAll().size();
-                System.out.println("  rows:" + size);
                 result.put(helper.getViewName(), helper.getViewClassName() + ", rows:" + size);
             }
             catch (Exception ex) {
-                System.out.println("  failed:" + ex.getMessage());
                 result.put(helper.getViewName(), helper.getViewClassName() + ", failed:" + ex.getMessage());
             }
         }
@@ -261,6 +316,11 @@ public final class DaoFactory {
         else {
             return schema + ".";
         }
+    }
+
+    DataType getDataType(String typeName) {
+        DataType type = this.dataTypes.get(typeName.toLowerCase());
+        return type == null ? DataType.NVARCHAR2 : type;
     }
 
     DaoColumnReader getColumnReader(String typeName) {

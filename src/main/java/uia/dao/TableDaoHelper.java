@@ -21,6 +21,7 @@ package uia.dao;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import uia.dao.ColumnType.DataType;
 import uia.dao.annotation.ColumnInfo;
 import uia.dao.annotation.TableInfo;
 
@@ -50,8 +51,13 @@ public final class TableDaoHelper<T> {
 
     private final String orderBy;
 
+    private final TableType tableType;
+
     TableDaoHelper(DaoFactory factory, Class<T> clz) {
         TableInfo ti = clz.getDeclaredAnnotation(TableInfo.class);
+        if (ti == null) {
+            throw new NullPointerException(clz.getName() + ": @TableInfo annotation not found");
+        }
 
         this.tableClassName = clz.getName();
         this.tableName = factory.readSchema(ti.schema()) + ti.name();
@@ -69,15 +75,35 @@ public final class TableDaoHelper<T> {
         ArrayList<String> selectColNames = new ArrayList<>();
         Field[] fs = clz.getDeclaredFields();
 
+        ArrayList<ColumnType> cts = new ArrayList<>();
         ArrayList<DaoColumn> pks = new ArrayList<>();
         for (Field f : fs) {
             ColumnInfo ci = f.getDeclaredAnnotation(ColumnInfo.class);
+
             if (ci != null) {
                 String typeName = ci.typeName();
                 if (typeName.isEmpty()) {
                     typeName = f.getType().getSimpleName();
                 }
 
+                DataType dataType = ci.sqlType();
+                if (dataType == DataType.OTHERS) {
+                    dataType = factory.getDataType(typeName);
+                }
+
+                // ColumnType
+                ColumnType ct = new ColumnType();
+                ct.setPk(ci.primaryKey());
+                ct.setColumnName(ci.name());
+                ct.setColumnSize(ci.length());
+                ct.setDataType(dataType);
+                ct.setDataTypeCode(dataType.sqlType);
+                ct.setDecimalDigits(ci.scale());
+                ct.setNullable(!ci.primaryKey());
+                ct.setRemark(ci.remark());
+                cts.add(ct);
+
+                // DaoColumn
                 DaoColumn column = new DaoColumn(
                         f,
                         factory.getColumnReader(typeName),
@@ -105,6 +131,7 @@ public final class TableDaoHelper<T> {
             this.update.addColumn(col);
         }
 
+        this.tableType = new TableType(ti.name(), ti.remark(), cts, true);
         this.insert.setSql(String.format("INSERT INTO %s(%s) VALUES (%s)",
                 this.tableName,
                 String.join(",", selectColNames),
@@ -121,6 +148,10 @@ public final class TableDaoHelper<T> {
                 String.join(",", selectColNames),
                 this.tableName));
         this.wherePK = String.join(" AND ", prikeyColNames);
+    }
+
+    public TableType getTableType() {
+        return this.tableType;
     }
 
     /**

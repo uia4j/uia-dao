@@ -1,15 +1,16 @@
 DAO Simple Solution
 ================
-The main purpose of the API is to implement DAO pattern simplify using `java.sql` package.
+The main purpose of the API is to implement DAO pattern that uses `java.sql` package to access database.
 
 There are three topics:
 * DTO File Generator
 * DAO Pattern
 * Statement Builder
 
-Datebases the API supports are:
+Databases the API supports are:
 * PostgreSQL
 * Oracle
+* SQLServer
 * HANA
 
 ### Maven
@@ -17,13 +18,13 @@ Datebases the API supports are:
 <dependency>
 	<groupId>org.uia.solution</groupId>
 	<artifactId>uia-dao</artifactId>
-	<version>0.2.1</version>
+	<version>0.2.12</version>
 </dependency>
 ```
 
 ## DAO Pattern
 
-The DAO pattern accesses database using `java.sql` package. You can use pre-implemtated DAO class or inherit it and use `java.sql.Connection` for full control.
+The DAO pattern accesses database using `java.sql` package. You can use pre-implemented `Dao` class or inherit it to fully control tables and views.
 
 * Focus on the design of DTO classes without any XML file.
 * Built-in CRUD SQL statements based on annotations in the DTO class.
@@ -48,16 +49,16 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
     ```java
     package a.b.c;
 
-    @TableName(name = "job_detail")
+    @TableInfo(name = "job_detail")
     public class JobDetail {
 
-        @ColumnName(name = "id", primaryKey = true)
-        private Stirng id;
+        @ColumnInfo(name = "id", primaryKey = true)
+        private String id;
 
-        @ColumnName(name = "job_id")
+        @ColumnInfo(name = "job_id")
         private String jobId;
 
-        @ColumnName(name = "job_detail_name")
+        @ColumnInfo(name = "job_detail_name")
         private String jobDetailName;
     }
     ```
@@ -68,15 +69,15 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
     ```java
     package a.b.c;
 
-    @ViewName(name = "view_job_detail", inherit = 1)
+    @ViewInfo(name = "view_job_detail", inherit = 1)
     public class ViewJobDetail extends JobDetail {
 
-        @ColumnName(name = "job_name")
+        @ColumnInfo(name = "job_name")
         private String jobName;
     }
     ```
 
-3. Creat a fatory and load definition of DTO classes.
+3. Create a factory and load definition of DTO classes.
 
     ```java
     DaoFactory factory = new DaoFactory();
@@ -84,22 +85,39 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
     ```
 
 4. Run __CRUD__ on a table
-
     ```java
+    // create a dao object
     TableDao<JobDetail> dao = new TableDao(conn, factory.forTable(JobDetail.class));
     dao.insert(...);
-    dao.udpate(...);
+    dao.update(...);
+    dao.deleteByPK(...);
+    List<JobDetail> result = dao.selectAll();
+    JobDetail one = dao.selectByPK(...);
+    ```
+    or
+    ```java
+    // create a dao object
+    TableDao<JobDetail> dao = factory.createTable(conn, JobDetail.class));
+    dao.insert(...);
+    dao.update(...);
     dao.deleteByPK(...);
     List<JobDetail> result = dao.selectAll();
     JobDetail one = dao.selectByPK(...);
     ```
 
-3. Run a __SELECT__ on a view
-
+5. Run a __SELECT__ on a view
     ```java
+    // create a dao object
     ViewDao<ViewJobDetail> dao = new ViewDao(conn, factory.forView(ViewJobDetail.class));
     List<ViewJobDetail> result = dao.selectAll();
     ```
+    or
+    ```java
+    // create a dao object
+    ViewDao<ViewJobDetail> dao = factory.createView(conn, ViewJobDetail.class));
+    List<ViewJobDetail> result = dao.selectAll();
+    ```
+
 
 ### Custom DAO
 Use simple SQL statements instead of writing __Spaghetti SQL__.
@@ -107,17 +125,17 @@ Use simple SQL statements instead of writing __Spaghetti SQL__.
 #### Inherit from uia.dao.TableDao to access a table
 
 ```java
-public class JobDetailDao exttends TableDao<JobDetail> {
+public class JobDetailDao extends TableDao<JobDetail> {
 
     public JobDetailDetail(Connection conn) {
         super(conn, factory.forTable(JobDetail.class));
     }
 
-    public List<JobDtail> selectByName(String name) {
+    public List<JobDetail> selectByName(String name) {
         // Get the SELECT method
         DaoMethod<JobDetail> method = this.tableHelper.forSelect();
 
-        // Prepare a statment with custom WHERE criteria.
+        // Prepare a statement with custom WHERE criteria.
         try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + "WHERE job_detail_name like ?")) {
             ps.setString(1, name);
 
@@ -134,14 +152,14 @@ public class JobDetailDao exttends TableDao<JobDetail> {
 #### Inherit from uia.dao.ViewDao for access a view
 
 ```java
-public class ViewJobDetailDao exttends ViewTableDao<ViewJobDetail> {
+public class ViewJobDetailDao extends ViewTableDao<ViewJobDetail> {
 
     public ViewJobDetailDetail(Connection conn) {
         super(conn, factory.forTable(ViewJobDetail.class));
     }
 
     public List<ViewJobDetail> selectByName(String name) {
-        // Prepare a statment with custom WHERE criteria.
+        // Prepare a statement with custom WHERE criteria.
         try (PreparedStatement ps = this.conn.prepareStatement(getSql() + "WHERE job_detail_name like ?")) {
             ps.setString(1, name);
 
@@ -203,8 +221,8 @@ SimpleWhere or2 = Where.simpleOr()
 WhereAnd where = Where.and(or1, or2);
 ```
 
-### Select Statement
-Create a __READY TO EXECUTE__ `PreparedStatement` object.
+### SelectStatement
+Used to create a READY TO BE EXECUTED `PreparedStatement` object.
 
 Example: __*SELECT id,revision,sch_name FROM pms_schedule WHERE state_name=? ORDER BY id*__
 ```java
@@ -225,28 +243,23 @@ try (PreparedStatement ps = select.prepare(conn)) {
 }
 ```
 
+
 ## DTO File Generator
-The tool can generate the Java file based on table and view schema in the database.
+The tool can generate the Java file based on the table and view schema in the database.
 
 ```java
+String sourceDir = "d:/my_project/src/main/java";   // save path
 String dtoPackage = "a.b.c";                        // package name
-String tableName = "job_dtail";                     // table name
-String viewName = "view_job_dtail";                 // view name
+String tableName = "job_detail";                    // table name
+String viewName = "view_job_detail";                // view name
 
 // PostgreSQL
 Database db = new PostgreSQL(host, port, dbName, user, password);
 
-// output stirng only
-String clzTable = DaoFactoryClassPrinter(db, tableName).generateDTO(
-        dtoPackage,
-        CamelNaming.upper(tableName));
-String clzView = DaoFactoryClassPrinter(db, viewName).generateDTO(
-        dtoPackage,
-        CamelNaming.upper(tableName));
-
 // save to files
-String sourceDir = "d:/my_project/src/main/java";   // save path
 DaoFactoryTool tool = new DaoFactoryTool(db);
+// save to files: table
 tool.toDTO(sourceDir, dtoPackage, tableName)
-tool.toDTO(sourceDir, dtoPackage, tableName)
+// save to files: view
+tool.toDTO(sourceDir, dtoPackage, viewName)
 ```

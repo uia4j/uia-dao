@@ -31,4 +31,6 @@ public @interface ViewInfo {
     String schema() default "";
 
     String orderBy() default "";
+
+    String code() default "";
 }

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.uia.solution</groupId>
 	<artifactId>uia-dao</artifactId>
-	<version>0.2.11</version>
+	<version>0.2.13-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>uia-dao</name>
 	<url>https://github.com/uia4j/uia-dao</url>
@@ -83,6 +83,7 @@
 						<exclude>uia/dao/pg/*.java</exclude>
 						<exclude>uia/dao/ora/*.java</exclude>
 						<exclude>uia/dao/sqlite/*.java</exclude>
+						<exclude>uia/dao/sqlserver/*.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>

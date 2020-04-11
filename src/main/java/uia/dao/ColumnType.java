@@ -22,6 +22,7 @@ import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.NClob;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 
 /**
@@ -30,96 +31,99 @@ import java.util.ArrayList;
  * @author Kyle K. Lin
  *
  */
-public abstract class ColumnType {
+public class ColumnType {
 
-    public enum DataType {
+    public static enum DataType {
 
         /**
          * varchar
          */
-        VARCHAR,
+        VARCHAR(Types.VARCHAR),
 
         /**
          * nvarchar
          */
-        NVARCHAR,
+        NVARCHAR(Types.NVARCHAR),
 
         /**
          * varchar2
          */
-        VARCHAR2,
+        VARCHAR2(Types.VARCHAR),
 
         /**
          * nvarchar2
          */
-        NVARCHAR2,
+        NVARCHAR2(Types.NVARCHAR),
 
         /**
          * integer
          */
-        INTEGER,
+        INTEGER(Types.INTEGER),
 
         /**
          * long
          */
-        LONG,
+        LONG(Types.BIGINT),
 
         /**
          * numeroc
          */
-        NUMERIC,
+        NUMERIC(Types.NUMERIC),
 
         /**
          * float
          */
-        FLOAT,
+        FLOAT(Types.FLOAT),
 
         /**
          * double
          */
-        DOUBLE,
+        DOUBLE(Types.DOUBLE),
 
         /**
          * timestamp
          */
-        TIMESTAMP,
+        TIMESTAMP(Types.TIMESTAMP),
 
         /**
          * timestamp with time zone
          */
-        TIMESTAMPZ,
+        TIMESTAMPZ(Types.TIMESTAMP_WITH_TIMEZONE),
 
         /**
          * date
          */
-        DATE,
+        DATE(Types.DATE),
 
         /**
          * time
          */
-        TIME,
+        TIME(Types.TIME),
 
         /**
          * blob
          */
-        BLOB,
+        BLOB(Types.BLOB),
 
         /**
          * clob
          */
-        CLOB,
+        CLOB(Types.CLOB),
 
         /**
          * nclob
          */
-        NCLOB,
+        NCLOB(Types.NCLOB),
 
         /**
          * others
          */
-        OTHERS;
+        OTHERS(Types.NVARCHAR);
 
-        DataType() {
+        public final int sqlType;
+
+        DataType(int sqlType) {
+            this.sqlType = sqlType;
         }
     }
 
@@ -547,7 +551,7 @@ public abstract class ColumnType {
 
         boolean result = targetColumn.isStringType();
         if (plan.strictVarchar) {
-            result = chdckDataType(targetColumn, plan, ctx);
+            result = checkDataType(targetColumn, plan, ctx);
         }
 
         return result ? checkSize(targetColumn, plan, ctx) : result;
@@ -562,7 +566,7 @@ public abstract class ColumnType {
             return targetColumn.isNumericType();
         }
 
-        boolean result = chdckDataType(targetColumn, plan, ctx);
+        boolean result = checkDataType(targetColumn, plan, ctx);
         return result ? checkSize(targetColumn, plan, ctx) : result;
     }
 
@@ -572,14 +576,14 @@ public abstract class ColumnType {
         }
 
         if (plan.strictDateTime) {
-            return chdckDataType(targetColumn, plan, ctx);
+            return checkDataType(targetColumn, plan, ctx);
         }
         else {
             return targetColumn.isDateTimeType();
         }
     }
 
-    public boolean chdckDataType(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
+    public boolean checkDataType(ColumnType targetColumn, ComparePlan plan, CompareResult ctx) {
         // data type
         if (this.dataType != targetColumn.getDataType()) {
             ctx.getDiff().add(new ColumnDiff(this, targetColumn, ColumnDiff.ActionType.ALTER, ColumnDiff.AlterType.DATA_TYPE));

@@ -40,12 +40,19 @@ public final class ViewDaoHelper<T> {
 
     private final String orderBy;
 
+    private final String code;
+
     ViewDaoHelper(DaoFactory factory, Class<T> clz) {
         ViewInfo ti = clz.getDeclaredAnnotation(ViewInfo.class);
+        if (ti == null) {
+            throw new NullPointerException(clz.getName() + ": @ViewInfo annotation not found");
+        }
+
         this.viewClassName = clz.getName();
         this.viewName = factory.readSchema(ti.schema()) + ti.name();
         this.select = new DaoMethod<>(clz);
         this.orderBy = ti.orderBy().trim().isEmpty() ? "" : ti.orderBy();
+        this.code = ti.code();
 
         ArrayList<String> selectColNames = new ArrayList<>();
         Class<?> curr = clz;
@@ -93,6 +100,14 @@ public final class ViewDaoHelper<T> {
      */
     public String getViewName() {
         return this.viewName;
+    }
+
+    /**
+     * Returns the code of this view.
+     * @return The code.
+     */
+    public String getCode() {
+        return this.code;
     }
 
     /**

@@ -16,19 +16,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package uia.dao.annotation;
+package uia.dao.sqlserver;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import org.junit.Test;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface TableInfo {
+/**
+ *
+ * @author Kyle K. Lin
+ *
+ */
+public class SQLServerTest {
 
-    String name();
-
-    String schema() default "";
-
-    String orderBy() default "";
-
-    String remark() default "";
+    @Test
+    public void testExists() throws Exception {
+        try (SQLServer db = new SQLServer("localhost", "1433", "master", "sa", "sqlAdmin2019")) {
+            System.out.println(db.exists("Databases"));
+        }
+    }
 }

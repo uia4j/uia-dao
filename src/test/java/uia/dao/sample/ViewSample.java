@@ -16,19 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package uia.dao.annotation;
+package uia.dao.sample;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import uia.dao.annotation.ViewInfo;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface TableInfo {
+@ViewInfo(
+        name = "view_one",
+        code = "select * from a \n" +
+                "inner join b on a.key=b.key")
+public class ViewSample {
 
-    String name();
-
-    String schema() default "";
-
-    String orderBy() default "";
-
-    String remark() default "";
 }

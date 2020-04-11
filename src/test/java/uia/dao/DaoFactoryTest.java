@@ -25,11 +25,47 @@ import java.util.Date;
 import org.junit.Assert;
 import org.junit.Test;
 
+import uia.dao.hana.Hana;
+import uia.dao.ora.Oracle;
+import uia.dao.pg.PostgreSQL;
 import uia.dao.sample.One;
+import uia.dao.sample.Sample;
 import uia.dao.sample.Two;
 import uia.dao.sample.ViewOne;
+import uia.dao.sample.ViewSample;
 
 public class DaoFactoryTest {
+
+    @Test
+    public void testTableType() throws Exception {
+        DaoFactory factory = new DaoFactory(true);
+        factory.addTable(Sample.class);
+
+        TableType tt = factory.getTableType(Sample.class);
+        System.out.println("-- hana");
+        try (Database db = new Hana()) {
+            System.out.println(db.generateCreateTableSQL(tt));
+        }
+        System.out.println();
+
+        System.out.println("-- oracle");
+        try (Database db = new Oracle()) {
+            System.out.println(db.generateCreateTableSQL(tt));
+        }
+        System.out.println();
+
+        System.out.println("-- pgsql");
+        try (Database db = new PostgreSQL()) {
+            System.out.println(db.generateCreateTableSQL(tt));
+        }
+    }
+
+    @Test
+    public void testViewCode() throws Exception {
+        DaoFactory factory = new DaoFactory(true);
+        factory.addView(ViewSample.class);
+        System.out.println(factory.getViewCode(ViewSample.class));
+    }
 
     @Test
     public void testDate() {
