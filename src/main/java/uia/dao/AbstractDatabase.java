@@ -58,6 +58,21 @@ public abstract class AbstractDatabase implements Database {
     /**
      * Constructor.
      *
+     * @param dataSource The data source.
+     * @throws SQLException Failed to initial.
+     */
+    protected AbstractDatabase(DataSource dataSource) throws SQLException {
+        this.url = "DataSource:" + getClass().getSimpleName();
+        this.alwaysNVarchar = false;
+        this.alwaysTimestampZ = false;
+        this.conn = dataSource.getConnection();
+        this.dataSource = dataSource;
+        this.schema = this.conn.getSchema();
+    }
+
+    /**
+     * Constructor.
+     *
      * @param driverName The driver calss.
      * @param url The JDBC connection string.
      * @param user The user id.
@@ -79,7 +94,7 @@ public abstract class AbstractDatabase implements Database {
         }
         else {
             this.conn = null;
-            this.dataSource = null;
+            // this.dataSource = null;
             this.schema = schema;
         }
     }
@@ -117,7 +132,7 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public Connection getConnectionFromPool() throws SQLException {
+    public Connection createConnection() throws SQLException {
         return this.dataSource.getConnection();
     }
 

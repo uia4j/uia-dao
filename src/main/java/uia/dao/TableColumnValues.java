@@ -28,7 +28,8 @@ import uia.dao.where.conditions.ConditionType;
 import uia.dao.where.conditions.EqType;
 
 /**
- *
+ * Value of columns used to update.
+ * 
  * @author Kyle K. Lin
  *
  */
@@ -36,19 +37,33 @@ public class TableColumnValues {
 
     private final ArrayList<ConditionType> conds;
 
+    /**
+     * Constructor.
+     */
     public TableColumnValues() {
         this.conds = new ArrayList<>();
     }
 
-    public TableColumnValues put(String key, Object value) {
-        if (isEmpty(key)) {
+    /**
+     * Adds a value for a specific column.
+     * @param column The column name.
+     * @param value The value.
+     * @return This instance.
+     */
+    public TableColumnValues put(String column, Object value) {
+        if (isEmpty(column)) {
             return this;
         }
-        this.conds.add(new EqType(key, value));
+        this.conds.add(new EqType(column, value));
         return this;
     }
 
-    public String generate() {
+    /**
+     * Generates the statement of 'set'.
+     * 
+     * @return The statement.
+     */
+    String sql() {
         if (this.conds.isEmpty()) {
             return "";
         }
@@ -58,12 +73,20 @@ public class TableColumnValues {
         return String.join(",", data);
     }
 
-    public int accept(PreparedStatement ps, int index) throws SQLException {
-        int i = index;
+    /**
+     * Accept the instance.
+     * 
+     * @param ps The prepared statement used to update the table.
+     * @param startIndex The start index.
+     * @return The next index.
+     * @throws SQLException Failed to prepare.
+     */
+    int accept(PreparedStatement ps, int startIndex) throws SQLException {
+        int next = startIndex;
         for (ConditionType cond : this.conds) {
-            i = cond.accpet(ps, i);
+        	next = cond.accpet(ps, next);
         }
-        return i;
+        return next;
     }
 
     @Override

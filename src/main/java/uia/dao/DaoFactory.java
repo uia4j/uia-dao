@@ -45,6 +45,8 @@ import uia.dao.annotation.ViewInfo;
 */
 public final class DaoFactory {
 
+	private String defaultSchema;
+	
     private final TreeMap<String, DataType> dataTypes;
 
     private final TreeMap<String, DaoColumnReader> readers;
@@ -103,7 +105,15 @@ public final class DaoFactory {
         this.daoViews = new TreeMap<>();
     }
 
-    /**
+    public String getDefaultSchema() {
+		return this.defaultSchema;
+	}
+
+	public void setDefaultSchema(String defaultSchema) {
+		this.defaultSchema = defaultSchema;
+	}
+
+	/**
      * Loads definitions of DAO.
      *
      * @param packageName The package name.
@@ -151,7 +161,6 @@ public final class DaoFactory {
      * Loads definitions of DAO.
      *
      * @param t Table class.
-     * @throws DaoException
      */
     public void addTable(Class<?> t) {
         if (!this.daoTables.containsKey(t.getName())) {
@@ -163,7 +172,6 @@ public final class DaoFactory {
      * Loads definitions of DAO.
      *
      * @param v View class.
-     * @throws DaoException
      */
     public void addView(Class<?> v) {
         if (!this.daoViews.containsKey(v.getName())) {
@@ -311,7 +319,7 @@ public final class DaoFactory {
 
     String readSchema(String schema) {
         if (schema == null || schema.isEmpty()) {
-            return "";
+            return this.defaultSchema == null ? "" : this.defaultSchema + ".";
         }
         else {
             return schema + ".";

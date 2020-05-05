@@ -53,6 +53,19 @@ public class TableType {
         this.columns = columns;
         this.table = table;
     }
+    
+    /**
+     * Clones the object.
+     * 
+     * @return Result.
+     */
+    public TableType clone() {
+    	return new TableType(
+    			this.tableName,
+    			this.remark,
+    			new ArrayList<ColumnType>(this.columns),
+    			table);
+    }
 
     /**
      * Returns table name.
@@ -266,5 +279,23 @@ public class TableType {
         return String.format("DELETE FROM %s WHERE %s",
                 this.tableName.toLowerCase(),
                 String.join(" AND ", ws));
+    }
+    
+    public String generateProperties() {
+    	StringBuilder p = new StringBuilder()
+    			.append(CamelNaming.lower(this.tableName))
+    			.append(".Title=")
+    			.append(this.remark == null ? CamelNaming.upper(this.tableName) : this.remark)
+    			.append("\n");
+        for (ColumnType column : this.columns) {
+        	String columnName = CamelNaming.upper(column.getColumnName());
+			p.append(CamelNaming.lower(this.tableName))
+        			.append(".")
+		        	.append(columnName)
+		        	.append("=")
+		        	.append(column.getRemark() == null ? columnName : column.getRemark()).append("\n");
+        }
+
+        return p.toString();
     }
 }

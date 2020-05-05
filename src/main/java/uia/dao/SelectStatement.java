@@ -25,7 +25,8 @@ import java.sql.SQLException;
 import uia.dao.where.Where;
 
 /**
- *
+ * The statement used to select/update/delete a table.
+ * 
  * @author Kyle K. Lin
  *
  */
@@ -39,6 +40,11 @@ public class SelectStatement {
 
     private String orders;
 
+    /**
+     * Constructor.
+     * 
+     * @param selectSql The 'select' part.
+     */
     public SelectStatement(String selectSql) {
         this.selectSql = selectSql;
     }
@@ -48,16 +54,34 @@ public class SelectStatement {
         this.orders = null;
     }
 
+    /**
+     * Sets the 'where' statement.
+     * 
+     * @param where The 'where' statement.
+     * @return The instance.
+     */
     public SelectStatement where(Where where) {
         this.where = where;
         return this;
     }
 
+    /**
+     * Sets the 'group by' statement.
+     * 
+     * @param groups The 'group by' statement.
+     * @return The instance.
+     */
     public SelectStatement groupBy(String groups) {
         this.groups = groups;
         return this;
     }
 
+    /**
+     * Sets the 'order by' statement.
+     * 
+     * @param orders The 'order by' statement.
+     * @return The instance.
+     */
     public SelectStatement orderBy(String orders) {
         this.orders = orders;
         return this;

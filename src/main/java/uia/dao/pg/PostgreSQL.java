@@ -267,7 +267,7 @@ public class PostgreSQL extends AbstractDatabase {
                         case Types.TIME:                // time, timez
                             ct.setDataType(DataType.TIME);
                             break;
-                        case Types.TIMESTAMP:           // timestamp, timestamp with timezone
+                        case Types.TIMESTAMP:           // timestamp, timestamp without timezone
                             if (isAlwaysTimestampZ()) {
                                 ct.setDataType(DataType.TIMESTAMPZ);
                             }

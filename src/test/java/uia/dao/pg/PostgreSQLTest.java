@@ -25,7 +25,7 @@ import org.junit.Test;
 import uia.dao.ColumnType;
 import uia.dao.CompareResult;
 import uia.dao.Database;
-import uia.dao.DatabaseTool;
+import uia.dao.ScriptTool;
 import uia.dao.TableType;
 import uia.dao.hana.Hana;
 import uia.dao.ora.Oracle;
@@ -66,8 +66,8 @@ public class PostgreSQLTest {
         try (Hana hana = fwks()) {
             try (PostgreSQL db1 = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
                 try (PostgreSQL db2 = new PostgreSQL("localhost", "5432", "pmsdbv1", "postgres", "pgAdmin")) {
-                    new DatabaseTool(db1).toAlterScript("d:/temp/pmsdbv2_pg.sql", db2);
-                    new DatabaseTool(db1).toAlterScript("d:/temp/pmsdbv2_hana.sql", hana);
+                    new ScriptTool(db1).toAlterScript("d:/temp/pmsdbv2_pg.sql", db2);
+                    new ScriptTool(db1).toAlterScript("d:/temp/pmsdbv2_hana.sql", hana);
                 }
             }
         }

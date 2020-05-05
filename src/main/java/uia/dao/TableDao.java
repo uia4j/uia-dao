@@ -294,7 +294,7 @@ public class TableDao<T> {
      * @throws SQLException Failed to execute the SQL statement.
      */
     public int update(TableColumnValues cvs) throws SQLException {
-        String sql = String.format("update %s set %s", this.tableHelper.getTableName(), cvs.generate());
+        String sql = String.format("update %s set %s", this.tableHelper.getTableName(), cvs.sql());
         try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
             cvs.accept(ps, 1);
             return ps.executeUpdate();
@@ -310,12 +310,13 @@ public class TableDao<T> {
      * @throws SQLException Failed to execute the SQL statement.
      */
     public int update(TableColumnValues cvs, Where where) throws SQLException {
-        String sql = String.format("update %s set %s", this.tableHelper.getTableName(), cvs.generate());
+        String sql = String.format("update %s set %s", this.tableHelper.getTableName(), cvs.sql());
         if (where.hasConditions()) {
             sql += (" where " + where.generate());
         }
         try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
-            where.accept(ps, cvs.accept(ps, 1));
+        	int next = cvs.accept(ps, 1);
+            where.accept(ps, next);
             return ps.executeUpdate();
         }
     }

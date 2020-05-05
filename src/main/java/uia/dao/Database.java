@@ -52,19 +52,19 @@ public interface Database extends AutoCloseable {
     public void setSchema(String schema);
 
     /**
-     * Returns the connection.
+     * Returns the connection the instance is using.
      *
      * @return The connection.
      */
     public Connection getConnection();
 
     /**
-     * Returns the connection from connection pool.
+     * Returns a new connection.
      *
      * @return The connection.
      * @throws SQLException Failed to execute.
      */
-    public Connection getConnectionFromPool() throws SQLException;
+    public Connection createConnection() throws SQLException;
 
     /**
      * Returns table names.

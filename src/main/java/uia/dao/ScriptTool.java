@@ -31,7 +31,7 @@ import java.util.List;
  * @author Kyle K. Lin
  *
  */
-public class DatabaseTool {
+public class ScriptTool {
 
     private final Database source;
 
@@ -40,7 +40,7 @@ public class DatabaseTool {
      *
      * @param source The source database.
      */
-    public DatabaseTool(Database source) {
+    public ScriptTool(Database source) {
         this.source = source;
     }
 
