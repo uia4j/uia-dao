@@ -33,7 +33,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.reflections.Reflections;
+
 import uia.dao.ColumnType.DataType;
+import uia.dao.annotation.DaoInfo;
 import uia.dao.annotation.TableInfo;
 import uia.dao.annotation.ViewInfo;
 
@@ -104,7 +107,33 @@ public final class DaoFactory {
         this.daoTables = new TreeMap<>();
         this.daoViews = new TreeMap<>();
     }
-
+    
+	public <T extends TableDao<?>> T newTableDao(Class<T> absclz, Connection conn) throws Exception {
+		DaoInfo dao = absclz.getDeclaredAnnotation(DaoInfo.class);
+		if(dao == null) {
+			throw new NullPointerException("@DaoInfo not found");
+		}
+		
+		TableDaoHelper<?> tableHelper = forTable(dao.type());
+		if(tableHelper != null) {
+			return new ProxyDao().bind(absclz, conn, tableHelper);
+		}
+		return null;
+	}
+    
+	public <T extends ViewDao<?>> T newViewDao(Class<T> absclz, Connection conn) throws Exception {
+		DaoInfo dao = absclz.getDeclaredAnnotation(DaoInfo.class);
+		if(dao == null) {
+			throw new NullPointerException("@DaoInfo not found");
+		}
+		
+		ViewDaoHelper<?> viewHelper = forView(dao.type());
+		if(viewHelper != null) {
+			return new ProxyDao().bind(absclz, conn, viewHelper);
+		}
+		return null;
+	}
+    
     public String getDefaultSchema() {
 		return this.defaultSchema;
 	}
@@ -122,7 +151,7 @@ public final class DaoFactory {
     public void load(String packageName) throws DaoException {
         load(packageName, null);
     }
-
+    
     public TableType getTableType(Class<?> clz) {
         TableDaoHelper<?> helper = forTable(clz);
         return helper == null ? null : helper.getTableType();
@@ -142,12 +171,14 @@ public final class DaoFactory {
      */
     public void load(String packageName, ClassLoader loader) throws DaoException {
         try {
-            List<Class<?>> tables = Reflections.findClasses(packageName, TableInfo.class, loader);
+        	Reflections ref = new Reflections(packageName);
+        	// tables
+            Set<Class<?>> tables = ref.getTypesAnnotatedWith(TableInfo.class, true);
             for (Class<?> t : tables) {
                 this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
             }
-
-            List<Class<?>> views = Reflections.findClasses(packageName, ViewInfo.class, loader);
+        	// views
+            Set<Class<?>> views = ref.getTypesAnnotatedWith(ViewInfo.class, true);
             for (Class<?> v : views) {
                 this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
             }
