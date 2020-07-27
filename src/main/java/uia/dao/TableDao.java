@@ -271,6 +271,25 @@ public class TableDao<T> {
     }
 
     /**
+     * Selects one row with a criteria.
+     *
+     * @param where The where statement.
+     * @return One row meets the criteria.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public T selectOne(Where where) throws SQLException, DaoException {
+        DaoMethod<T> method = this.tableHelper.forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toOne(rs);
+            }
+        }
+    }
+
+    /**
      * Deletes some rows with a criteria.
      *
      * @param where The where statement.
@@ -315,7 +334,7 @@ public class TableDao<T> {
             sql += (" where " + where.generate());
         }
         try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
-        	int next = cvs.accept(ps, 1);
+            int next = cvs.accept(ps, 1);
             where.accept(ps, next);
             return ps.executeUpdate();
         }

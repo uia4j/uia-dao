@@ -37,6 +37,14 @@ import uia.dao.sample.ViewSample;
 public class DaoFactoryTest {
 
     @Test
+    public void testLoad() throws Exception {
+        DaoFactory factory = new DaoFactory(true);
+        factory.load("uia.dao.pms");
+        factory.getTables().forEach(System.out::println);
+        factory.getViews().forEach(System.out::println);
+    }
+
+    @Test
     public void testTableType() throws Exception {
         DaoFactory factory = new DaoFactory(true);
         factory.addTable(Sample.class);

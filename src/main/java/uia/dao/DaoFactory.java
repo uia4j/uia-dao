@@ -28,12 +28,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.reflections.Reflections;
+
 import uia.dao.ColumnType.DataType;
+import uia.dao.annotation.DaoInfo;
 import uia.dao.annotation.TableInfo;
 import uia.dao.annotation.ViewInfo;
 
@@ -45,8 +47,8 @@ import uia.dao.annotation.ViewInfo;
 */
 public final class DaoFactory {
 
-	private String defaultSchema;
-	
+    private String defaultSchema;
+
     private final TreeMap<String, DataType> dataTypes;
 
     private final TreeMap<String, DaoColumnReader> readers;
@@ -64,11 +66,14 @@ public final class DaoFactory {
     /**
      * Constructor.
      *
+     * @param useTz Enable time zone for Date or not.
+     *
      */
     public DaoFactory(boolean useTz) {
         this.dataTypes = new TreeMap<>();
         this.dataTypes.put("short", DataType.INTEGER);
         this.dataTypes.put("int", DataType.INTEGER);
+        this.dataTypes.put("integer", DataType.INTEGER);
         this.dataTypes.put("long", DataType.LONG);
         this.dataTypes.put("bigdecimal", DataType.NUMERIC);
         this.dataTypes.put("string", DataType.NVARCHAR2);
@@ -79,6 +84,7 @@ public final class DaoFactory {
         this.readers = new TreeMap<>();
         this.readers.put("short", this::readShort);
         this.readers.put("int", this::readInt);
+        this.readers.put("integer", this::readInt);
         this.readers.put("long", this::readLong);
         this.readers.put("bigdecimal", this::readBigDecimal);
         this.readers.put("string", this::readString);
@@ -92,6 +98,7 @@ public final class DaoFactory {
         this.writers = new TreeMap<>();
         this.writers.put("short", this::writeShort);
         this.writers.put("int", this::writeInt);
+        this.writers.put("integer", this::writeInt);
         this.writers.put("long", this::writeLong);
         this.writers.put("bigdecimal", this::writeBigDecimal);
         this.writers.put("string", this::writeString);
@@ -105,15 +112,75 @@ public final class DaoFactory {
         this.daoViews = new TreeMap<>();
     }
 
+    public DaoSession createSession(Connection conn) {
+        return new DaoSession(this, conn);
+    }
+
+    /**
+     * Create a DAO for a table.
+     *
+     * @param conn The connection.
+     * @param clz The DTO class type of a table.
+     * @param <T> The type of DTO class.
+     * @return The TableDao object.
+     */
+    public <T> TableDao<T> creaeTableDao(Class<T> clz, Connection conn) {
+        TableDaoHelper<T> helper = forTable(clz);
+        return helper == null
+                ? null
+                : new TableDao<T>(conn, helper);
+    }
+
+    /**
+     * Create a DAO for a view.
+     *
+     * @param conn The connection.
+     * @param clz The DTO class type of a view.
+     * @param <T> The type of DTO class.
+     * @return The ViewDao object.
+     */
+    public <T> ViewDao<T> createViewDao(Class<T> clz, Connection conn) {
+        ViewDaoHelper<T> helper = forView(clz);
+        return helper == null
+                ? null
+                : new ViewDao<T>(conn, helper);
+    }
+
+    public <T extends TableDao<?>> T proxyTableDao(Class<T> daoClz, Connection conn) throws Exception {
+        DaoInfo dao = daoClz.getDeclaredAnnotation(DaoInfo.class);
+        if (dao == null) {
+            throw new NullPointerException("@DaoInfo not found");
+        }
+
+        TableDaoHelper<?> tableHelper = forTable(dao.type());
+        if (tableHelper != null) {
+            return new ProxyDao().bind(daoClz, conn, tableHelper);
+        }
+        return null;
+    }
+
+    public <T extends ViewDao<?>> T proxyViewDao(Class<T> daoClz, Connection conn) throws Exception {
+        DaoInfo dao = daoClz.getDeclaredAnnotation(DaoInfo.class);
+        if (dao == null) {
+            throw new NullPointerException("@DaoInfo not found");
+        }
+
+        ViewDaoHelper<?> viewHelper = forView(dao.type());
+        if (viewHelper != null) {
+            return new ProxyDao().bind(daoClz, conn, viewHelper);
+        }
+        return null;
+    }
+
     public String getDefaultSchema() {
-		return this.defaultSchema;
-	}
+        return this.defaultSchema;
+    }
 
-	public void setDefaultSchema(String defaultSchema) {
-		this.defaultSchema = defaultSchema;
-	}
+    public void setDefaultSchema(String defaultSchema) {
+        this.defaultSchema = defaultSchema;
+    }
 
-	/**
+    /**
      * Loads definitions of DAO.
      *
      * @param packageName The package name.
@@ -142,12 +209,14 @@ public final class DaoFactory {
      */
     public void load(String packageName, ClassLoader loader) throws DaoException {
         try {
-            List<Class<?>> tables = Reflections.findClasses(packageName, TableInfo.class, loader);
+            Reflections ref = new Reflections(packageName);
+            // tables
+            Set<Class<?>> tables = ref.getTypesAnnotatedWith(TableInfo.class, true);
             for (Class<?> t : tables) {
                 this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
             }
-
-            List<Class<?>> views = Reflections.findClasses(packageName, ViewInfo.class, loader);
+            // views
+            Set<Class<?>> views = ref.getTypesAnnotatedWith(ViewInfo.class, true);
             for (Class<?> v : views) {
                 this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
             }
@@ -243,36 +312,6 @@ public final class DaoFactory {
         this.writers.put(typeName.toLowerCase(), writer);
     }
 
-    /**
-     * Create a DAO for a table.
-     *
-     * @param conn The connection.
-     * @param clz The DTO class type of a table.
-     * @param <T> The type of DTO class.
-     * @return The TableDao object.
-     */
-    public <T> TableDao<T> createTableDao(Connection conn, Class<T> clz) {
-        TableDaoHelper<T> helper = forTable(clz);
-        return helper == null
-                ? null
-                : new TableDao<T>(conn, helper);
-    }
-
-    /**
-     * Create a DAO for a view.
-     *
-     * @param conn The connection.
-     * @param clz The DTO class type of a view.
-     * @param <T> The type of DTO class.
-     * @return The ViewDao object.
-     */
-    public <T> ViewDao<T> createViewDao(Connection conn, Class<T> clz) {
-        ViewDaoHelper<T> helper = forView(clz);
-        return helper == null
-                ? null
-                : new ViewDao<T>(conn, helper);
-    }
-
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Map<String, String> test(Connection conn) {
         Map<String, String> result = new TreeMap<>();
@@ -334,6 +373,11 @@ public final class DaoFactory {
     DaoColumnReader getColumnReader(String typeName) {
         DaoColumnReader reader = this.readers.get(typeName.toLowerCase());
         return reader == null ? this.objectReader : reader;
+    }
+
+    DaoColumnWriter getColumnWriter(Class<?> type) {
+        DaoColumnWriter writer = this.writers.get(type.getSimpleName().toLowerCase());
+        return writer == null ? this.objectWriter : writer;
     }
 
     DaoColumnWriter getColumnWriter(String typeName) {

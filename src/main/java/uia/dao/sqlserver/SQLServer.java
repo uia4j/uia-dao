@@ -154,7 +154,7 @@ public class SQLServer extends AbstractDatabase {
     @Override
     public List<ColumnType> selectColumns(String tableName, boolean firstAsPK) throws SQLException {
         ArrayList<String> pks = new ArrayList<>();
-        try (ResultSet rs = this.conn.getMetaData().getPrimaryKeys(null, null, tableName)) {
+        try (ResultSet rs = this.conn.getMetaData().getPrimaryKeys(null, this.schema, tableName)) {
             while (rs.next()) {
                 pks.add(rs.getString("COLUMN_NAME"));
             }
@@ -186,7 +186,7 @@ public class SQLServer extends AbstractDatabase {
          * IS_AUTOINCREMENT         *
          */
         List<ColumnType> cts = new ArrayList<>();
-        try (ResultSet rs = this.conn.getMetaData().getColumns(null, null, tableName, null)) {
+        try (ResultSet rs = this.conn.getMetaData().getColumns(null, this.schema, tableName, null)) {
             while (rs.next()) {
                 if (tableName.equalsIgnoreCase(rs.getString("TABLE_NAME"))) {
                     String columnName = rs.getString("COLUMN_NAME");

@@ -32,17 +32,22 @@ import uia.dao.annotation.ViewInfo;
  */
 public final class ViewDaoHelper<T> {
 
+    private final DaoFactory factory;
+
     private final String viewClassName;
 
     private final String viewName;
 
     private final DaoMethod<T> select;
 
+    private final DaoMethod<T> selectWithAlias;
+
     private final String orderBy;
 
     private final String code;
 
     ViewDaoHelper(DaoFactory factory, Class<T> clz) {
+        this.factory = factory;
         ViewInfo ti = clz.getDeclaredAnnotation(ViewInfo.class);
         if (ti == null) {
             throw new NullPointerException(clz.getName() + ": @ViewInfo annotation not found");
@@ -51,6 +56,7 @@ public final class ViewDaoHelper<T> {
         this.viewClassName = clz.getName();
         this.viewName = factory.readSchema(ti.schema()) + ti.name();
         this.select = new DaoMethod<>(clz);
+        this.selectWithAlias = new DaoMethod<>(clz);
         this.orderBy = ti.orderBy().trim().isEmpty() ? "" : ti.orderBy();
         this.code = ti.code();
 
@@ -73,6 +79,7 @@ public final class ViewDaoHelper<T> {
                             factory.getColumnWriter(typeName));
 
                     this.select.addColumn(column);
+                    this.selectWithAlias.addColumn(column);
                     selectColNames.add(ci.name());
 
                 }
@@ -82,6 +89,13 @@ public final class ViewDaoHelper<T> {
         this.select.setSql(String.format("SELECT %s FROM %s ",
                 String.join(",", selectColNames),
                 this.viewName));
+        this.selectWithAlias.setSql(String.format("SELECT x.%s FROM %s AS x ",
+                String.join(",x.", selectColNames),
+                this.viewName));
+    }
+
+    public DaoFactory getFactory() {
+        return this.factory;
     }
 
     /**
@@ -118,6 +132,16 @@ public final class ViewDaoHelper<T> {
      */
     public DaoMethod<T> forSelect() {
         return this.select;
+    }
+
+    /**
+     * Returns a method for SELECT which contains all columns of the table with alias name 'x'.<br>
+     * The SQL will be 'SELECT x.pk1,x.pk2,vc1,x.c2... FROM table_name AS x'.
+     *
+     * @return The SELECT method.
+     */
+    public DaoMethod<T> forSelectX() {
+        return this.selectWithAlias;
     }
 
     public String getOrderBy() {
