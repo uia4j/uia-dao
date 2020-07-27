@@ -67,9 +67,9 @@ public class ViewDao<T> {
         String orderBy = this.viewHelper.getOrderBy();
         String sql = getSql();
         if (!orderBy.isEmpty()) {
-        	sql = sql + " ORDER BY " + orderBy;
+            sql = sql + " ORDER BY " + orderBy;
         }
-        
+
         try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
                 return toList(rs);

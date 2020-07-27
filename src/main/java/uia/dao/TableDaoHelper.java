@@ -33,6 +33,8 @@ import uia.dao.annotation.TableInfo;
  */
 public final class TableDaoHelper<T> {
 
+    private final DaoFactory factory;
+
     private final String tableClassName;
 
     private final String tableName;
@@ -47,6 +49,8 @@ public final class TableDaoHelper<T> {
 
     private final DaoMethod<T> select;
 
+    private final DaoMethod<T> selectWithAlias;
+
     private final String wherePK;
 
     private final String orderBy;
@@ -54,6 +58,7 @@ public final class TableDaoHelper<T> {
     private final TableType tableType;
 
     TableDaoHelper(DaoFactory factory, Class<T> clz) {
+        this.factory = factory;;
         TableInfo ti = clz.getDeclaredAnnotation(TableInfo.class);
         if (ti == null) {
             throw new NullPointerException(clz.getName() + ": @TableInfo annotation not found");
@@ -67,6 +72,7 @@ public final class TableDaoHelper<T> {
         this.update = new DaoMethod<>(clz);
         this.delete = new DaoMethod<>(clz);
         this.select = new DaoMethod<>(clz);
+        this.selectWithAlias = new DaoMethod<>(clz);
         this.primaryKeys = new ArrayList<>();
 
         ArrayList<String> prikeyColNames = new ArrayList<>();
@@ -121,6 +127,7 @@ public final class TableDaoHelper<T> {
                 }
                 this.insert.addColumn(column);
                 this.select.addColumn(column);
+                this.selectWithAlias.addColumn(column);
 
                 insertColNames.add("?");
                 selectColNames.add(ci.name());
@@ -147,7 +154,14 @@ public final class TableDaoHelper<T> {
         this.select.setSql(String.format("SELECT %s FROM %s ",
                 String.join(",", selectColNames),
                 this.tableName));
+        this.selectWithAlias.setSql(String.format("SELECT x.%s FROM %s AS x ",
+                String.join(",x.", selectColNames),
+                this.tableName));
         this.wherePK = String.join(" AND ", prikeyColNames);
+    }
+
+    public DaoFactory getFactory() {
+        return this.factory;
     }
 
     public TableType getTableType() {
@@ -217,6 +231,16 @@ public final class TableDaoHelper<T> {
      */
     public DaoMethod<T> forSelect() {
         return this.select;
+    }
+
+    /**
+     * Returns a method for SELECT which contains all columns of the table with alias name 'x'.<br>
+     * The SQL will be 'SELECT x.pk1,x.pk2,vc1,x.c2... FROM table_name AS x'.
+     *
+     * @return The SELECT method.
+     */
+    public DaoMethod<T> forSelectX() {
+        return this.selectWithAlias;
     }
 
     public String getOrderBy() {

@@ -16,7 +16,7 @@ public class DBDiff extends AbstractCmd {
     public void test() throws Exception {
         execute(new String[] {
                 "-s", "pgsvr96",
-                "-t", "aliyun",
+                "-t", "pgsvr96_0713",
                 "--table", null,
                 "--view", null });
     }

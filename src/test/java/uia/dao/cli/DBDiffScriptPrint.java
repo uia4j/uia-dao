@@ -14,6 +14,60 @@ public class DBDiffScriptPrint extends AbstractCmd {
 
     @Test
     public void test() throws Exception {
+        //String[] tables = new String[] {
+        //"SHOP_ORDER",
+        //"ACTIVITY_LOG",
+        //"SHOP_ORDER_SFC",
+        //"SFC",
+        //"SFC_ID_HISTORY",
+        //"SFC_BOM",
+        //"SFC_ROUTING",
+        //"SFC_ROUTER",
+        //"SFC_STEP",
+        //"HOLD_DETAIL",
+        //"ZD_SFC",
+        //"ZR_BINMAP_COMBINE",
+        //"ZR_DC_RESULT",
+        //"ZR_DC_RESULT_DETAIL",
+        //"ZR_DC_RESULT_RAW",
+        //"ZR_DC_RESULT_STAT",
+        //"ZR_DISPATCH_SFC",
+        //"ZR_RUN_DEFECT",
+        //"ZR_RUN_JUMP",
+        //"ZR_RUN_MT_SFC",
+        //"ZR_RUN_SFC",
+        //"ZR_RUN_SPLIT_MERGE",
+        //"ZR_SAMPLING_RESULT",
+        //"ZR_SFC_LOG",
+        //"ZR_SPC_ALARM",
+        //"ZR_SPC_ALARM_DATA",
+        //"ZR_SPC_ALARM_DATA_MASTER",
+        //"ZR_SPC_ALARM_MAIL",
+        //"ZR_HOLD_RELEASE_SFC",
+        //"ZR_HOLD_RELEASE_SFC_ITEM",
+        //"ZR_HOLD_RELEASE_SFC_ITEM_STATE",
+        //"ZR_SFC_MEMO",
+        //"ZD_SHOP_ORDER_ITEMSET",
+        //"ZD_CUSTOMER_ITEM",
+        //"ZD_SFC_ITEM",
+        //"ZD_SFC_ITEM_GRADE",
+        //"ZD_LOOKUP_EX",
+        //"ZR_CUSTOMER_ITEM_DEFECT",
+        //"ZR_CUSTOMER_ITEM_GRADE",
+        //"ZR_CUSTOMER_ITEM_OPERATION_DEFECT",
+        //"ZR_CUSTOMER_ITEM_OPERATION_YIELD",
+        //"ZR_SAMPLING_RESULT_DETAIL",
+        //"ZR_RUN_SFC_ITEM",
+        //"ZR_RUN_SPLIT_MERGE_ITEM",
+        //"ZR_SHOP_ORDER_ITEMSET_LOG",
+        //"ZR_ROUTE_EVENT",
+        //"ZR_PKG_CONTAINER",
+        //"ZR_PKG_CONTAINER_LOG",
+        //"ZR_PKG_CONTAINER_LABEL",
+        //"ZR_PKG_CONTAINER_SFC",
+        //"ZR_PKG_CONTAINER_SFC_LOG"
+        //};
+
         execute(new String[] {
                 "-s", "pgsvr96",
                 "-t", "aliyun",
@@ -32,9 +86,14 @@ public class DBDiffScriptPrint extends AbstractCmd {
         for (String tn : tns) {
             TableType ta = source.selectTable(tn, false);
             TableType tb = target.selectTable(tn, false);
-            CompareResult cr = ta.sameAs(tb, new ComparePlan(false, true, true, true, true));
+            if(tb == null) {
+                System.out.println("-- " + tn + ", " + ta.getColumns().size() + "/0");
+            }
+            else {
+                System.out.println("-- " + tn + ", " + ta.getColumns().size() + "/" + tb.getColumns().size());
+            }
 
-            System.out.println("-- " + tn);
+            CompareResult cr = ta.sameAs(tb, new ComparePlan(false, true, true, true, true));
             if (!cr.isPassed()) {
                 if (cr.isMissing()) {
                     System.out.println(dbtype.generateCreateTableSQL(ta));

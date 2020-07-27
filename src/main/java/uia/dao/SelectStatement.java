@@ -26,7 +26,7 @@ import uia.dao.where.Where;
 
 /**
  * The statement used to select/update/delete a table.
- * 
+ *
  * @author Kyle K. Lin
  *
  */
@@ -42,7 +42,7 @@ public class SelectStatement {
 
     /**
      * Constructor.
-     * 
+     *
      * @param selectSql The 'select' part.
      */
     public SelectStatement(String selectSql) {
@@ -56,7 +56,7 @@ public class SelectStatement {
 
     /**
      * Sets the 'where' statement.
-     * 
+     *
      * @param where The 'where' statement.
      * @return The instance.
      */
@@ -67,7 +67,7 @@ public class SelectStatement {
 
     /**
      * Sets the 'group by' statement.
-     * 
+     *
      * @param groups The 'group by' statement.
      * @return The instance.
      */
@@ -78,7 +78,7 @@ public class SelectStatement {
 
     /**
      * Sets the 'order by' statement.
-     * 
+     *
      * @param orders The 'order by' statement.
      * @return The instance.
      */
@@ -91,7 +91,7 @@ public class SelectStatement {
         final PreparedStatement ps;
 
         String whereSQL = this.where == null ? null : this.where.generate();
-        if (whereSQL == null || whereSQL.length() == 0) {
+        if (whereSQL == null || whereSQL.trim().length() == 0) {
             String sql = String.format("%s%s%s",
                     this.selectSql,
                     groupBy(),

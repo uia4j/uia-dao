@@ -170,7 +170,7 @@ public class Hana extends AbstractDatabase {
     @Override
     public List<ColumnType> selectColumns(String tableName, boolean firstAsPK) throws SQLException {
         ArrayList<String> pks = new ArrayList<>();
-        try (ResultSet rs = this.conn.getMetaData().getPrimaryKeys(null, null, tableName)) {
+        try (ResultSet rs = this.conn.getMetaData().getPrimaryKeys(null, this.schema, tableName)) {
             while (rs.next()) {
                 pks.add(rs.getString("COLUMN_NAME"));
             }
@@ -202,7 +202,7 @@ public class Hana extends AbstractDatabase {
          * IS_AUTOINCREMENT         *
          */
         List<ColumnType> cts = new ArrayList<>();
-        try (ResultSet rs = this.conn.getMetaData().getColumns(null, null, tableName, null)) {
+        try (ResultSet rs = this.conn.getMetaData().getColumns(null, this.schema, tableName, null)) {
             while (rs.next()) {
                 if (tableName.equalsIgnoreCase(rs.getString("TABLE_NAME"))) {
                     String columnName = rs.getString("COLUMN_NAME");
@@ -236,6 +236,7 @@ public class Hana extends AbstractDatabase {
                         case Types.SMALLINT:                // SMALLINT
                         case Types.TINYINT:                 // TINYINT
                         case Types.INTEGER:                 // INTEGER
+                        case Types.BOOLEAN:					// BOOLEAN
                             ct.setDataType(DataType.INTEGER);
                             break;
                         case Types.BIGINT:                  // BIGINT
@@ -285,7 +286,7 @@ public class Hana extends AbstractDatabase {
     private String prepareColumnDef(ColumnType ct) {
         String type = "";
         switch (ct.getDataType()) {
-            case INTEGER:       // INTEGER, TINYINT, SMALLINT
+            case INTEGER:       // INTEGER, TINYINT, SMALLINT, BOOLEAN
                 type = "INTEGER";
                 break;
             case LONG:          // BIGINT

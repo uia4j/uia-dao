@@ -90,12 +90,6 @@ public class SQLite extends AbstractDatabase {
 
         ArrayList<String> pks = new ArrayList<>();
         ArrayList<String> cols = new ArrayList<>();
-        ArrayList<String> comments = new ArrayList<>();
-        if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
-                    table.getTableName().toLowerCase(),
-                    table.getRemark()));
-        }
 
         for (ColumnType ct : table.getColumns()) {
             if (ct.isPk()) {
@@ -104,10 +98,6 @@ public class SQLite extends AbstractDatabase {
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null &&
                     ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';%n",
-                        table.getTableName().toLowerCase(),
-                        ct.getColumnName().toLowerCase(),
-                        ct.getRemark()));
             }
         }
 
@@ -122,10 +112,6 @@ public class SQLite extends AbstractDatabase {
                     table.getTableName().toLowerCase(),
                     String.join(",", pks));
             sb.append(pkSQL).append(");\n");
-        }
-
-        for (String comment : comments) {
-            sb.append(comment);
         }
 
         return sb.toString();

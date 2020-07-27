@@ -28,4 +28,9 @@ public class ColumnDiff {
         this.actionType = actionType;
         this.alterType = alterType;
     }
+    
+    @Override
+    public String toString() {
+    	return source.getColumnName() + ": " + this.actionType;
+    }
 }

@@ -48,6 +48,8 @@ public class DaoFactoryClassPrinter {
 
     private static final String TOSTRING = "{TOSTRING}";
 
+    private final String schema;
+
     private final TableType table;
 
     private final String templateDTO;
@@ -61,17 +63,22 @@ public class DaoFactoryClassPrinter {
      * @throws SQLException Failed to query definition of the table or view.
      */
     public DaoFactoryClassPrinter(Database db, String tableOrView) throws IOException, SQLException {
-        this(db.selectTable(tableOrView, true));
+        this(db.selectTable(tableOrView, true), db.getSchema());
     }
 
     /**
      * Constructor.
      *
      * @param table The definition of a table or a view.
+     * @param schema The schema.
      * @throws IOException Failed to load template files.
      */
-    public DaoFactoryClassPrinter(TableType table) throws IOException {
+    public DaoFactoryClassPrinter(TableType table, String schema) throws IOException {
+        if (table == null) {
+            throw new IOException("table not found");
+        }
         this.table = table;
+        this.schema = schema;
         this.templateDTO = readContent("uia_dto_template.txt");
     }
 
@@ -83,9 +90,17 @@ public class DaoFactoryClassPrinter {
      * @return The result.
      */
     public String generateDTO(String dtoPackageName, String dtoName) {
-        String annotation = this.table.isTable()
-                ? String.format("@TableInfo(name = \"%s\")", this.table.getTableName())
-                : String.format("@ViewInfo(name = \"%s\")", this.table.getTableName());
+        String annotation = null;
+        if (this.schema == null) {
+            annotation = this.table.isTable()
+                    ? String.format("@TableInfo(name = \"%s\")", this.table.getTableName())
+                    : String.format("@ViewInfo(name = \"%s\")", this.table.getTableName());
+        }
+        else {
+            annotation = this.table.isTable()
+                    ? String.format("@TableInfo(name = \"%s\", schema = \"%s\")", this.table.getTableName(), this.schema)
+                    : String.format("@ViewInfo(name = \"%s\"), schema = \"%s\"", this.table.getTableName(), this.schema);
+        }
 
         ArrayList<String> toString = new ArrayList<>();
         StringBuilder codeMember = new StringBuilder();

@@ -45,4 +45,26 @@ public class SQLiteTest {
 
         pg.close();
     }
+
+    @Test
+    public void testCreate2() throws Exception {
+        Database pg = new PostgreSQL("localhost", "5432", "hesdb", "huede", "huede");
+
+        SQLite sqlite = new SQLite("test/hesdb.sqlite");
+        sqlite.createTable(pg.selectTable("user", false));
+        sqlite.createTable(pg.selectTable("secu", false));
+        sqlite.createTable(pg.selectTable("lookup", false));
+        sqlite.createTable(pg.selectTable("device", false));
+        sqlite.createTable(pg.selectTable("run_event", false));
+        sqlite.close();
+
+        pg.close();
+    }
+
+    @Test
+    public void testCreate3() throws Exception {
+        SQLite sqlite = new SQLite("test/hesdb.sqlite");
+        sqlite.execute("insert into user(id,user_code,full_name,first_name,last_name,sex,state_name,email,phone_no,dept_id,emp_no) values('1','kyle','Kan Lin','Kan','Lin','M','on','gazer.kanlin@gmail.com','0928','RD','000')");
+        sqlite.close();
+    }
 }

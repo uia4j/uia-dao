@@ -8,79 +8,122 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import javassist.util.proxy.ProxyFactory;
+import uia.dao.annotation.DeleteInfo;
 import uia.dao.annotation.SelectInfo;
+import uia.dao.annotation.UpdateInfo;
 
-public final class ProxyDao  {
-	
-	private Connection conn;
-	
-	ProxyDao() {
-	}
-	
-	@SuppressWarnings("unchecked")
-	<T> T bind(Class<T> absclz, Connection conn, TableDaoHelper<?> helper) throws Exception {
-		this.conn = conn;
-		ProxyFactory factory = new ProxyFactory();
-		factory.setSuperclass(absclz);
-		factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
-		
-		return (T) factory.create(
-				new Class<?>[] {Connection .class, TableDaoHelper.class}, 
-				new Object[] { conn, helper },
-				this::invokeTable);
-	}
-	
-	@SuppressWarnings("unchecked")
-	<T> T bind(Class<T> absclz, Connection conn, ViewDaoHelper<?> helper) throws Exception {
-		this.conn = conn;
-		ProxyFactory factory = new ProxyFactory();
-		factory.setSuperclass(absclz);
-		factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
-		
-		return (T) factory.create(
-				new Class<?>[] {Connection .class, ViewDaoHelper.class}, 
-				new Object[] { conn, helper },
-				this::invokeView);
-	}
+import javassist.util.proxy.ProxyFactory;
 
-	@SuppressWarnings("rawtypes")
-	private Object invokeTable(Object self, Method proxyMethod, Method proceed, Object[] args) throws Throwable {
-		boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
-		SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
-		if(selectInfo == null) {
-			return list ? new ArrayList<>() : null;
-		}
-		
-		TableDao dao = (TableDao)self;
-		DaoMethod<?> method = dao.tableHelper.forSelect();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + selectInfo.sql())) {
-        	for(int i=0; i<args.length; i++) {
-	            ps.setObject(i + 1, args[i]);
-        	}
-            try (ResultSet rs = ps.executeQuery()) {
-                return list ? method.toList(rs) :  method.toOne(rs);
+public final class ProxyDao {
+
+    private Connection conn;
+
+    ProxyDao() {
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> T bind(Class<T> absclz, Connection conn, TableDaoHelper<?> helper) throws Exception {
+        this.conn = conn;
+        ProxyFactory factory = new ProxyFactory();
+        factory.setSuperclass(absclz);
+        factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
+
+        T result = (T) factory.create(
+                new Class<?>[] { Connection.class, TableDaoHelper.class },
+                new Object[] { conn, helper },
+                this::runTable);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> T bind(Class<T> absclz, Connection conn, ViewDaoHelper<?> helper) throws Exception {
+        this.conn = conn;
+        ProxyFactory factory = new ProxyFactory();
+        factory.setSuperclass(absclz);
+        factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
+
+        return (T) factory.create(
+                new Class<?>[] { Connection.class, ViewDaoHelper.class },
+                new Object[] { conn, helper },
+                this::runView);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private Object runTable(Object self, Method proxyMethod, Method proceed, Object[] args) throws Throwable {
+        TableDao dao = (TableDao) self;
+
+        // select
+        SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
+        if (selectInfo != null) {
+            boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
+            DaoMethod<?> method = selectInfo.join()
+                    ? dao.tableHelper.forSelectX()
+                    : dao.tableHelper.forSelect();
+            final String sql = method.getSql() + selectInfo.sql();
+            try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+                for (int i = 0; i < args.length; i++) {
+                    dao.tableHelper.getFactory()
+                            .getColumnWriter(args[i].getClass())
+                            .write(ps, i + 1, args[i]);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    return list ? method.toList(rs) : method.toOne(rs);
+                }
             }
         }
-	}
 
-	@SuppressWarnings("rawtypes")
-	private Object invokeView(Object self, Method proxyMethod, Method proceed, Object[] args) throws Throwable {
-		boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
-		SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
-		if(selectInfo == null) {
-			return list ? new ArrayList<>() : null;
-		}
-		
-		ViewDao dao = (ViewDao)self;
-		DaoMethod<?> method = dao.viewHelper.forSelect();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + selectInfo.sql())) {
-        	for(int i=0; i<args.length; i++) {
-	            ps.setObject(i + 1, args[i]);
-        	}
-            try (ResultSet rs = ps.executeQuery()) {
-                return list ? method.toList(rs) :  method.toOne(rs);
+        // update
+        UpdateInfo updateInfo = proxyMethod.getDeclaredAnnotation(UpdateInfo.class);
+        if (updateInfo != null) {
+            try (PreparedStatement ps = this.conn.prepareStatement(String.format("UPDATE %s %s",
+                    dao.tableHelper.getTableName(),
+                    updateInfo.sql()))) {
+                for (int i = 0; i < args.length; i++) {
+                    dao.tableHelper.getFactory()
+                            .getColumnWriter(args[i].getClass())
+                            .write(ps, i + 1, args[i]);
+                }
+                return ps.executeUpdate();
             }
         }
-	}
+
+        // delete
+        DeleteInfo deleteInfo = proxyMethod.getDeclaredAnnotation(DeleteInfo.class);
+        if (deleteInfo != null) {
+            DaoMethod<?> method = dao.tableHelper.forDelete();
+            try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + deleteInfo.sql())) {
+                for (int i = 0; i < args.length; i++) {
+                    dao.tableHelper.getFactory()
+                            .getColumnWriter(args[i].getClass())
+                            .write(ps, i + 1, args[i]);
+                }
+                return ps.executeUpdate();
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private Object runView(Object self, Method proxyMethod, Method proceed, Object[] args) throws Throwable {
+        boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
+        SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
+        if (selectInfo == null) {
+            return list ? new ArrayList<>() : null;
+        }
+
+        ViewDao dao = (ViewDao) self;
+        DaoMethod<?> method = selectInfo.join()
+                ? dao.viewHelper.forSelectX()
+                : dao.viewHelper.forSelect();
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + selectInfo.sql())) {
+            for (int i = 0; i < args.length; i++) {
+                dao.viewHelper.getFactory()
+                        .getColumnWriter(args[i].getClass())
+                        .write(ps, i + 1, args[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return list ? method.toList(rs) : method.toOne(rs);
+            }
+        }
+    }
 }

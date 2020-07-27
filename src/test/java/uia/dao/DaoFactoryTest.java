@@ -21,7 +21,6 @@ package uia.dao;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,10 +28,6 @@ import org.junit.Test;
 import uia.dao.hana.Hana;
 import uia.dao.ora.Oracle;
 import uia.dao.pg.PostgreSQL;
-import uia.dao.pms.Lookup;
-import uia.dao.pms.LookupDao;
-import uia.dao.pms.ViewEquip;
-import uia.dao.pms.ViewEquipDao;
 import uia.dao.sample.One;
 import uia.dao.sample.Sample;
 import uia.dao.sample.Two;
@@ -123,46 +118,4 @@ public class DaoFactoryTest {
         ViewDaoHelper<ViewOne> dao = factory.forView(ViewOne.class);
         Assert.assertEquals("SELECT description,id,name,birthday FROM view_one ", dao.forSelect().getSql());
     }
-	
-	@Test
-	public void testTableProxy() throws Exception {
-		DaoFactory factory = new DaoFactory(true);
-		factory.addTable(Lookup.class);
-		
-		try(Database db = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
-			LookupDao dao = factory.newTableDao(
-					LookupDao.class, 
-					db.getConnection());
-			System.out.println(dao);
-			
-			List<Lookup> result = dao.select("system"); 
-			for(Lookup lk : result) {
-				System.out.println(lk);
-			}
-		}
-	}
-	
-	@Test
-	public void testViewProxy() throws Exception {
-		DaoFactory factory = new DaoFactory(true);
-		factory.addView(ViewEquip.class);
-		
-		try(Database db = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
-			ViewEquipDao dao = factory.newViewDao(
-					ViewEquipDao.class, 
-					db.getConnection());
-			System.out.println(dao);
-			
-			List<ViewEquip> result1 = dao.selectWithGroup(); 
-			for(ViewEquip eq : result1) {
-				System.out.println(eq.getId() + ":" + eq.getEquipGroupId());
-			}
-			System.out.println();
-			List<ViewEquip> result2 = dao.selectByGroup("ACTE");
-			for(ViewEquip eq : result2) {
-				System.out.println(eq.getId() + ":" + eq.getEquipGroupId());
-			}
-		}
-		
-	}
 }

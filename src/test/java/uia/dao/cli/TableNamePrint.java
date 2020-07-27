@@ -11,7 +11,7 @@ public class TableNamePrint extends AbstractCmd {
     @Test
     public void test() throws Exception {
         execute(new String[] {
-                "-s", "aliyun_wip" });
+                "-s", "pms_yo_hmq" });
     }
 
     public void execute(String[] args) throws Exception {

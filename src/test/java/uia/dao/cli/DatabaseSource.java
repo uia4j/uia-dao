@@ -38,13 +38,15 @@ public abstract class DatabaseSource {
             pg.setAlwaysTimestampZ(true);
             return pg;
         }
-        if ("pgsvr96_test".equalsIgnoreCase(name)) {
-            PostgreSQL pg = new PostgreSQL("localhost", "5432", "pmsdb_test", "pms", "pms", "public");
+        if ("pgsvr96_0713".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("localhost", "5432", "pmsdb_0713", "pms", "pms", "public");
             pg.setAlwaysTimestampZ(true);
             return pg;
         }
-        if ("pgsvr96_v2".equalsIgnoreCase(name)) {
-            return new PostgreSQL("localhost", "5432", "pmsdbv2", "pms", "pms", "public");
+        if ("pgsvr96_tci".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("localhost", "5432", "pmsdb_tci", "pms", "pms", "public");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
         }
         if ("orasvr12".equalsIgnoreCase(name)) {
             Oracle ora = new Oracle("localhost", "1521", "ORCLCDB.localdomain", "PMS", "PMS");
@@ -75,6 +77,61 @@ public abstract class DatabaseSource {
             Hana hana = new Hana("192.168.137.245", "39015", "PMS", "PMS", "PMSpms");
             hana.setAlwaysNVarchar(true);
             return hana;
+        }
+        if ("scm".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("localhost", "5432", "scmdb", "scm", "scmAdmin");
+            pg.setAlwaysNVarchar(true);
+            return pg;
+        }
+        if ("scm_fmtest".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("10.10.2.169", "5432", "scmdb", "scm", "scmAdmin");
+            pg.setAlwaysNVarchar(true);
+            return pg;
+        }
+        if ("htks_prod".equalsIgnoreCase(name)) {
+            Hana hana = new Hana("10.160.2.20", "30015", "WIP", "WIP", "Sap12345");
+            hana.setAlwaysNVarchar(true);
+            return hana;
+        }
+        if ("htks_test_arch".equalsIgnoreCase(name)) {
+            Hana hana = new Hana("10.160.2.23", "31015", "WIP_ARCHIVE", "WIP_ARCHIVE", "Sap12345");
+            hana.setAlwaysNVarchar(true);
+            return hana;
+        }
+        if ("zztop".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms", "zztop");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
+        }
+        if ("scm_po".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("localhost", "5432", "scmdb", "scm", "scmAdmin", "po");
+            pg.setAlwaysNVarchar(true);
+            return pg;
+        }
+        if ("scm_po_fmtest".equalsIgnoreCase(name)) {
+            PostgreSQL pg = new PostgreSQL("10.10.2.169", "5432", "scmdb", "scm", "scmAdmin", "po");
+            pg.setAlwaysNVarchar(true);
+            return pg;
+        }
+        if ("yo_hmd".equalsIgnoreCase(name)) {
+        	Hana pg = new Hana("10.3.11.37", "39044", "WIP", "WIP", "wip123");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
+        }
+        if ("yo_hmq".equalsIgnoreCase(name)) {
+        	Hana pg = new Hana("10.3.11.37", "39041", "WIP", "WIP", "wip123");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
+        }
+        if ("pms_yo_hmd".equalsIgnoreCase(name)) {
+        	Hana pg = new Hana("10.3.11.37", "39044", "PMS", "PMS", "Sap12345");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
+        }
+        if ("pms_yo_hmq".equalsIgnoreCase(name)) {
+        	Hana pg = new Hana("10.3.11.37", "39041", "PMS", "PMS", "Sap12345");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
         }
 
         throw new SQLException("no datasource: " + name);
