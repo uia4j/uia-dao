@@ -1,5 +1,7 @@
 DAO Simple Solution
 ================
+## Description
+
 The main purpose of the API is to implement DAO pattern that uses `java.sql` package to access database.
 
 There are three topics:
@@ -13,28 +15,35 @@ Databases the API supports are:
 * SQLServer
 * HANA
 
-### Maven
+Maven
 ```xml
 <dependency>
 	<groupId>org.uia.solution</groupId>
 	<artifactId>uia-dao</artifactId>
-	<version>0.2.12</version>
+	<version>0.3.0</version>
 </dependency>
 ```
 
-## DAO Pattern
+Other topics
 
-The DAO pattern accesses database using `java.sql` package. You can use pre-implemented `Dao` class or inherit it to fully control tables and views.
+  * [DaoEnv](ENV.md)
+  * [SpringFramework](ENV.md)
+  
 
-* Focus on the design of DTO classes without any XML file.
-* Built-in CRUD SQL statements based on annotations in the DTO class.
+## Core Concept
+
+The implementation of the API uses `java.sql` package tos access the database. You can use pre-implemented `Dao` class or inherit it to provide meaningful methods to CRUD data.
+
+When you use the API, you can
+
+* Use annotations to design DTO classes without any XML file.
 * No need to implement the standard CRUD methods.
 * Minimum implementation, maximum functionality.
 
 ### Key Points
 #### classes
-* TableDao<T> - The generic DAO for a table.
-* ViewDao<T> - The generic DAO for a view.
+* TableDao<T> - The generic DAO to access a table.
+* ViewDao<T> - The generic DAO to access a view.
 * TableDaoHelper<T> - The DAO helper for a table.
 * ViewDaoHelper<T> - The DAO helper for a view.
 
@@ -42,6 +51,9 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
 * TableInfo - annotate a class for a table.
 * ViewInfo - annotate a class for a view.
 * ColumnInfo - annotate attributes for the columns.
+* SelectInfo - annotate methods to select data.
+* UpdateInfo - annotate methods to update data.
+* DeleteInfo - annotate methods to delete data.
 
 ### How To Use
 1. Define a DTO for a table.
@@ -69,7 +81,7 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
     ```java
     package a.b.c;
 
-    @ViewInfo(name = "view_job_detail", inherit = 1)
+    @ViewInfo(name = "view_job_detail")
     public class ViewJobDetail extends JobDetail {
 
         @ColumnInfo(name = "job_name")
@@ -87,7 +99,9 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
 4. Run __CRUD__ on a table
     ```java
     // create a dao object
-    TableDao<JobDetail> dao = new TableDao(conn, factory.forTable(JobDetail.class));
+    TableDao<JobDetail> dao = new TableDao(
+            conn, 
+            factory.forTable(JobDetail.class));
     dao.insert(...);
     dao.update(...);
     dao.deleteByPK(...);
@@ -97,7 +111,9 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
     or
     ```java
     // create a dao object
-    TableDao<JobDetail> dao = factory.createTable(conn, JobDetail.class));
+    TableDao<JobDetail> dao = factory.createTableDao(
+            JobDetail.class,
+            conn);
     dao.insert(...);
     dao.update(...);
     dao.deleteByPK(...);
@@ -108,13 +124,17 @@ The DAO pattern accesses database using `java.sql` package. You can use pre-impl
 5. Run a __SELECT__ on a view
     ```java
     // create a dao object
-    ViewDao<ViewJobDetail> dao = new ViewDao(conn, factory.forView(ViewJobDetail.class));
+    ViewDao<ViewJobDetail> dao = new ViewDao(
+            conn, 
+            factory.forView(ViewJobDetail.class));
     List<ViewJobDetail> result = dao.selectAll();
     ```
     or
     ```java
     // create a dao object
-    ViewDao<ViewJobDetail> dao = factory.createView(conn, ViewJobDetail.class));
+    ViewDao<ViewJobDetail> dao = factory.createViewDao(
+            ViewJobDetail.class,
+            conn);
     List<ViewJobDetail> result = dao.selectAll();
     ```
 
