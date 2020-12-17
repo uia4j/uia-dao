@@ -80,14 +80,16 @@ All helper methods above have two arguments
 
     ```java
     try (DaoSession session = env.createSession()) {
-        TableDao dao = session.forTable(MyClass.class);
+        TableDao<MyClass> dao = session.forTable(MyClass.class);
         List<MyClass> result = dao.selectAll();
     }
     ```
 
 ## Spring Integration
 
-### 1. Create a component which inherits from `uia.dao.DaoEnv` and annotate scope to `ConfigurableBeanFactory.SCOPE_SINGLETON`.
+### 1. Create a component 
+
+The component inherits from `uia.dao.DaoEnv` and annotate scope to `ConfigurableBeanFactory.SCOPE_SINGLETON`.
 
 ```java
 package a.b.c;
@@ -108,7 +110,7 @@ public class MyDaoEnv extends DaoEnv {
 
 ```
 
-### 2. Create a configuration class to scan components automatically.
+### 2. Create a configuration class
 
 ```java
 package a.b.c;
