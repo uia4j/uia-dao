@@ -18,28 +18,25 @@
  *******************************************************************************/
 package uia.dao;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import uia.dao.hana.Hana;
 import uia.dao.ora.Oracle;
 import uia.dao.pg.PostgreSQL;
-import uia.dao.sample.One;
-import uia.dao.sample.Sample;
-import uia.dao.sample.Two;
-import uia.dao.sample.ViewOne;
-import uia.dao.sample.ViewSample;
+import uia.dao.sample1.One;
+import uia.dao.sample1.Sample1;
+import uia.dao.sample1.Sample2;
+import uia.dao.sample1.Two;
+import uia.dao.sample1.ViewOne;
+import uia.dao.sample1.ViewSample;
 
 public class DaoFactoryTest {
 
     @Test
     public void testLoad() throws Exception {
         DaoFactory factory = new DaoFactory(true);
-        factory.load("uia.dao.pms");
+        factory.load("uia.dao.sample1");
         factory.getTables().forEach(System.out::println);
         factory.getViews().forEach(System.out::println);
     }
@@ -47,9 +44,9 @@ public class DaoFactoryTest {
     @Test
     public void testTableType() throws Exception {
         DaoFactory factory = new DaoFactory(true);
-        factory.addTable(Sample.class);
+        factory.addTable(Sample2.class);
 
-        TableType tt = factory.getTableType(Sample.class);
+        TableType tt = factory.getTableType(Sample1.class);
         System.out.println("-- hana");
         try (Database db = new Hana()) {
             System.out.println(db.generateCreateTableSQL(tt));
@@ -76,18 +73,9 @@ public class DaoFactoryTest {
     }
 
     @Test
-    public void testDate() {
-        Date now1 = new Date();
-        LocalDateTime z = now1.toInstant().atZone(ZoneId.of("Z")).toLocalDateTime().minusHours(8);
-        Date now2 = Date.from(z.atZone(ZoneId.of("Z")).toInstant());
-        System.out.println(now1);
-        System.out.println(now2);
-    }
-
-    @Test
     public void testOne() throws Exception {
         DaoFactory factory = new DaoFactory(false);
-        factory.load("uia.dao.sample");
+        factory.load("uia.dao.sample1");
 
         TableDaoHelper<One> dao = factory.forTable(One.class);
         Assert.assertEquals("INSERT INTO one(id,name,birthday,state_name) VALUES (?,?,?,?)", dao.forInsert().getSql());
@@ -100,7 +88,7 @@ public class DaoFactoryTest {
     @Test
     public void testTwo() throws Exception {
         DaoFactory factory = new DaoFactory(false);
-        factory.load("uia.dao.sample");
+        factory.load("uia.dao.sample1");
 
         TableDaoHelper<Two> dao = factory.forTable(Two.class);
         Assert.assertEquals("INSERT INTO org_supplier(org_id,supplier_id,state_name) VALUES (?,?,?)", dao.forInsert().getSql());
@@ -113,7 +101,7 @@ public class DaoFactoryTest {
     @Test
     public void testViewOne() throws Exception {
         DaoFactory factory = new DaoFactory(false);
-        factory.load("uia.dao.sample");
+        factory.load("uia.dao.sample1");
 
         ViewDaoHelper<ViewOne> dao = factory.forView(ViewOne.class);
         Assert.assertEquals("SELECT description,id,name,birthday FROM view_one ", dao.forSelect().getSql());

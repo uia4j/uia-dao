@@ -263,7 +263,7 @@ public class Hana extends AbstractDatabase {
                             ct.setDataType(DataType.NCLOB);
                             break;
                         default:
-                            ct.setDataType(DataType.OTHERS);
+                            ct.setDataType(DataType.UNDEFINED);
                             break;
                     }
                     cts.add(ct);
@@ -335,6 +335,7 @@ public class Hana extends AbstractDatabase {
             case CLOB:          // CLOB
                 type = "CLOB";
                 break;
+            case JSON:			// JSON
             case NCLOB:         // NCLOB
                 type = "NCLOB";
                 break;

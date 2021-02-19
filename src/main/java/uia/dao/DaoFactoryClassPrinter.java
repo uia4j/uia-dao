@@ -24,6 +24,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import uia.dao.ColumnType.DataType;
+
 /**
  * The DTO and DAO class printer.
  *
@@ -99,7 +101,7 @@ public class DaoFactoryClassPrinter {
         else {
             annotation = this.table.isTable()
                     ? String.format("@TableInfo(name = \"%s\", schema = \"%s\")", this.table.getTableName(), this.schema)
-                    : String.format("@ViewInfo(name = \"%s\"), schema = \"%s\"", this.table.getTableName(), this.schema);
+                    : String.format("@ViewInfo(name = \"%s\", schema = \"%s\")", this.table.getTableName(), this.schema);
         }
 
         ArrayList<String> toString = new ArrayList<>();
@@ -122,6 +124,10 @@ public class DaoFactoryClassPrinter {
                 codeMember.append(String.format("    @ColumnInfo(name = \"%s\", primaryKey = true)%n",
                         ct.getColumnName()));
             }
+            else if(ct.getDataType() == DataType.JSON){
+                codeMember.append(String.format("    @ColumnInfo(name = \"%s\", sqlType = DataType.JSON)%n",
+                        ct.getColumnName()));
+            }
             else {
                 codeMember.append(String.format("    @ColumnInfo(name = \"%s\")%n",
                         ct.getColumnName()));
@@ -130,7 +136,6 @@ public class DaoFactoryClassPrinter {
             codeMember.append(String.format("    private %s %s;%n", javaType, propNameLower));
             codeConstr.append("        this.").append(propNameLower).append(" = data.").append(propNameLower).append(";\n");
 
-            codeGetSet.append("\n");
             if ("Date".equals(javaType)) {
                 if (ct.getRemark() != null) {
                     codeGetSet.append(String.format("    /**%n     * Returns %s.%n     *%n     * @return %s.%n     */%n", ct.getRemark(), ct.getRemark()));

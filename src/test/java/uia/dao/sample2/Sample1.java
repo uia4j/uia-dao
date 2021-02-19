@@ -1,4 +1,4 @@
-package uia.dao.sample;
+package uia.dao.sample2;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -8,7 +8,7 @@ import uia.dao.annotation.ColumnInfo;
 import uia.dao.annotation.TableInfo;
 
 @TableInfo(name = "sample_table", remark = "Sample")
-public class Sample {
+public class Sample1 {
 
     @ColumnInfo(name = "key1", primaryKey = true, length = 64, remark = "key1")
     private String key1;

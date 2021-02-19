@@ -116,9 +116,14 @@ public class ColumnType {
         NCLOB(Types.NCLOB),
 
         /**
+         * json
+         */
+        JSON(Types.OTHER),
+
+        /**
          * others
          */
-        OTHERS(Types.NVARCHAR);
+        UNDEFINED(Types.NVARCHAR);
 
         public final int sqlType;
 
@@ -337,6 +342,7 @@ public class ColumnType {
             case DATE:
             case TIME:
             case TIMESTAMP:
+            case TIMESTAMPZ:
                 return "Date";
             case CLOB:
                 return "Clob";
@@ -506,14 +512,32 @@ public class ColumnType {
     }
 
     @Override
+    public ColumnType clone() {
+        ColumnType ct = new ColumnType();
+        ct.setPk(this.isPk());
+        ct.setColumnName(getColumnName());
+        ct.setColumnSize(getColumnSize());
+        ct.setDataType(getDataType());
+        ct.setDataTypeCode(getDataTypeCode());
+        ct.setDataTypeName(getDataTypeName());
+        ct.setDecimalDigits(getDecimalDigits());
+        ct.setDefaultValue(getDefaultValue());
+        ct.setRemark(getRemark());
+        ct.setNullable(isNullable());
+        return ct;
+    }
+
+    @Override
     public String toString() {
-        return String.format("%-30s, pk:%-5s, %-9s, %4s:%-13s [%s], %s",
+        return String.format("%-30s, %s, %s, %-11s, %4s, %s[%s%s] , %s",
                 this.columnName,
-                this.pk,
+                this.pk ? "PK" : "  ",
+                this.nullable ? "        " : "NOT NULL",
                 this.dataType,
                 this.dataTypeCode,
                 this.dataTypeName,
                 this.columnSize,
+                this.decimalDigits > 0 ? "," + this.decimalDigits : "",
                 this.remark);
     }
 

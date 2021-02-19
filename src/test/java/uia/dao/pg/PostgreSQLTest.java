@@ -19,11 +19,14 @@
 package uia.dao.pg;
 
 import java.sql.SQLException;
+import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import uia.dao.ColumnType;
+import uia.dao.ComparePlan;
 import uia.dao.CompareResult;
+import uia.dao.DaoFactoryClassPrinter;
 import uia.dao.Database;
 import uia.dao.ScriptTool;
 import uia.dao.TableType;
@@ -39,7 +42,7 @@ public class PostgreSQLTest {
 
     @Test
     public void testSelect() throws Exception {
-        try (Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede")) {
+        try (Database db = new PostgreSQL("localhost", "5432", "postgres", "postgres", "pgAdmin")) {
             db.selectTableNames().forEach(System.out::println);
             db.selectViewNames().forEach(System.out::println);
         }
@@ -47,17 +50,38 @@ public class PostgreSQLTest {
 
     @Test
     public void testSelectTable() throws Exception {
-        try (Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede")) {
-            print(db.selectTable("hspt", true));
-            print(db.selectTable("hspt_area", true));
-            print(db.selectTable("ivp_dtu", true));
-            print(db.selectTable("ivp_event_def", true));
-            print(db.selectTable("ivp", true));
-            print(db.selectTable("ivp_agent", true));
-            print(db.selectTable("ivp_run", true));
-            print(db.selectTable("ivp_raw", true));
-            print(db.selectTable("ivp_raw_event", true));
-            print(db.selectTable("login_log", true));
+        try (Database db = new PostgreSQL("localhost", "5432", "postgres", "postgres", "pgAdmin")) {
+            TableType table = db.selectTable("uia_dto_test", false);
+            Assert.assertEquals(7, table.getColumns().size());
+            table.getColumns().forEach(System.out::println);
+        }
+    }
+
+    @Test
+    public void testGenerateDTO() throws Exception {
+        try (Database db = new PostgreSQL("localhost", "5432", "postgres", "postgres", "pgAdmin")) {
+            DaoFactoryClassPrinter p = new DaoFactoryClassPrinter(db, "uia_dto_test");
+            System.out.println(p.generateDTO("uia.dao.sample", "Sample2"));
+        }
+    }
+
+    @Test
+    public void testGenerateCreateTableSQL() throws Exception {
+        try (Database db = new PostgreSQL("localhost", "5432", "postgres", "postgres", "pgAdmin")) {
+            TableType table = db.selectTable("uia_dto_test", false);
+
+            System.out.println("=== PostgreSQL ===");
+            System.out.println(db.generateCreateTableSQL(table));
+
+            System.out.println("=== Oracle ===");
+            try (Database ora = new Oracle()) {
+                System.out.println(ora.generateCreateTableSQL(table));
+            }
+
+            System.out.println("=== Hana ===");
+            try (Database hana = new Hana()) {
+                System.out.println(hana.generateCreateTableSQL(table));
+            }
         }
     }
 
@@ -88,35 +112,26 @@ public class PostgreSQLTest {
     }
 
     @Test
-    public void testGenerateCreateTableSQL() throws Exception {
-        try (Database db = new PostgreSQL("localhost", "5432", "mvsdb", "huede", "huede")) {
-            TableType table = db.selectTable("ivp", false);
+    public void testAlter2Nvarchar() throws Exception {
+        try (Database target = new Hana()) {
+            try (Database source = new PostgreSQL("localhost", "5432", "pmsdb", "pms", "pms")) {
 
-            System.out.println("=== PostgreSQL ===");
-            System.out.println(db.generateCreateTableSQL(table));
+                // tables
+                List<String> ts = source.selectTableNames();
+                StringBuilder scripts = new StringBuilder();
+                for (String t : ts) {
+                    TableType tableOld = source.selectTable(t, false);
+                    TableType tableNew = tableOld.toNvarchar();
+                    CompareResult cr = tableNew.sameAs(tableOld, new ComparePlan(true, false, false, false, false));
+                    scripts.append("-- ").append(t).append("\n");
+                    if (!cr.isPassed()) {
+                        scripts.append(target.generateAlterTableSQL(tableOld.getTableName(), cr.getDiff())).append("\n");
+                    }
+                }
 
-            System.out.println("=== Oracle ===");
-            try (Database ora = new Oracle()) {
-                System.out.println(ora.generateCreateTableSQL(table));
-            }
-
-            System.out.println("=== Hana ===");
-            try (Database hana = new Hana()) {
-                System.out.println(hana.generateCreateTableSQL(table));
+                System.out.println(scripts.toString());
             }
         }
-    }
-
-    private void print(TableType table) {
-        System.out.println(table.getTableName() + " " + table.getRemark());
-        for (ColumnType ct : table.getColumns()) {
-            System.out.println(String.format("  %s(%s): %s%s",
-                    ct.getColumnName(),
-                    ct.getDataTypeName(),
-                    ct.getRemark(),
-                    ct.isPk() ? ", PK" : ""));
-        }
-        System.out.println();
     }
 
     private Hana fwks() throws SQLException {

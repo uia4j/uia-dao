@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import uia.dao.ColumnType.DataType;
+
 /**
  * The structure of a table.
  *
@@ -53,18 +55,33 @@ public class TableType {
         this.columns = columns;
         this.table = table;
     }
-    
+
+    public TableType toNvarchar() {
+        TableType result = clone();
+        result.getColumns().forEach(c -> {
+            if (c.isStringType()) {
+                c.setDataType(DataType.NVARCHAR2);
+            }
+        });
+        return result;
+    }
+
     /**
      * Clones the object.
-     * 
+     *
      * @return Result.
      */
+    @Override
     public TableType clone() {
-    	return new TableType(
-    			this.tableName,
-    			this.remark,
-    			new ArrayList<ColumnType>(this.columns),
-    			table);
+        ArrayList<ColumnType> columns = new ArrayList<>();
+        this.columns.forEach(c -> {
+            columns.add(c.clone());
+        });
+        return new TableType(
+                this.tableName,
+                this.remark,
+                new ArrayList<ColumnType>(columns),
+                this.table);
     }
 
     /**
@@ -280,20 +297,20 @@ public class TableType {
                 this.tableName.toLowerCase(),
                 String.join(" AND ", ws));
     }
-    
+
     public String generateProperties() {
-    	StringBuilder p = new StringBuilder()
-    			.append(CamelNaming.lower(this.tableName))
-    			.append(".Title=")
-    			.append(this.remark == null ? CamelNaming.upper(this.tableName) : this.remark)
-    			.append("\n");
+        StringBuilder p = new StringBuilder()
+                .append(CamelNaming.lower(this.tableName))
+                .append(".Title=")
+                .append(this.remark == null ? CamelNaming.upper(this.tableName) : this.remark)
+                .append("\n");
         for (ColumnType column : this.columns) {
-        	String columnName = CamelNaming.upper(column.getColumnName());
-			p.append(CamelNaming.lower(this.tableName))
-        			.append(".")
-		        	.append(columnName)
-		        	.append("=")
-		        	.append(column.getRemark() == null ? columnName : column.getRemark()).append("\n");
+            String columnName = CamelNaming.upper(column.getColumnName());
+            p.append(CamelNaming.lower(this.tableName))
+                    .append(".")
+                    .append(columnName)
+                    .append("=")
+                    .append(column.getRemark() == null ? columnName : column.getRemark()).append("\n");
         }
 
         return p.toString();

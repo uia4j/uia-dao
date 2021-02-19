@@ -1,8 +1,10 @@
 package {DTO_PACKAGE};
 
+import java.math.BigDecimal;
+import java.sql.Clob;
 import java.util.Date;
-import java.util.UUID;
 
+import uia.dao.ColumnType.DataType;
 import uia.dao.annotation.ColumnInfo;
 import uia.dao.annotation.TableInfo;
 import uia.dao.annotation.ViewInfo;
@@ -32,6 +34,7 @@ public class {DTO} {
     public {DTO}({DTO} data) {
 {CODE_INITIAL}
     }	
+    
 {CODE_GETSET}
     /**
      * Copies this instance.

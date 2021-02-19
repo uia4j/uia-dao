@@ -271,6 +271,28 @@ public class TableDao<T> {
     }
 
     /**
+     * Selects some rows with a criteria.
+     *
+     * @param where The where statement.
+     * @param orders The orders.
+     * @param topN The max count of result.
+     * @return Rows meet the criteria.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> select(Where where, String orders, int topN) throws SQLException, DaoException {
+        DaoMethod<T> method = this.tableHelper.forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where)
+                .orderBy(orders);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toList(rs, topN);
+            }
+        }
+    }
+
+    /**
      * Selects one row with a criteria.
      *
      * @param where The where statement.

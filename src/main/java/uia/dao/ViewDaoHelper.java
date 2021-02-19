@@ -62,21 +62,24 @@ public final class ViewDaoHelper<T> {
 
         ArrayList<String> selectColNames = new ArrayList<>();
         Class<?> curr = clz;
-        for (int i = 0; i <= ti.inherit(); i++) {
+        String packageName = curr.getPackage().getName();
+        boolean next = true;
+        int i = ti.inherit();
+        while (next) {
             Field[] fs = curr.getDeclaredFields();
 
             for (Field f : fs) {
                 ColumnInfo ci = f.getDeclaredAnnotation(ColumnInfo.class);
                 if (ci != null && ci.inView()) {
-                    String typeName = ci.typeName();
-                    if (typeName.isEmpty()) {
-                        typeName = f.getType().getSimpleName();
+                    String cvrtName = ci.converter();
+                    if (cvrtName.isEmpty()) {
+                        cvrtName = f.getType().getSimpleName();
                     }
 
                     DaoColumn column = new DaoColumn(
                             f,
-                            factory.getColumnReader(typeName),
-                            factory.getColumnWriter(typeName));
+                            factory.getColumnReader(cvrtName),
+                            factory.getColumnWriter(cvrtName));
 
                     this.select.addColumn(column);
                     this.selectWithAlias.addColumn(column);
@@ -85,6 +88,13 @@ public final class ViewDaoHelper<T> {
                 }
             }
             curr = curr.getSuperclass();
+            i--;
+            if (ti.inherit() == 0) {
+                next = packageName.equals(curr.getPackage().getName());
+            }
+            else {
+                next = i >= 0;
+            }
         }
         this.select.setSql(String.format("SELECT %s FROM %s ",
                 String.join(",", selectColNames),

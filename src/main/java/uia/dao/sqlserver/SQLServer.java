@@ -249,7 +249,7 @@ public class SQLServer extends AbstractDatabase {
                             ct.setDataType(DataType.TIMESTAMPZ);
                             break;
                         default:
-                            ct.setDataType(DataType.OTHERS);
+                            ct.setDataType(DataType.UNDEFINED);
                             break;
                     }
                     cts.add(ct);
@@ -298,6 +298,7 @@ public class SQLServer extends AbstractDatabase {
                 type = "datetimeoffset";
                 break;
             case CLOB:
+            case JSON:
             case NVARCHAR:
             case NVARCHAR2:
                 type = "nvarchar(" + columnSize + ")";

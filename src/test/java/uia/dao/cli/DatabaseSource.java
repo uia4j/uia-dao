@@ -133,6 +133,16 @@ public abstract class DatabaseSource {
             pg.setAlwaysTimestampZ(true);
             return pg;
         }
+        if ("pms_yo_hmp".equalsIgnoreCase(name)) {
+        	Hana pg = new Hana("10.3.11.34", "30015", "PMS", "PMS", "PMS@zaq1");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
+        }
+        if ("pms_yo_hms".equalsIgnoreCase(name)) {
+        	Hana pg = new Hana("10.3.11.34", "30041", "PMS", "PMS", "PMS@zaq1");
+            pg.setAlwaysTimestampZ(true);
+            return pg;
+        }
 
         throw new SQLException("no datasource: " + name);
     }

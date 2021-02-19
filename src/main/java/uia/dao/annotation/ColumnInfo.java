@@ -30,9 +30,9 @@ public @interface ColumnInfo {
 
     boolean primaryKey() default false;
 
-    String typeName() default "";
+    String converter() default "";
 
-    DataType sqlType() default DataType.OTHERS;
+    DataType sqlType() default DataType.UNDEFINED;
 
     boolean inView() default true;
 

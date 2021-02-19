@@ -20,6 +20,8 @@ package uia.dao.where.conditions;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
 
 /**
  *
@@ -45,5 +47,14 @@ public interface ConditionType {
      */
     public default int accpet(PreparedStatement ps, int index) throws SQLException {
         return index;
+    }
+    
+    public static void apply(PreparedStatement ps, int index, Object value) throws SQLException {
+        if (value instanceof Date) {
+            ps.setTimestamp(index, new Timestamp(((Date) value).getTime()));
+        }
+        else {
+            ps.setObject(index, value);
+        }
     }
 }

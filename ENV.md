@@ -123,7 +123,7 @@ public class DaoEnvConfig {
 ```
 
 
-3. use `@Autowired` to get the `DaoEnv` instance.
+### 3. use `@Autowired` to get the `DaoEnv` instance.
 ###
 ```java
 @Service

@@ -83,12 +83,12 @@ public class DaoFactoryTool {
         String dtoName = CamelNaming.upper(tableOrView);
         DaoFactoryClassPrinter printer = new DaoFactoryClassPrinter(this.source, tableOrView);
         String cls = printer.generateDTO(packageName, dtoName);
-        String file = new StringBuilder(dir)
-                .append("/")
-                .append(packageName.replace('.', '/'))
-                .append("/")
-                .append(dtoName)
-                .append(".java").toString();
+        StringBuilder path = new StringBuilder(dir)
+	            .append("/")
+	            .append(packageName.replace('.', '/'))
+	            .append("/");
+        Files.createDirectories(Paths.get(path.toString()));
+        String file = path.append(dtoName).append(".java").toString();
         Files.write(Paths.get(file), cls.getBytes());
     }
 }

@@ -30,4 +30,6 @@ public @interface SelectInfo {
     String sql();
 
     boolean join() default false;
+    
+    int top() default 0;
 }

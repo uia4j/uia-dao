@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.postgresql.util.PGobject;
 import org.reflections.Reflections;
 
 import uia.dao.ColumnType.DataType;
@@ -49,15 +50,20 @@ public final class DaoFactory {
 
     private String defaultSchema;
 
+    /**
+     * cvrtName - DataType mapping
+     */
     private final TreeMap<String, DataType> dataTypes;
 
+    /**
+     * cvrtName - DaoColumnReader mapping
+     */
     private final TreeMap<String, DaoColumnReader> readers;
 
+    /**
+     * cvrtName - DaoColumnWriter mapping
+     */
     private final TreeMap<String, DaoColumnWriter> writers;
-
-    private final DaoColumnReader objectReader;
-
-    private final DaoColumnWriter objectWriter;
 
     private final TreeMap<String, TableDaoHelper<?>> daoTables;
 
@@ -66,10 +72,10 @@ public final class DaoFactory {
     /**
      * Constructor.
      *
-     * @param useTz Enable time zone for Date or not.
+     * @param dateToUTC Convert date with UTC time.
      *
      */
-    public DaoFactory(boolean useTz) {
+    public DaoFactory(boolean dateToUTC) {
         this.dataTypes = new TreeMap<>();
         this.dataTypes.put("short", DataType.INTEGER);
         this.dataTypes.put("int", DataType.INTEGER);
@@ -77,9 +83,12 @@ public final class DaoFactory {
         this.dataTypes.put("long", DataType.LONG);
         this.dataTypes.put("bigdecimal", DataType.NUMERIC);
         this.dataTypes.put("string", DataType.NVARCHAR2);
-        this.dataTypes.put("date", useTz ? DataType.TIMESTAMPZ : DataType.TIMESTAMP);
+        this.dataTypes.put("stringE2N", DataType.NVARCHAR2);
+        this.dataTypes.put("stirngN2E", DataType.NVARCHAR2);
+        this.dataTypes.put("date", dateToUTC ? DataType.TIMESTAMPZ : DataType.TIMESTAMP);
         this.dataTypes.put("clob", DataType.CLOB);
         this.dataTypes.put("byte[]", DataType.BLOB);
+        this.dataTypes.put("json", DataType.JSON);
 
         this.readers = new TreeMap<>();
         this.readers.put("short", this::readShort);
@@ -90,10 +99,11 @@ public final class DaoFactory {
         this.readers.put("string", this::readString);
         this.readers.put("stringE2N", DaoColumnReader::empty2Null);
         this.readers.put("stirngN2E", DaoColumnReader::null2Empty);
-        this.readers.put("date", useTz ? this::readDateTz : this::readDate);
+        this.readers.put("date", dateToUTC ? this::readDateTz : this::readDate);
         this.readers.put("clob", this::readString);
         this.readers.put("byte[]", this::readBytes);
-        this.objectReader = this::readObject;
+        this.readers.put("json", this::readString);
+        this.readers.put("object", this::readObject);
 
         this.writers = new TreeMap<>();
         this.writers.put("short", this::writeShort);
@@ -103,10 +113,12 @@ public final class DaoFactory {
         this.writers.put("bigdecimal", this::writeBigDecimal);
         this.writers.put("string", this::writeString);
         this.writers.put("stringE2N", DaoColumnWriter::empty2Null);
-        this.writers.put("date", useTz ? this::writeDateTz : this::writeDate);
+        this.writers.put("stirngN2E", this::writeString);
+        this.writers.put("date", dateToUTC ? this::writeDateTz : this::writeDate);
         this.writers.put("clob", this::writeClob);
         this.writers.put("byte[]", this::writeBytes);
-        this.objectWriter = this::writeObject;
+        this.writers.put("json", this::writeJson);
+        this.writers.put("object", this::writeObject);
 
         this.daoTables = new TreeMap<>();
         this.daoViews = new TreeMap<>();
@@ -124,7 +136,7 @@ public final class DaoFactory {
      * @param <T> The type of DTO class.
      * @return The TableDao object.
      */
-    public <T> TableDao<T> creaeTableDao(Class<T> clz, Connection conn) {
+    public <T> TableDao<T> createTableDao(Class<T> clz, Connection conn) {
         TableDaoHelper<T> helper = forTable(clz);
         return helper == null
                 ? null
@@ -146,7 +158,7 @@ public final class DaoFactory {
                 : new ViewDao<T>(conn, helper);
     }
 
-    public <T extends TableDao<?>> T proxyTableDao(Class<T> daoClz, Connection conn) throws Exception {
+    public <T extends TableDao<?>> T proxyTableDao(Class<T> daoClz, Connection conn) throws DaoException {
         DaoInfo dao = daoClz.getDeclaredAnnotation(DaoInfo.class);
         if (dao == null) {
             throw new NullPointerException("@DaoInfo not found");
@@ -159,7 +171,7 @@ public final class DaoFactory {
         return null;
     }
 
-    public <T extends ViewDao<?>> T proxyViewDao(Class<T> daoClz, Connection conn) throws Exception {
+    public <T extends ViewDao<?>> T proxyViewDao(Class<T> daoClz, Connection conn) throws DaoException {
         DaoInfo dao = daoClz.getDeclaredAnnotation(DaoInfo.class);
         if (dao == null) {
             throw new NullPointerException("@DaoInfo not found");
@@ -208,6 +220,10 @@ public final class DaoFactory {
      * @throws DaoException Failed to load.
      */
     public void load(String packageName, ClassLoader loader) throws DaoException {
+    	if(packageName == null) {
+    		return;
+    	}
+    	
         try {
             Reflections ref = new Reflections(packageName);
             // tables
@@ -292,24 +308,10 @@ public final class DaoFactory {
         return (ViewDaoHelper<T>) this.daoViews.get(clz.getName());
     }
 
-    /**
-     * Adds a column reader for a specific type.
-     *
-     * @param typeName The type name using in the ColumnInfo annotation.
-     * @param reader The reader.
-     */
-    public void addColumnReader(String typeName, DaoColumnReader reader) {
-        this.readers.put(typeName.toLowerCase(), reader);
-    }
-
-    /**
-     * Adds a column writer for a specific type.
-     *
-     * @param typeName The type name using in the ColumnInfo annotation.
-     * @param writer The writer.
-     */
-    public void addColumnWriter(String typeName, DaoColumnWriter writer) {
-        this.writers.put(typeName.toLowerCase(), writer);
+    public void register(String cvrtName, DataType dataType, DaoColumnReader reader, DaoColumnWriter writer) {
+        this.dataTypes.put(cvrtName, dataType);
+        this.readers.put(cvrtName.toLowerCase(), reader);
+        this.writers.put(cvrtName.toLowerCase(), writer);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -365,24 +367,35 @@ public final class DaoFactory {
         }
     }
 
-    DataType getDataType(String typeName) {
-        DataType type = this.dataTypes.get(typeName.toLowerCase());
+    /**
+     * Returns the mapping SQL type of result.
+     *
+     * @param cvrtName The name of converter.
+     * @return The SQL type mapping to the result.
+     */
+    DataType getDataType(String cvrtName) {
+        DataType type = this.dataTypes.get(cvrtName.toLowerCase());
         return type == null ? DataType.NVARCHAR2 : type;
     }
 
-    DaoColumnReader getColumnReader(String typeName) {
-        DaoColumnReader reader = this.readers.get(typeName.toLowerCase());
-        return reader == null ? this.objectReader : reader;
+    /**
+     * Returns the reader of a column.
+     *
+     * @param cvrtName The type of the result.
+     * @return The result.
+     */
+    DaoColumnReader getColumnReader(String cvrtName) {
+        return this.readers.get(cvrtName.toLowerCase());
     }
 
-    DaoColumnWriter getColumnWriter(Class<?> type) {
-        DaoColumnWriter writer = this.writers.get(type.getSimpleName().toLowerCase());
-        return writer == null ? this.objectWriter : writer;
-    }
-
-    DaoColumnWriter getColumnWriter(String typeName) {
-        DaoColumnWriter writer = this.writers.get(typeName.toLowerCase());
-        return writer == null ? this.objectWriter : writer;
+    /**
+     * Returns the writer of a column.
+     *
+     * @param cvrtName The type of the result.
+     * @return The writer.
+     */
+    DaoColumnWriter getColumnWriter(String cvrtName) {
+        return this.writers.get(cvrtName.toLowerCase());
     }
 
     private Object readShort(ResultSet rs, int index) throws SQLException {
@@ -453,20 +466,37 @@ public final class DaoFactory {
         ps.setObject(index, value);
     }
 
+    private void writeJson(PreparedStatement ps, int index, Object value) throws SQLException {
+        PGobject jsonObject = new PGobject();
+        jsonObject.setType("json");
+        jsonObject.setValue((String) value);
+        ps.setObject(index, jsonObject);
+    }
+
     private void writeClob(PreparedStatement ps, int index, Object value) throws SQLException {
         String content = (String) value;
-        try (StringReader stringReader = new StringReader(content)) {
-            ps.setCharacterStream(index, stringReader, content.length());
+        if (content == null) {
+            ps.setObject(index, null);
+        }
+        else {
+            try (StringReader stringReader = new StringReader(content)) {
+                ps.setCharacterStream(index, stringReader, content.length());
+            }
         }
     }
 
     private void writeBytes(PreparedStatement ps, int index, Object value) throws SQLException {
         byte[] content = (byte[]) value;
-        try (InputStream is = new ByteArrayInputStream(content)) {
-            ps.setBinaryStream(index, is, content.length);
+        if (content == null) {
+            ps.setObject(index, null);
         }
-        catch (IOException e) {
-            throw new SQLException("Column:" + index + " failed to convert to InputStream");
+        else {
+            try (InputStream is = new ByteArrayInputStream(content)) {
+                ps.setBinaryStream(index, is, content.length);
+            }
+            catch (IOException e) {
+                throw new SQLException("Column:" + index + " failed to convert to InputStream");
+            }
         }
     }
 }

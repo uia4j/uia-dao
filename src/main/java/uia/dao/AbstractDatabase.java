@@ -29,7 +29,8 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * Abstract implementation for all databases.
@@ -343,13 +344,16 @@ public abstract class AbstractDatabase implements Database {
     }
 
     private DataSource createDataSource(String driverName, String connectUrl, String user, String pwd) {
-        BasicDataSource bds = new BasicDataSource();
-        bds.setUrl(connectUrl);
-        bds.setUsername(user);
-        bds.setPassword(pwd);
-        bds.setInitialSize(10);
-        bds.setDriverClassName(driverName);
-        bds.setMaxTotal(50);
-        return bds;
+    	HikariConfig config = new HikariConfig();
+    	config.setDriverClassName(driverName);
+    	config.setJdbcUrl(connectUrl);
+    	config.setUsername(user);
+    	config.setPassword(pwd);
+    	config.setMaximumPoolSize(200);
+    	config.addDataSourceProperty("cachePrepStmts" , "true");
+    	config.addDataSourceProperty("prepStmtCacheSize" , "512");
+    	config.addDataSourceProperty("prepStmtCacheSqlLimit" , "1024");    	
+    	
+    	return new HikariDataSource(config);
     }
 }

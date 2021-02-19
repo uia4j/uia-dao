@@ -22,30 +22,40 @@ public final class ProxyDao {
     }
 
     @SuppressWarnings("unchecked")
-    <T> T bind(Class<T> absclz, Connection conn, TableDaoHelper<?> helper) throws Exception {
+    <T> T bind(Class<T> absclz, Connection conn, TableDaoHelper<?> helper) throws DaoException {
         this.conn = conn;
         ProxyFactory factory = new ProxyFactory();
         factory.setSuperclass(absclz);
         factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
 
-        T result = (T) factory.create(
-                new Class<?>[] { Connection.class, TableDaoHelper.class },
-                new Object[] { conn, helper },
-                this::runTable);
-        return result;
+        try {
+            T result = (T) factory.create(
+                    new Class<?>[] { Connection.class, TableDaoHelper.class },
+                    new Object[] { conn, helper },
+                    this::runTable);
+            return result;
+        }
+        catch (Exception ex) {
+            throw new DaoException(ex);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    <T> T bind(Class<T> absclz, Connection conn, ViewDaoHelper<?> helper) throws Exception {
+    <T> T bind(Class<T> absclz, Connection conn, ViewDaoHelper<?> helper) throws DaoException {
         this.conn = conn;
         ProxyFactory factory = new ProxyFactory();
         factory.setSuperclass(absclz);
         factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
 
-        return (T) factory.create(
-                new Class<?>[] { Connection.class, ViewDaoHelper.class },
-                new Object[] { conn, helper },
-                this::runView);
+        try {
+            return (T) factory.create(
+                    new Class<?>[] { Connection.class, ViewDaoHelper.class },
+                    new Object[] { conn, helper },
+                    this::runView);
+        }
+        catch (Exception ex) {
+            throw new DaoException(ex);
+        }
     }
 
     @SuppressWarnings("rawtypes")
@@ -63,11 +73,11 @@ public final class ProxyDao {
             try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
                 for (int i = 0; i < args.length; i++) {
                     dao.tableHelper.getFactory()
-                            .getColumnWriter(args[i].getClass())
+                            .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
                             .write(ps, i + 1, args[i]);
                 }
                 try (ResultSet rs = ps.executeQuery()) {
-                    return list ? method.toList(rs) : method.toOne(rs);
+                    return list ? method.toList(rs, selectInfo.top()) : method.toOne(rs);
                 }
             }
         }
@@ -80,7 +90,7 @@ public final class ProxyDao {
                     updateInfo.sql()))) {
                 for (int i = 0; i < args.length; i++) {
                     dao.tableHelper.getFactory()
-                            .getColumnWriter(args[i].getClass())
+                            .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
                             .write(ps, i + 1, args[i]);
                 }
                 return ps.executeUpdate();
@@ -94,7 +104,7 @@ public final class ProxyDao {
             try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + deleteInfo.sql())) {
                 for (int i = 0; i < args.length; i++) {
                     dao.tableHelper.getFactory()
-                            .getColumnWriter(args[i].getClass())
+                            .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
                             .write(ps, i + 1, args[i]);
                 }
                 return ps.executeUpdate();
@@ -118,7 +128,7 @@ public final class ProxyDao {
         try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + selectInfo.sql())) {
             for (int i = 0; i < args.length; i++) {
                 dao.viewHelper.getFactory()
-                        .getColumnWriter(args[i].getClass())
+                        .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
                         .write(ps, i + 1, args[i]);
             }
             try (ResultSet rs = ps.executeQuery()) {

@@ -208,7 +208,7 @@ public class SQLite extends AbstractDatabase {
                             ct.setDataType(DataType.NUMERIC);
                             break;
                         default:
-                            ct.setDataType(DataType.OTHERS);
+                            ct.setDataType(DataType.UNDEFINED);
                             break;
                     }
                     cts.add(ct);
@@ -249,6 +249,7 @@ public class SQLite extends AbstractDatabase {
             case TIMESTAMP:
                 type = "TEXT";
                 break;
+            case JSON:
             case NVARCHAR:
             case NVARCHAR2:
             case VARCHAR:

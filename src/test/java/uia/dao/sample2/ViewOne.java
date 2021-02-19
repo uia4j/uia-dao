@@ -16,14 +16,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package uia.dao.sample;
+package uia.dao.sample2;
 
+import uia.dao.annotation.ColumnInfo;
 import uia.dao.annotation.ViewInfo;
 
-@ViewInfo(
-        name = "view_one",
-        code = "select * from a \n" +
-                "inner join b on a.key=b.key")
-public class ViewSample {
+@ViewInfo(name = "view_one", inherit = 1)
+public class ViewOne extends One {
+
+    @ColumnInfo(name = "description")
+    private String description;
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
 }

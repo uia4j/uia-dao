@@ -20,8 +20,6 @@ package uia.dao.where.conditions;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Date;
 
 /**
  *
@@ -49,12 +47,7 @@ public class LessThanType implements ConditionType {
 
     @Override
     public int accpet(final PreparedStatement ps, final int index) throws SQLException {
-        if (this.value instanceof Date) {
-            ps.setTimestamp(index, new Timestamp(((Date) this.value).getTime()));
-        }
-        else {
-            ps.setObject(index, this.value);
-        }
+    	ConditionType.apply(ps, index, this.value);
         return index + 1;
     }
 

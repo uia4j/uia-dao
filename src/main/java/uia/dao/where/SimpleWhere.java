@@ -31,6 +31,8 @@ import uia.dao.where.conditions.LessThanType;
 import uia.dao.where.conditions.LikeType;
 import uia.dao.where.conditions.MoreThanType;
 import uia.dao.where.conditions.NotEqType;
+import uia.dao.where.conditions.NotNullType;
+import uia.dao.where.conditions.NullType;
 
 /**
  *
@@ -131,6 +133,22 @@ public class SimpleWhere extends Where {
             return this;
         }
         this.conds.add(new NotEqType(key, value));
+        return this;
+    }
+
+    public SimpleWhere isNull(String key) {
+        if (isEmpty(key)) {
+            return this;
+        }
+        this.conds.add(new NullType(key));
+        return this;
+    }
+
+    public SimpleWhere notNull(String key) {
+        if (isEmpty(key)) {
+            return this;
+        }
+        this.conds.add(new NotNullType(key));
         return this;
     }
 

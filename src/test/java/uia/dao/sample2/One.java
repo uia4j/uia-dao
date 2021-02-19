@@ -16,37 +16,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package uia.dao.sample;
+package uia.dao.sample2;
+
+import java.util.Date;
 
 import uia.dao.annotation.ColumnInfo;
 import uia.dao.annotation.TableInfo;
 
-@TableInfo(name = "org_supplier")
-public class Two {
+@TableInfo(name = "one")
+public class One {
 
-    @ColumnInfo(name = "org_id", primaryKey = true)
-    private String orgId;
+    @ColumnInfo(name = "id", primaryKey = true)
+    private String id;
 
-    @ColumnInfo(name = "supplier_id", primaryKey = true)
-    private String supplierId;
+    @ColumnInfo(name = "name")
+    private String name;
 
-    @ColumnInfo(name = "state_name")
+    @ColumnInfo(name = "birthday")
+    private Date birthday;
+
+    @ColumnInfo(name = "state_name", inView = false)
     private int stateName;
 
-    public String getOrgId() {
-        return this.orgId;
+    public String getId() {
+        return this.id;
     }
 
-    public void setOrgId(String orgId) {
-        this.orgId = orgId;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getSupplierId() {
-        return this.supplierId;
+    public String getName() {
+        return this.name;
     }
 
-    public void setSupplierId(String supplierId) {
-        this.supplierId = supplierId;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Date getBirthday() {
+        return this.birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
     }
 
     public int getStateName() {

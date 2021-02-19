@@ -288,7 +288,7 @@ public class Oracle extends AbstractDatabase {
                             ct.setDataType(DataType.NCLOB);
                             break;
                         default:
-                            ct.setDataType(DataType.OTHERS);
+                            ct.setDataType(DataType.UNDEFINED);
                             break;
                     }
                     cts.add(ct);
@@ -365,6 +365,7 @@ public class Oracle extends AbstractDatabase {
             case CLOB:
                 type = "CLOB";
                 break;
+            case JSON:
             case NCLOB:
                 type = "NCLOB";
                 break;

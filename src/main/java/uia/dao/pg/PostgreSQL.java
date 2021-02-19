@@ -52,7 +52,7 @@ public class PostgreSQL extends AbstractDatabase {
     }
 
     public PostgreSQL(String host, String port, String database, String user, String pwd) throws SQLException {
-        super("org.postgresql.Driver", String.format("jdbc:postgresql://%s:%s/%s", host, port, database), user, pwd, "public");
+        super("org.postgresql.Driver", String.format("jdbc:postgresql://%s:%s/%s", host, port, database), user, pwd, null);
     }
 
     public PostgreSQL(String host, String port, String database, String user, String pwd, String schema) throws SQLException {
@@ -267,8 +267,8 @@ public class PostgreSQL extends AbstractDatabase {
                         case Types.TIME:                // time, timez
                             ct.setDataType(DataType.TIME);
                             break;
-                        case Types.TIMESTAMP:           // timestamp, timestamp without timezone
-                            if (isAlwaysTimestampZ()) {
+                        case Types.TIMESTAMP:           // timestamp, timestamp without timezone, timestamptz
+                            if (isAlwaysTimestampZ() || "timestamptz".equals(ct.getDataTypeName())) {
                                 ct.setDataType(DataType.TIMESTAMPZ);
                             }
                             else {
@@ -278,8 +278,11 @@ public class PostgreSQL extends AbstractDatabase {
                         case Types.TIME_WITH_TIMEZONE:  // timestamp with timezone
                             ct.setDataType(DataType.TIMESTAMPZ);
                             break;
+                        case 1111:						// JSON
+                            ct.setDataType(DataType.JSON);
+                            break;
                         default:
-                            ct.setDataType(DataType.OTHERS);
+                            ct.setDataType(DataType.UNDEFINED);
                             break;
 
                     }
@@ -364,6 +367,9 @@ public class PostgreSQL extends AbstractDatabase {
                 break;
             case BLOB:
                 type = "bytea";
+                break;
+            case JSON:
+                type = "json";
                 break;
             default:
                 throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());

@@ -63,8 +63,18 @@ public final class DaoMethod<T> {
     public void fromOne(PreparedStatement ps, Object obj) throws SQLException, DaoException {
         int index = 1;
         for (DaoColumn col : this.columns) {
-            col.run(obj, ps, index);
-            index++;
+        	try {
+	            col.run(obj, ps, index);
+	            index++;
+        	}
+        	catch(SQLException ex1) {
+        		System.out.println("column:" + col + " failed");
+        		throw ex1;
+        	}
+        	catch(DaoException ex2) {
+        		System.out.println("column:" + col + " failed");
+        		throw ex2;
+        	}
         }
     }
 
@@ -76,9 +86,43 @@ public final class DaoMethod<T> {
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
-    public List<T> toList(ResultSet rs) throws SQLException, DaoException {
+    public List<T> toList(final ResultSet rs) throws SQLException, DaoException {
         ArrayList<T> result = new ArrayList<>();
         while (rs.next()) {
+            try {
+                T data = this.clz.newInstance();
+                int index = 1;
+                for (DaoColumn col : this.columns) {
+                    col.run(data, rs, index);
+                    index++;
+                }
+                result.add(data);
+            }
+            catch (InstantiationException | IllegalAccessException e) {
+                throw new DaoException(e);
+            }
+
+        }
+        return result;
+    }
+
+    /**
+     * Convert result set to DTO object list.
+     *
+     * @param rs The result set.
+     * @param n The max count of result.
+     * @return DTO object list.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> toList(final ResultSet rs, final int n) throws SQLException, DaoException {
+    	if(n <= 0) {
+    		return toList(rs);
+    	}
+
+    	ArrayList<T> result = new ArrayList<>();
+        int i = 0;
+        while (rs.next() && i++ < n) {
             try {
                 T data = this.clz.newInstance();
                 int index = 1;

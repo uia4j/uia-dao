@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.uia.solution</groupId>
 	<artifactId>uia-dao</artifactId>
-	<version>0.3.0</version>
+	<version>0.3.1</version>
 	<packaging>jar</packaging>
 	<name>uia-dao</name>
 	<url>https://github.com/uia4j/uia-dao</url>
@@ -16,23 +16,18 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-dbcp2</artifactId>
-			<version>2.7.0</version>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.12</version>
 		</dependency>
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.12</version>
-        </dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.2.6</version>
+			<version>42.2.16</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -65,10 +60,29 @@
 			<version>8.0.19</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>3.4.5</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
@@ -85,12 +99,13 @@
 				<version>2.12.4</version>
 				<configuration>
 					<excludes>
+						<exclude>uia/dao/cli/*.java</exclude>
 						<exclude>uia/dao/hana/*.java</exclude>
-						<exclude>uia/dao/pg/*.java</exclude>
 						<exclude>uia/dao/ora/*.java</exclude>
+						<exclude>uia/dao/pg/*.java</exclude>
+						<exclude>uia/dao/pms/*.java</exclude>
 						<exclude>uia/dao/sqlite/*.java</exclude>
 						<exclude>uia/dao/sqlserver/*.java</exclude>
-						<exclude>uia/dao/pms/*.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>

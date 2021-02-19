@@ -87,14 +87,19 @@ public final class TableDaoHelper<T> {
             ColumnInfo ci = f.getDeclaredAnnotation(ColumnInfo.class);
 
             if (ci != null) {
-                String typeName = ci.typeName();
-                if (typeName.isEmpty()) {
-                    typeName = f.getType().getSimpleName();
+                String cvrtName = ci.converter();
+                if (cvrtName.isEmpty()) {
+                	if(ci.sqlType() == DataType.JSON) {
+                        cvrtName = "json";
+                	}
+                	else {
+                        cvrtName = f.getType().getSimpleName();
+                	}
                 }
 
                 DataType dataType = ci.sqlType();
-                if (dataType == DataType.OTHERS) {
-                    dataType = factory.getDataType(typeName);
+                if (dataType == DataType.UNDEFINED) {
+                    dataType = factory.getDataType(cvrtName);
                 }
 
                 // ColumnType
@@ -108,12 +113,17 @@ public final class TableDaoHelper<T> {
                 ct.setNullable(!ci.primaryKey());
                 ct.setRemark(ci.remark());
                 cts.add(ct);
-
+                
                 // DaoColumn
-                DaoColumn column = new DaoColumn(
-                        f,
-                        factory.getColumnReader(typeName),
-                        factory.getColumnWriter(typeName));
+                DaoColumnReader r = factory.getColumnReader(cvrtName);
+                if(r == null) {
+                	throw new NullPointerException(String.format("Column:%s reader:%s not found", ct.getColumnName(), cvrtName));
+                }
+                DaoColumnWriter w = factory.getColumnWriter(cvrtName);
+                if(w == null) {
+                	throw new NullPointerException(String.format("Column:%s writer:%s not found", ct.getColumnName(), cvrtName));
+                }
+                DaoColumn column = new DaoColumn(f, r, w);
 
                 if (ci.primaryKey()) {
                     this.primaryKeys.add(ci.name());
