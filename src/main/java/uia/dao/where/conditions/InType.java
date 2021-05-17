@@ -16,26 +16,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package uia.dao;
+package uia.dao.where.conditions;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
-*
-* @author Kyle K. Lin
-*
-*/
-public class DaoException extends Exception {
+ *
+ * @author Kyle K. Lin
+ *
+ */
+public class InType implements ConditionType {
 
-    private static final long serialVersionUID = -5509816590777819211L;
+    private final String key;
 
-    public DaoException(String message) {
-        super(message);
+    private final Set<String> values;
+
+    public InType(String key, Set<String> values) {
+        this.key = key;
+        this.values = values;
     }
 
-    public DaoException(Throwable th) {
-        super(th);
+    @Override
+    public String getStatement() {
+        String[] args = new String[this.values.size()];
+        Arrays.fill(args, "?");;
+        return this.key + " in(" + String.join(",", args) + " )";
     }
 
-    public DaoException(String message, Throwable th) {
-        super(message, th);
+    @Override
+    public int accpet(final PreparedStatement ps, final int index) throws SQLException {
+        int next = index;
+        for (String v : this.values) {
+            ps.setString(next, v);
+            next++;
+        }
+        return next;
+    }
+
+    @Override
+    public String toString() {
+        return this.key + " in(" + this.values + ")";
     }
 }

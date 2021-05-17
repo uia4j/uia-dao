@@ -72,7 +72,29 @@ public class ViewDao<T> {
 
         try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return toList(rs);
+                return toList(rs, Filter.ALL);
+            }
+        }
+    }
+
+    /**
+     * Selects rows of the view.
+     *
+     * @param filter The filter.
+     * @return Rows.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> select(Filter filter) throws SQLException, DaoException {
+        String orderBy = this.viewHelper.getOrderBy();
+        String sql = getSql();
+        if (!orderBy.isEmpty()) {
+            sql = sql + " ORDER BY " + orderBy;
+        }
+
+        try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return toList(rs, filter);
             }
         }
     }
@@ -91,7 +113,7 @@ public class ViewDao<T> {
                 .orderBy(this.viewHelper.getOrderBy());
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return toList(rs);
+                return toList(rs, Filter.ALL);
             }
             catch (SQLException ex) {
                 throw ex;
@@ -117,25 +139,78 @@ public class ViewDao<T> {
                 .orderBy(orders);
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return toList(rs);
+                return toList(rs, Filter.ALL);
             }
         }
     }
 
-    protected String getSql() {
+    /**
+     * Selects some rows with a criteria.
+     *
+     * @param where The where statement.
+     * @param filter The filter.
+     * @return Rows meet the criteria.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> select(Where where, Filter filter) throws SQLException, DaoException {
+        SelectStatement sql = new SelectStatement(getSql())
+                .where(where)
+                .orderBy(this.viewHelper.getOrderBy());
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return toList(rs, filter);
+            }
+            catch (SQLException ex) {
+                throw ex;
+            }
+            catch (DaoException ex2) {
+                throw ex2;
+            }
+        }
+    }
+
+    /**
+     * Selects some rows with a criteria.
+     *
+     * @param where The where statement.
+     * @param filter The filter.
+     * @param orders The orders.
+     * @return Rows meet the criteria.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> select(Where where, Filter filter, String orders) throws SQLException, DaoException {
+        SelectStatement sql = new SelectStatement(getSql())
+                .where(where)
+                .orderBy(orders);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return toList(rs, filter);
+            }
+            catch (SQLException ex) {
+                throw ex;
+            }
+            catch (DaoException ex2) {
+                throw ex2;
+            }
+        }
+    }
+
+    public String getSql() {
         return this.viewHelper.forSelect().getSql();
     }
 
     protected String getSql(String where) {
-        return this.viewHelper.forSelect().getSql() + where;
+        return this.viewHelper.forSelect().getSql() + " " + where;
     }
 
     protected String getSql(String where, String orderBy) {
-        return this.viewHelper.forSelect().getSql() + where + " ORDER BY " + orderBy;
+        return this.viewHelper.forSelect().getSql() + " " + where + " ORDER BY " + orderBy;
     }
 
-    protected List<T> toList(ResultSet rs) throws SQLException, DaoException {
-        return this.viewHelper.forSelect().toList(rs);
+    protected List<T> toList(ResultSet rs, Filter filter) throws SQLException, DaoException {
+        return this.viewHelper.forSelect().toList(rs, filter);
     }
 
     protected T toOne(ResultSet rs) throws SQLException, DaoException {

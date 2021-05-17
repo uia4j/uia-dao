@@ -177,7 +177,7 @@ public class TableDao<T> {
         }
 
         DaoMethod<T> method = this.tableHelper.forDelete();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + "WHERE " + this.tableHelper.forWherePK())) {
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + " WHERE " + this.tableHelper.forWherePK())) {
             for (int i = 0; i < pks.length; i++) {
                 ps.setObject(i + 1, pks[i]);
             }
@@ -200,7 +200,7 @@ public class TableDao<T> {
         }
         try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + orderBy)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs);
+                return method.toList(rs, Filter.ALL);
             }
         }
     }
@@ -219,7 +219,7 @@ public class TableDao<T> {
         }
 
         DaoMethod<T> method = this.tableHelper.forSelect();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + "WHERE " + this.tableHelper.forWherePK())) {
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + " WHERE " + this.tableHelper.forWherePK())) {
             for (int i = 0; i < pks.length; i++) {
                 ps.setObject(i + 1, pks[i]);
             }
@@ -244,7 +244,7 @@ public class TableDao<T> {
                 .orderBy(this.tableHelper.getOrderBy());
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs);
+                return method.toList(rs, Filter.ALL);
             }
         }
     }
@@ -265,7 +265,7 @@ public class TableDao<T> {
                 .orderBy(orders);
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs);
+                return method.toList(rs, Filter.ALL);
             }
         }
     }
@@ -287,7 +287,7 @@ public class TableDao<T> {
                 .orderBy(orders);
         try (PreparedStatement ps = sql.prepare(this.conn)) {
             try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs, topN);
+                return method.toList(rs, Filter.ALL, topN);
             }
         }
     }

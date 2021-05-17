@@ -63,18 +63,18 @@ public final class DaoMethod<T> {
     public void fromOne(PreparedStatement ps, Object obj) throws SQLException, DaoException {
         int index = 1;
         for (DaoColumn col : this.columns) {
-        	try {
-	            col.run(obj, ps, index);
-	            index++;
-        	}
-        	catch(SQLException ex1) {
-        		System.out.println("column:" + col + " failed");
-        		throw ex1;
-        	}
-        	catch(DaoException ex2) {
-        		System.out.println("column:" + col + " failed");
-        		throw ex2;
-        	}
+            try {
+                col.run(obj, ps, index);
+                index++;
+            }
+            catch (SQLException ex1) {
+                System.out.println("column:" + col + " failed");
+                throw ex1;
+            }
+            catch (DaoException ex2) {
+                System.out.println("column:" + col + " failed");
+                throw ex2;
+            }
         }
     }
 
@@ -86,12 +86,18 @@ public final class DaoMethod<T> {
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
-    public List<T> toList(final ResultSet rs) throws SQLException, DaoException {
+    public List<T> toList(final ResultSet rs, Filter filter) throws SQLException, DaoException {
+        if (filter == null) {
+            filter = Filter.ALL;
+        }
         ArrayList<T> result = new ArrayList<>();
         while (rs.next()) {
+            if (!filter.accept(rs)) {
+                continue;
+            }
+            int index = 1;
             try {
                 T data = this.clz.newInstance();
-                int index = 1;
                 for (DaoColumn col : this.columns) {
                     col.run(data, rs, index);
                     index++;
@@ -115,15 +121,22 @@ public final class DaoMethod<T> {
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
-    public List<T> toList(final ResultSet rs, final int n) throws SQLException, DaoException {
-    	if(n <= 0) {
-    		return toList(rs);
-    	}
+    public List<T> toList(final ResultSet rs, Filter filter, final int n) throws SQLException, DaoException {
+        if (n <= 0) {
+            return toList(rs, filter);
+        }
+        if (filter == null) {
+            filter = Filter.ALL;
+        }
 
-    	ArrayList<T> result = new ArrayList<>();
+        ArrayList<T> result = new ArrayList<>();
         int i = 0;
-        while (rs.next() && i++ < n) {
+        while (rs.next() && i < n) {
             try {
+                if (!filter.accept(rs)) {
+                    continue;
+                }
+                i++;
                 T data = this.clz.newInstance();
                 int index = 1;
                 for (DaoColumn col : this.columns) {

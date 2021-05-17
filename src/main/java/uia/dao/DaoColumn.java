@@ -47,8 +47,8 @@ public class DaoColumn {
         try {
             this.writer.write(ps, index, this.field.get(obj));
         }
-        catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new DaoException(e);
+        catch (Exception e) {
+            throw new DaoException(String.format("%s(%s) write failed", this, index), e);
         }
     }
 
@@ -56,8 +56,8 @@ public class DaoColumn {
         try {
             this.field.set(obj, this.reader.read(rs, index));
         }
-        catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new DaoException(e);
+        catch (Exception e) {
+            throw new DaoException(String.format("%s(%s) read failed", this, index), e);
         }
     }
 

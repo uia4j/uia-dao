@@ -22,11 +22,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import uia.dao.where.conditions.BetweenType;
 import uia.dao.where.conditions.ConditionType;
 import uia.dao.where.conditions.EqType;
+import uia.dao.where.conditions.InType;
 import uia.dao.where.conditions.LessThanType;
 import uia.dao.where.conditions.LikeType;
 import uia.dao.where.conditions.MoreThanType;
@@ -170,6 +172,14 @@ public class SimpleWhere extends Where {
             return this;
         }
         this.conds.add(new LessThanType(key, value, eq));
+        return this;
+    }
+
+    public SimpleWhere in(String key, Set<String> values) {
+        if (isEmpty(key) || values == null || values.isEmpty()) {
+            return this;
+        }
+        this.conds.add(new InType(key, values));
         return this;
     }
 

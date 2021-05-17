@@ -90,18 +90,25 @@ public final class ViewDaoHelper<T> {
             curr = curr.getSuperclass();
             i--;
             if (ti.inherit() == 0) {
-                next = packageName.equals(curr.getPackage().getName());
+                next = packageName.contains(curr.getPackage().getName());
             }
             else {
                 next = i >= 0;
             }
         }
-        this.select.setSql(String.format("SELECT %s FROM %s ",
-                String.join(",", selectColNames),
-                this.viewName));
-        this.selectWithAlias.setSql(String.format("SELECT x.%s FROM %s AS x ",
-                String.join(",x.", selectColNames),
-                this.viewName));
+
+        if(this.code != null && !this.code.trim().isEmpty()) {
+        	this.select.setSql(this.code);
+        	this.selectWithAlias.setSql(this.code);
+        }
+        else {
+	        this.select.setSql(String.format("SELECT %s FROM %s ",
+	                String.join(",", selectColNames),
+	                this.viewName));
+	        this.selectWithAlias.setSql(String.format("SELECT x.%s FROM %s AS x ",
+	                String.join(",x.", selectColNames),
+	                this.viewName));
+        }
     }
 
     public DaoFactory getFactory() {

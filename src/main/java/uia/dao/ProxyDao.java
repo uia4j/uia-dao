@@ -69,15 +69,30 @@ public final class ProxyDao {
             DaoMethod<?> method = selectInfo.join()
                     ? dao.tableHelper.forSelectX()
                     : dao.tableHelper.forSelect();
-            final String sql = method.getSql() + selectInfo.sql();
+            final String sql = method.getSql() + " " + selectInfo.sql();
             try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+                int r = 1;
+                Filter filter = Filter.ALL;
                 for (int i = 0; i < args.length; i++) {
-                    dao.tableHelper.getFactory()
-                            .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
-                            .write(ps, i + 1, args[i]);
+                    Object v = args[i];
+                    if (v != null && v instanceof Filter) {
+                        filter = (Filter) v;
+                        continue;
+                    }
+                    else {
+                        dao.tableHelper.getFactory()
+                                .getColumnWriter(v == null ? "object" : v.getClass().getSimpleName())
+                                .write(ps, r++, v);
+                    }
                 }
-                try (ResultSet rs = ps.executeQuery()) {
-                    return list ? method.toList(rs, selectInfo.top()) : method.toOne(rs);
+                if (selectInfo.mapper() == ObjectMapper.Null.class) {
+                    try (ResultSet rs = ps.executeQuery()) {
+                        return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
+                    }
+                }
+                else {
+                    ObjectMapper mapper = selectInfo.mapper().newInstance();
+                    return mapper.read(ps.executeQuery());
                 }
             }
         }
@@ -101,7 +116,7 @@ public final class ProxyDao {
         DeleteInfo deleteInfo = proxyMethod.getDeclaredAnnotation(DeleteInfo.class);
         if (deleteInfo != null) {
             DaoMethod<?> method = dao.tableHelper.forDelete();
-            try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + deleteInfo.sql())) {
+            try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + " " + deleteInfo.sql())) {
                 for (int i = 0; i < args.length; i++) {
                     dao.tableHelper.getFactory()
                             .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
@@ -125,14 +140,28 @@ public final class ProxyDao {
         DaoMethod<?> method = selectInfo.join()
                 ? dao.viewHelper.forSelectX()
                 : dao.viewHelper.forSelect();
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + selectInfo.sql())) {
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + " " + selectInfo.sql())) {
+            int r = 1;
+            Filter filter = Filter.ALL;
             for (int i = 0; i < args.length; i++) {
-                dao.viewHelper.getFactory()
-                        .getColumnWriter(args[i] == null ? "object" : args[i].getClass().getSimpleName())
-                        .write(ps, i + 1, args[i]);
+                Object v = args[i];
+                if (v != null && v instanceof Filter) {
+                    filter = (Filter) v;
+                }
+                else {
+                    dao.viewHelper.getFactory()
+                            .getColumnWriter(v == null ? "object" : v.getClass().getSimpleName())
+                            .write(ps, r++, v);
+                }
             }
-            try (ResultSet rs = ps.executeQuery()) {
-                return list ? method.toList(rs) : method.toOne(rs);
+            if (selectInfo.mapper() == ObjectMapper.Null.class) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
+                }
+            }
+            else {
+                ObjectMapper mapper = selectInfo.mapper().newInstance();
+                return mapper.read(ps.executeQuery());
             }
         }
     }

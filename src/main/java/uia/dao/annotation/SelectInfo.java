@@ -23,6 +23,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import uia.dao.ObjectMapper;
+
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD })
 public @interface SelectInfo {
@@ -30,6 +32,10 @@ public @interface SelectInfo {
     String sql();
 
     boolean join() default false;
-    
+
     int top() default 0;
+
+    @SuppressWarnings("rawtypes")
+    Class<? extends ObjectMapper> mapper() default ObjectMapper.Null.class;
+
 }
