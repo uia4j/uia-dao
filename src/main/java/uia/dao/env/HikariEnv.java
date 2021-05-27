@@ -43,6 +43,10 @@ public class HikariEnv implements Env {
         this.ds = new HikariDataSource(this.config);
     }
 
+    public void close() {
+        this.ds.close();
+    }
+
     @Override
     public String test() {
         return String.format("%s, user:%s", this.config.getJdbcUrl(), this.config.getUsername());

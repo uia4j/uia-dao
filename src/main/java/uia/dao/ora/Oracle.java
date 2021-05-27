@@ -40,7 +40,7 @@ public class Oracle extends AbstractDatabase {
 
     static {
         try {
-            Class.forName("oracle.jdbc.OracleDriver").newInstance();
+            Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
         }
         catch (Exception e) {
 
@@ -53,7 +53,7 @@ public class Oracle extends AbstractDatabase {
 
     public Oracle(String host, String port, String service, String user, String pwd) throws SQLException {
         // jdbc:oracle:thin:@host:port:SID
-        super("oracle.jdbc.OracleDriver", "jdbc:oracle:thin:@" + host + ":" + port + "/" + service, user, pwd, null);
+        super("oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@" + host + ":" + port + "/" + service, user, pwd, null);
         setSchema(user.toUpperCase());
     }
 

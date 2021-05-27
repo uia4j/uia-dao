@@ -34,42 +34,42 @@ public class OracleEnv implements Env {
 
     static {
         try {
-        	DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
+            DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
         }
         catch (Exception ex) {
-        	
+            ex.printStackTrace();
         }
     }
 
     public OracleEnv() {
-        this.oraConn = "jdbc:oracle:thin:@//localhost:1521/orcl.localdomain";
+        this.oraConn = "jdbc:oracle:thin:@localhost:1521/orcl.localdomain";
         this.oraUser = "orcl";
         this.oraPwd = "orcl";
         this.oraSchema = null;
     }
 
     public OracleEnv(String conn, String user, String pwd, String schema) {
-    	if(conn == null) {
-            this.oraConn = "jdbc:oracle:thin:@//localhost:1521/orcl.localdomain";
+        if (conn == null) {
+            this.oraConn = "jdbc:oracle:thin:@localhost:1521/orcl.localdomain";
             this.oraUser = "orcl";
             this.oraPwd = "orcl";
             this.oraSchema = null;
-    	}
-    	else {
+        }
+        else {
             this.oraConn = conn;
             this.oraUser = user;
             this.oraPwd = pwd;
             this.oraSchema = schema;
-    	}
+        }
     }
 
     @Override
     public String test() {
-        return String.format("%s, user:%s, schema:%s", oraConn, oraUser, oraSchema);
+        return String.format("%s, user:%s, schema:%s", this.oraConn, this.oraUser, this.oraSchema);
     }
 
     @Override
     public Connection create() throws SQLException {
-        return java.sql.DriverManager.getConnection(oraConn, oraUser, oraPwd);
+        return java.sql.DriverManager.getConnection(this.oraConn, this.oraUser, this.oraPwd);
     }
 }

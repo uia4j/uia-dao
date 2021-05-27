@@ -25,10 +25,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
 
-import uia.dao.DaoFactory;
-import uia.dao.DaoSession;
-import uia.dao.TableDaoHelper;
-import uia.dao.ViewDaoHelper;
 import uia.dao.env.AppSourceEnv;
 import uia.dao.env.Env;
 import uia.dao.env.HanaEnv;
@@ -39,9 +35,9 @@ import uia.dao.env.SQLServerEnv;
 
 public abstract class DaoEnv {
 
-	public static final String DATASOURCE = "DATASOURCE";
+    public static final String DATASOURCE = "DATASOURCE";
 
-	public static final String DATAPOOL = "DATAPOOL";
+    public static final String DATAPOOL = "DATAPOOL";
 
     public static final String HANA = "HANA";
 
@@ -50,96 +46,100 @@ public abstract class DaoEnv {
     public static final String MSSQL = "MSSQL";
 
     public static final String POSTGRE = "PG";
-	
+
     private final DaoFactory factory;
-    
+
     private final String envName;
-    
+
     private Env env;
-    
+
     public static DaoEnv dataSource(final boolean dateToUTC, final String packageName) throws Exception {
-    	return new DaoEnv(DATASOURCE, dateToUTC) {
+        return new DaoEnv(DATASOURCE, dateToUTC) {
 
-			@Override
-			protected void initialFactory(DaoFactory factory) throws Exception {
-				factory.load(packageName);
-			}
-    	};
+            @Override
+            protected void initialFactory(DaoFactory factory) throws Exception {
+                factory.load(packageName);
+            }
+        };
     }
-    
+
     public static DaoEnv pool(final boolean dateToUTC, final String packageName) throws Exception {
-    	return new DaoEnv(DATAPOOL, dateToUTC) {
+        return new DaoEnv(DATAPOOL, dateToUTC) {
 
-			@Override
-			protected void initialFactory(DaoFactory factory) throws Exception {
-				factory.load(packageName);
-			}
-    	};
+            @Override
+            protected void initialFactory(DaoFactory factory) throws Exception {
+                factory.load(packageName);
+            }
+        };
     }
-    
+
     public static DaoEnv hana(final boolean dateToUTC, final String packageName) throws Exception {
-    	return new DaoEnv(HANA, dateToUTC) {
+        return new DaoEnv(HANA, dateToUTC) {
 
-			@Override
-			protected void initialFactory(DaoFactory factory) throws Exception {
-				factory.load(packageName);
-			}
-    	};
+            @Override
+            protected void initialFactory(DaoFactory factory) throws Exception {
+                factory.load(packageName);
+            }
+        };
     }
-    
+
     public static DaoEnv oracle(final boolean dateToUTC, final String packageName) throws Exception {
-    	return new DaoEnv(ORACLE, dateToUTC) {
+        return new DaoEnv(ORACLE, dateToUTC) {
 
-			@Override
-			protected void initialFactory(DaoFactory factory) throws Exception {
-				factory.load(packageName);
-			}
-    	};
+            @Override
+            protected void initialFactory(DaoFactory factory) throws Exception {
+                factory.load(packageName);
+            }
+        };
     }
-    
+
     public static DaoEnv postgre(final boolean dateToUTC, final String packageName) throws Exception {
-    	return new DaoEnv(POSTGRE, dateToUTC) {
+        return new DaoEnv(POSTGRE, dateToUTC) {
 
-			@Override
-			protected void initialFactory(DaoFactory factory) throws Exception {
-				factory.load(packageName);
-			}
-    	};
+            @Override
+            protected void initialFactory(DaoFactory factory) throws Exception {
+                factory.load(packageName);
+            }
+        };
     }
-    
+
     /**
      * The constructor.
-     * 
+     *
      * @param envName One of 'DATASOURCE','HANA','ORA','PG'.
      * @param dateToUTC Convert date with UTC time.
      * @throws Exception Failed to initial factory.
      */
     public DaoEnv(String envName, boolean dateToUTC) throws Exception {
-    	this.envName = envName;
-    	this.factory = new DaoFactory(dateToUTC);
+        this.envName = envName;
+        this.factory = new DaoFactory(dateToUTC);
         initialFactory(this.factory);
     }
 
     public DaoFactory getDaoFactory() {
-    	return this.factory;
+        return this.factory;
     }
-    
+
+    public void close() {
+        this.env.close();
+    }
+
     public <T> TableDaoHelper<T> forTable(Class<T> clz) {
-        return this.factory == null 
-        		? null 
-        		: this.factory.forTable(clz);
+        return this.factory == null
+                ? null
+                : this.factory.forTable(clz);
     }
 
     public <T> ViewDaoHelper<T> forView(Class<T> clz) {
-        return this.factory == null 
-        		? null 
-        		: this.factory.forView(clz);
+        return this.factory == null
+                ? null
+                : this.factory.forView(clz);
     }
 
     public List<String> listTables() throws Exception {
-        Set<String> tables = this.factory == null 
-        		? new TreeSet<>() 
-        		: this.factory.getTables();
+        Set<String> tables = this.factory == null
+                ? new TreeSet<>()
+                : this.factory.getTables();
         ArrayList<String> result = new ArrayList<>();
         for (String t : tables) {
             result.add("" + Class.forName(t).getDeclaredField("KEY").get(null));
@@ -149,9 +149,9 @@ public abstract class DaoEnv {
     }
 
     public List<String> listViews() throws Exception {
-        Set<String> views = this.factory == null 
-        		? new TreeSet<>() 
-        		: this.factory.getViews();
+        Set<String> views = this.factory == null
+                ? new TreeSet<>()
+                : this.factory.getViews();
         ArrayList<String> result = new ArrayList<>();
         for (String v : views) {
             result.add("" + Class.forName(v).getDeclaredField("KEY").get(null));
@@ -168,13 +168,13 @@ public abstract class DaoEnv {
             return this.factory.test(conn);
         }
     }
-    
+
     public synchronized String testConnString() {
-    	return this.env.test();
+        return this.env.test();
     }
-    
+
     public synchronized DaoSession createSession() throws SQLException {
-    	return this.factory.createSession(create());
+        return this.factory.createSession(create());
     }
 
     /**
@@ -187,31 +187,30 @@ public abstract class DaoEnv {
      * @return The instance.
      */
     public synchronized DaoEnv config(
-    		String conn, 
-    		String user, 
-    		String pwd, 
-    		String schema) {
-        if (DATASOURCE.equals(envName)) {
+            String conn,
+            String user,
+            String pwd,
+            String schema) {
+        if (DATASOURCE.equals(this.envName)) {
             this.env = new AppSourceEnv(conn);
         }
-        if (DATAPOOL.equals(envName)) { 
+        if (DATAPOOL.equals(this.envName)) {
             this.env = new HikariEnv(conn, user, pwd);
         }
-        else if (HANA.equals(envName)) {
-        	this.env = new HanaEnv(conn, user, pwd, schema);
+        else if (HANA.equals(this.envName)) {
+            this.env = new HanaEnv(conn, user, pwd, schema);
         }
-        else if (MSSQL.equals(envName)) {
-        	this.env = new SQLServerEnv(conn, user, pwd, schema);
+        else if (MSSQL.equals(this.envName)) {
+            this.env = new SQLServerEnv(conn, user, pwd, schema);
         }
-        else if (ORACLE.equals(envName)) {
-        	this.env = new OracleEnv(conn, user, pwd, schema);
+        else if (ORACLE.equals(this.envName)) {
+            this.env = new OracleEnv(conn, user, pwd, schema);
         }
         else {
-        	this.env = new PostgreSQLEnv(conn, user, pwd, schema);
+            this.env = new PostgreSQLEnv(conn, user, pwd, schema);
         }
         return this;
     }
-
 
     /**
      * Configure database.
@@ -224,35 +223,35 @@ public abstract class DaoEnv {
      * @return The instance.
      */
     public synchronized DaoEnv config(
-    		String conn, 
-    		String user, 
-    		String pwd, 
-    		String schema, 
-    		Properties props) {
-        if (DATASOURCE.equals(envName)) {
+            String conn,
+            String user,
+            String pwd,
+            String schema,
+            Properties props) {
+        if (DATASOURCE.equals(this.envName)) {
             this.env = new AppSourceEnv(conn);
         }
-        if (DATAPOOL.equals(envName)) { 
+        if (DATAPOOL.equals(this.envName)) {
             this.env = new HikariEnv(conn, user, pwd, props);
         }
-        else if (HANA.equals(envName)) {
-        	this.env = new HanaEnv(conn, user, pwd, schema);
+        else if (HANA.equals(this.envName)) {
+            this.env = new HanaEnv(conn, user, pwd, schema);
         }
-        else if (MSSQL.equals(envName)) {
-        	this.env = new SQLServerEnv(conn, user, pwd, schema);
+        else if (MSSQL.equals(this.envName)) {
+            this.env = new SQLServerEnv(conn, user, pwd, schema);
         }
-        else if (ORACLE.equals(envName)) {
-        	this.env = new OracleEnv(conn, user, pwd, schema);
+        else if (ORACLE.equals(this.envName)) {
+            this.env = new OracleEnv(conn, user, pwd, schema);
         }
         else {
-        	this.env = new PostgreSQLEnv(conn, user, pwd, schema);
+            this.env = new PostgreSQLEnv(conn, user, pwd, schema);
         }
         return this;
     }
 
     /**
      * Create a connection.
-     * 
+     *
      * @return A connection.
      * @throws SQLException Failed to execute.
      */
@@ -261,7 +260,7 @@ public abstract class DaoEnv {
     }
 
     protected abstract void initialFactory(DaoFactory factory) throws Exception;
-    
+
     /**
      * Connection proxy of J2SE connection.
      *
@@ -553,5 +552,5 @@ public abstract class DaoEnv {
         }
 
     }
-	
+
 }
