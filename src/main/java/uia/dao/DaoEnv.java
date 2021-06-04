@@ -17,6 +17,7 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -118,6 +119,14 @@ public abstract class DaoEnv {
 
     public DaoFactory getDaoFactory() {
         return this.factory;
+    }
+
+    public Date toUTC(Date local) {
+        return this.factory.toUTC(local);
+    }
+
+    public Date fromUTC(Date utc) {
+        return this.factory.fromUTC(utc);
     }
 
     public void close() {

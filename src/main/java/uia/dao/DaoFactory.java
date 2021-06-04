@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.postgresql.util.PGobject;
@@ -69,6 +70,8 @@ public final class DaoFactory {
 
     private final TreeMap<String, ViewDaoHelper<?>> daoViews;
 
+    private final boolean dateToUTC;
+
     /**
      * Constructor.
      *
@@ -76,6 +79,7 @@ public final class DaoFactory {
      *
      */
     public DaoFactory(boolean dateToUTC) {
+        this.dateToUTC = dateToUTC;
         this.dataTypes = new TreeMap<>();
         this.dataTypes.put("short", DataType.INTEGER);
         this.dataTypes.put("int", DataType.INTEGER);
@@ -126,6 +130,24 @@ public final class DaoFactory {
 
     public DaoSession createSession(Connection conn) {
         return new DaoSession(this, conn);
+    }
+
+    public Date fromUTC(Date utc) {
+        if (this.dateToUTC) {
+            return new Date(utc.getTime() + TimeZone.getDefault().getRawOffset());
+        }
+        else {
+            return utc;
+        }
+    }
+
+    public Date toUTC(Date local) {
+        if (this.dateToUTC) {
+            return new Date(local.getTime() - TimeZone.getDefault().getRawOffset());
+        }
+        else {
+            return local;
+        }
     }
 
     /**
@@ -220,10 +242,10 @@ public final class DaoFactory {
      * @throws DaoException Failed to load.
      */
     public void load(String packageName, ClassLoader loader) throws DaoException {
-    	if(packageName == null) {
-    		return;
-    	}
-    	
+        if (packageName == null) {
+            return;
+        }
+
         try {
             Reflections ref = new Reflections(packageName);
             // tables

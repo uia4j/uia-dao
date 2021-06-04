@@ -206,6 +206,46 @@ public class TableDao<T> {
     }
 
     /**
+     * Selects all rows of the table.
+     *
+     * @return All rows of the table.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public List<T> selectAll(int topN) throws SQLException, DaoException {
+        if (topN <= 0) {
+            return selectAll();
+        }
+        DaoMethod<T> method = this.tableHelper.forSelect();
+        String orderBy = this.tableHelper.getOrderBy();
+        if (!orderBy.isEmpty()) {
+            orderBy = " ORDER BY " + orderBy;
+        }
+
+        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + orderBy)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toList(rs, Filter.ALL, topN);
+            }
+        }
+    }
+
+    /**
+     * Selects all rows of the table.
+     *
+     * @return All rows of the table.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public long count() throws SQLException, DaoException {
+        try (PreparedStatement ps = this.conn.prepareStatement("select count(*) n from " + this.tableHelper.getTableName())) {
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getLong(1);
+            }
+        }
+    }
+
+    /**
      * Selects a row of the table.
      *
      * @param pks Values of primary keys.

@@ -124,7 +124,7 @@ public class DaoFactoryClassPrinter {
                 codeMember.append(String.format("    @ColumnInfo(name = \"%s\", primaryKey = true)%n",
                         ct.getColumnName()));
             }
-            else if(ct.getDataType() == DataType.JSON){
+            else if (ct.getDataType() == DataType.JSON) {
                 codeMember.append(String.format("    @ColumnInfo(name = \"%s\", sqlType = DataType.JSON)%n",
                         ct.getColumnName()));
             }

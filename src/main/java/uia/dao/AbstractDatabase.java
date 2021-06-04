@@ -221,7 +221,7 @@ public abstract class AbstractDatabase implements Database {
                 return null;
             }
             table = "TABLE".equalsIgnoreCase(rs.getString(4));
-            comment = rs.getString("REMARKS");
+            comment = rs.getNString("REMARKS");
         }
 
         List<ColumnType> columns = selectColumns(upperOrLower(tableOrView), firstAsPk);
@@ -344,16 +344,16 @@ public abstract class AbstractDatabase implements Database {
     }
 
     private DataSource createDataSource(String driverName, String connectUrl, String user, String pwd) {
-    	HikariConfig config = new HikariConfig();
-    	config.setDriverClassName(driverName);
-    	config.setJdbcUrl(connectUrl);
-    	config.setUsername(user);
-    	config.setPassword(pwd);
-    	config.setMaximumPoolSize(200);
-    	config.addDataSourceProperty("cachePrepStmts" , "true");
-    	config.addDataSourceProperty("prepStmtCacheSize" , "512");
-    	config.addDataSourceProperty("prepStmtCacheSqlLimit" , "1024");    	
-    	
-    	return new HikariDataSource(config);
+        HikariConfig config = new HikariConfig();
+        config.setDriverClassName(driverName);
+        config.setJdbcUrl(connectUrl);
+        config.setUsername(user);
+        config.setPassword(pwd);
+        config.setMaximumPoolSize(200);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "512");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
+
+        return new HikariDataSource(config);
     }
 }

@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Date;
 
 public class DaoSession implements Closeable {
 
@@ -14,6 +15,14 @@ public class DaoSession implements Closeable {
     DaoSession(DaoFactory factory, Connection conn) {
         this.factory = factory;
         this.conn = conn;
+    }
+
+    public Date toUTC(Date local) {
+        return this.factory.toUTC(local);
+    }
+
+    public Date fromUTC(Date utc) {
+        return this.factory.fromUTC(utc);
     }
 
     public void setAutoCommit(boolean autoCommit) throws SQLException {
