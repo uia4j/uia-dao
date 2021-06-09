@@ -221,7 +221,7 @@ public abstract class AbstractDatabase implements Database {
                 return null;
             }
             table = "TABLE".equalsIgnoreCase(rs.getString(4));
-            comment = rs.getNString("REMARKS");
+            comment = rs.getString("REMARKS");
         }
 
         List<ColumnType> columns = selectColumns(upperOrLower(tableOrView), firstAsPk);
