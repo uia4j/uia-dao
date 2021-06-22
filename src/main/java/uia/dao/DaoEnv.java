@@ -54,7 +54,7 @@ public abstract class DaoEnv {
 
     private Env env;
 
-    public static DaoEnv dataSource(final boolean dateToUTC, final String packageName) throws Exception {
+    public static DaoEnv dataSource(final boolean dateToUTC, final String packageName) throws DaoException {
         return new DaoEnv(DATASOURCE, dateToUTC) {
 
             @Override
@@ -64,7 +64,7 @@ public abstract class DaoEnv {
         };
     }
 
-    public static DaoEnv pool(final boolean dateToUTC, final String packageName) throws Exception {
+    public static DaoEnv pool(final boolean dateToUTC, final String packageName) throws DaoException {
         return new DaoEnv(DATAPOOL, dateToUTC) {
 
             @Override
@@ -74,7 +74,7 @@ public abstract class DaoEnv {
         };
     }
 
-    public static DaoEnv hana(final boolean dateToUTC, final String packageName) throws Exception {
+    public static DaoEnv hana(final boolean dateToUTC, final String packageName) throws DaoException {
         return new DaoEnv(HANA, dateToUTC) {
 
             @Override
@@ -84,7 +84,7 @@ public abstract class DaoEnv {
         };
     }
 
-    public static DaoEnv oracle(final boolean dateToUTC, final String packageName) throws Exception {
+    public static DaoEnv oracle(final boolean dateToUTC, final String packageName) throws DaoException {
         return new DaoEnv(ORACLE, dateToUTC) {
 
             @Override
@@ -94,7 +94,7 @@ public abstract class DaoEnv {
         };
     }
 
-    public static DaoEnv postgre(final boolean dateToUTC, final String packageName) throws Exception {
+    public static DaoEnv postgre(final boolean dateToUTC, final String packageName) throws DaoException {
         return new DaoEnv(POSTGRE, dateToUTC) {
 
             @Override
@@ -109,12 +109,17 @@ public abstract class DaoEnv {
      *
      * @param envName One of 'DATASOURCE','HANA','ORA','PG'.
      * @param dateToUTC Convert date with UTC time.
-     * @throws Exception Failed to initial factory.
+     * @throws DaoException Failed to initial factory.
      */
-    public DaoEnv(String envName, boolean dateToUTC) throws Exception {
+    public DaoEnv(String envName, boolean dateToUTC) throws DaoException {
         this.envName = envName;
         this.factory = new DaoFactory(dateToUTC);
-        initialFactory(this.factory);
+        try {
+            initialFactory(this.factory);
+        }
+        catch (Exception ex) {
+            throw new DaoException(ex);
+        }
     }
 
     public DaoFactory getDaoFactory() {

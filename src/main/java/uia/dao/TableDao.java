@@ -206,8 +206,9 @@ public class TableDao<T> {
     }
 
     /**
-     * Selects all rows of the table.
+     * Selects all rows of the table and return a specific count.
      *
+     * @param topN The max count of records to be returned.
      * @return All rows of the table.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.

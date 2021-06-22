@@ -82,6 +82,7 @@ public final class DaoMethod<T> {
      * Convert result set to DTO object list.
      *
      * @param rs The result set.
+     * @param filter The filter.
      * @return DTO object list.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
@@ -116,6 +117,7 @@ public final class DaoMethod<T> {
      * Convert result set to DTO object list.
      *
      * @param rs The result set.
+     * @param filter The filter.
      * @param n The max count of result.
      * @return DTO object list.
      * @throws SQLException Failed to execute the SQL statement.
