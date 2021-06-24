@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -457,15 +458,30 @@ public final class DaoFactory {
     }
 
     private void writeShort(PreparedStatement ps, int index, Object value) throws SQLException {
-        ps.setShort(index, (short) value);
+        if (value == null) {
+            ps.setNull(index, Types.SMALLINT);
+        }
+        else {
+            ps.setShort(index, (short) value);
+        }
     }
 
     private void writeInt(PreparedStatement ps, int index, Object value) throws SQLException {
-        ps.setInt(index, (int) value);
+        if (value == null) {
+            ps.setNull(index, Types.INTEGER);
+        }
+        else {
+            ps.setInt(index, (int) value);
+        }
     }
 
     private void writeLong(PreparedStatement ps, int index, Object value) throws SQLException {
-        ps.setLong(index, (long) value);
+        if (value == null) {
+            ps.setNull(index, Types.BIGINT);
+        }
+        else {
+            ps.setLong(index, (long) value);
+        }
     }
 
     private void writeBigDecimal(PreparedStatement ps, int index, Object value) throws SQLException {
