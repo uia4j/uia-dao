@@ -208,7 +208,7 @@ public abstract class DaoEnv {
         if (DATASOURCE.equals(this.envName)) {
             this.env = new AppSourceEnv(conn);
         }
-        if (DATAPOOL.equals(this.envName)) {
+        else if (DATAPOOL.equals(this.envName)) {
             this.env = new HikariEnv(conn, user, pwd);
         }
         else if (HANA.equals(this.envName)) {
@@ -222,6 +222,10 @@ public abstract class DaoEnv {
         }
         else {
             this.env = new PostgreSQLEnv(conn, user, pwd, schema);
+        }
+        try (Connection x = create()) {
+        }
+        catch (Exception ex) {
         }
         return this;
     }
@@ -245,7 +249,7 @@ public abstract class DaoEnv {
         if (DATASOURCE.equals(this.envName)) {
             this.env = new AppSourceEnv(conn);
         }
-        if (DATAPOOL.equals(this.envName)) {
+        else if (DATAPOOL.equals(this.envName)) {
             this.env = new HikariEnv(conn, user, pwd, props);
         }
         else if (HANA.equals(this.envName)) {

@@ -59,14 +59,6 @@ public interface Database extends AutoCloseable {
     public Connection getConnection();
 
     /**
-     * Returns a new connection.
-     *
-     * @return The connection.
-     * @throws SQLException Failed to execute.
-     */
-    public Connection createConnection() throws SQLException;
-
-    /**
      * Returns table names.
      *
      * @return Table names.

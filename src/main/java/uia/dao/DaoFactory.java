@@ -82,6 +82,7 @@ public final class DaoFactory {
     public DaoFactory(boolean dateToUTC) {
         this.dateToUTC = dateToUTC;
         this.dataTypes = new TreeMap<>();
+        this.dataTypes.put("boolean", DataType.BOOLEAN);
         this.dataTypes.put("short", DataType.INTEGER);
         this.dataTypes.put("int", DataType.INTEGER);
         this.dataTypes.put("integer", DataType.INTEGER);
@@ -92,10 +93,12 @@ public final class DaoFactory {
         this.dataTypes.put("stirngN2E", DataType.NVARCHAR2);
         this.dataTypes.put("date", dateToUTC ? DataType.TIMESTAMPZ : DataType.TIMESTAMP);
         this.dataTypes.put("clob", DataType.CLOB);
+        this.dataTypes.put("nclob", DataType.NCLOB);
         this.dataTypes.put("byte[]", DataType.BLOB);
         this.dataTypes.put("json", DataType.JSON);
 
         this.readers = new TreeMap<>();
+        this.readers.put("boolean", this::readBoolean);
         this.readers.put("short", this::readShort);
         this.readers.put("int", this::readInt);
         this.readers.put("integer", this::readInt);
@@ -106,11 +109,13 @@ public final class DaoFactory {
         this.readers.put("stirngN2E", DaoColumnReader::null2Empty);
         this.readers.put("date", dateToUTC ? this::readDateTz : this::readDate);
         this.readers.put("clob", this::readString);
+        this.readers.put("nclob", this::readString);
         this.readers.put("byte[]", this::readBytes);
         this.readers.put("json", this::readString);
         this.readers.put("object", this::readObject);
 
         this.writers = new TreeMap<>();
+        this.writers.put("boolean", this::writeBoolean);
         this.writers.put("short", this::writeShort);
         this.writers.put("int", this::writeInt);
         this.writers.put("integer", this::writeInt);
@@ -121,6 +126,7 @@ public final class DaoFactory {
         this.writers.put("stirngN2E", this::writeString);
         this.writers.put("date", dateToUTC ? this::writeDateTz : this::writeDate);
         this.writers.put("clob", this::writeClob);
+        this.writers.put("nclob", this::writeClob);
         this.writers.put("byte[]", this::writeBytes);
         this.writers.put("json", this::writeJson);
         this.writers.put("object", this::writeObject);
@@ -247,21 +253,24 @@ public final class DaoFactory {
             return;
         }
 
+        String name = null;
         try {
             Reflections ref = new Reflections(packageName);
             // tables
             Set<Class<?>> tables = ref.getTypesAnnotatedWith(TableInfo.class, true);
             for (Class<?> t : tables) {
+                name = t.getName();
                 this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
             }
             // views
             Set<Class<?>> views = ref.getTypesAnnotatedWith(ViewInfo.class, true);
             for (Class<?> v : views) {
+                name = v.getName();
                 this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
             }
         }
         catch (Exception ex) {
-            throw new DaoException(ex);
+            throw new DaoException(name + " failed, " + ex.getMessage(), ex);
         }
     }
 
@@ -421,6 +430,10 @@ public final class DaoFactory {
         return this.writers.get(cvrtName.toLowerCase());
     }
 
+    private Object readBoolean(ResultSet rs, int index) throws SQLException {
+        return rs.getBoolean(index);
+    }
+
     private Object readShort(ResultSet rs, int index) throws SQLException {
         return rs.getShort(index);
     }
@@ -455,6 +468,15 @@ public final class DaoFactory {
 
     private Object readBytes(ResultSet rs, int index) throws SQLException {
         return rs.getBytes(index);
+    }
+
+    private void writeBoolean(PreparedStatement ps, int index, Object value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, Types.BOOLEAN);
+        }
+        else {
+            ps.setBoolean(index, (boolean) value);
+        }
     }
 
     private void writeShort(PreparedStatement ps, int index, Object value) throws SQLException {

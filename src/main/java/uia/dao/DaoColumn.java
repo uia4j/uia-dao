@@ -36,7 +36,7 @@ public class DaoColumn {
 
     private DaoColumnReader reader;
 
-    DaoColumn(Field field, DaoColumnReader reader, DaoColumnWriter writer) {
+    public DaoColumn(Field field, DaoColumnReader reader, DaoColumnWriter writer) {
         this.field = field;
         this.field.setAccessible(true);
         this.reader = reader;

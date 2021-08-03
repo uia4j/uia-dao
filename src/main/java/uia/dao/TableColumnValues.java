@@ -29,7 +29,7 @@ import uia.dao.where.conditions.EqType;
 
 /**
  * Value of columns used to update.
- * 
+ *
  * @author Kyle K. Lin
  *
  */
@@ -60,10 +60,10 @@ public class TableColumnValues {
 
     /**
      * Generates the statement of 'set'.
-     * 
+     *
      * @return The statement.
      */
-    String sql() {
+    public String sql() {
         if (this.conds.isEmpty()) {
             return "";
         }
@@ -75,16 +75,16 @@ public class TableColumnValues {
 
     /**
      * Accept the instance.
-     * 
+     *
      * @param ps The prepared statement used to update the table.
      * @param startIndex The start index.
      * @return The next index.
      * @throws SQLException Failed to prepare.
      */
-    int accept(PreparedStatement ps, int startIndex) throws SQLException {
+    public int accept(PreparedStatement ps, int startIndex) throws SQLException {
         int next = startIndex;
         for (ConditionType cond : this.conds) {
-        	next = cond.accpet(ps, next);
+            next = cond.accpet(ps, next);
         }
         return next;
     }

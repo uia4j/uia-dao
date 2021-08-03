@@ -36,6 +36,11 @@ public class ColumnType {
     public static enum DataType {
 
         /**
+         * boolean
+         */
+        BOOLEAN(Types.BOOLEAN),
+
+        /**
          * varchar
          */
         VARCHAR(Types.VARCHAR),
@@ -331,6 +336,8 @@ public class ColumnType {
      */
     public String getJavaTypeName() {
         switch (this.dataType) {
+            case BOOLEAN:
+                return this.nullable ? "Boolean" : "boolean";
             case INTEGER:
                 return this.nullable ? "Integer" : "int";
             case LONG:
@@ -386,129 +393,6 @@ public class ColumnType {
 
         this.cs.forEach(c -> c.check(targetColumn, plan, cr));
         return cr.isPassed();
-    }
-
-    String genPsSet(int index) {
-        String propertyName = CamelNaming.upper(this.columnName);
-        switch (this.dataType) {
-            case DATE:
-            case TIME:
-            case TIMESTAMP:
-                return String.format("ps.setTimestamp(%s, new Timestamp(data.get%s().getTime()));",
-                        index,
-                        propertyName);
-            case INTEGER:
-                return String.format("ps.setInt(%s, data.get%s());",
-                        index,
-                        propertyName);
-            case LONG:
-                return String.format("ps.setLong(%s, data.get%s());",
-                        index,
-                        propertyName);
-            case NUMERIC:
-            case FLOAT:
-            case DOUBLE:
-                return String.format("ps.setBigDecimal(%s, data.get%s());",
-                        index,
-                        propertyName);
-            case CLOB:
-                return String.format("ps.setClob(%s, data.get%s());",
-                        index,
-                        propertyName);
-            case NCLOB:
-                return String.format("ps.setNClob(%s, data.get%s());",
-                        index,
-                        propertyName);
-            case BLOB:
-                return String.format("ps.setBlob(%s, data.get%s());",
-                        index,
-                        propertyName);
-
-            default:
-                return String.format("ps.setString(%s, data.get%s());",
-                        index,
-                        propertyName);
-        }
-    }
-
-    String genPsSetEx(int index) {
-        String propertyName = CamelNaming.lower(this.columnName);
-        switch (this.dataType) {
-            case DATE:
-            case TIME:
-            case TIMESTAMP:
-                return String.format("ps.setTimestamp(%s, new Timestamp(%s.getTime()));",
-                        index,
-                        propertyName);
-            case INTEGER:
-                return String.format("ps.setInt(%s, %s);",
-                        index,
-                        propertyName);
-            case LONG:
-                return String.format("ps.setLong(%s, %s);",
-                        index,
-                        propertyName);
-            case NUMERIC:
-            case FLOAT:
-            case DOUBLE:
-                return String.format("ps.setBigDecimal(%s, %s);",
-                        index,
-                        propertyName);
-            case CLOB:
-                return String.format("ps.setClob(%s, %s);",
-                        index,
-                        propertyName);
-            case NCLOB:
-                return String.format("ps.setNClob(%s, %s);",
-                        index,
-                        propertyName);
-            case BLOB:
-                return String.format("ps.setBlob(%s, %s);",
-                        index,
-                        propertyName);
-            default:
-                return String.format("ps.setString(%s, %s);",
-                        index,
-                        propertyName);
-        }
-    }
-
-    String genRsGet(String index) {
-        String type = null;
-        switch (this.dataType) {
-            case INTEGER:
-                type = "Int";
-                break;
-            case LONG:
-                type = "Long";
-                break;
-            case NUMERIC:
-            case FLOAT:
-            case DOUBLE:
-                type = "BigDecimal";
-                break;
-            case DATE:
-            case TIME:
-            case TIMESTAMP:
-                type = "Timestamp";
-                break;
-            case CLOB:
-                type = "Clob";
-                break;
-            case NCLOB:
-                type = "NClob";
-                break;
-            case BLOB:
-                type = "Blob";
-                break;
-            default:
-                type = "String";
-        }
-
-        return String.format("data.set%s(rs.get%s(%s));",
-                CamelNaming.upper(this.columnName),
-                type,
-                index);
     }
 
     @Override

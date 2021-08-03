@@ -38,7 +38,7 @@ public final class DaoMethod<T> {
 
     private String sql;
 
-    DaoMethod(Class<T> clz) {
+    public DaoMethod(Class<T> clz) {
         this.clz = clz;
         this.columns = new ArrayList<>();
     }
@@ -199,11 +199,11 @@ public final class DaoMethod<T> {
         return this.sql;
     }
 
-    void setSql(String sql) {
-        this.sql = sql;
+    public void addColumn(DaoColumn column) {
+        this.columns.add(column);
     }
 
-    void addColumn(DaoColumn column) {
-        this.columns.add(column);
+    public void setSql(String sql) {
+        this.sql = sql;
     }
 }

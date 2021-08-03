@@ -29,9 +29,6 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-
 /**
  * Abstract implementation for all databases.
  *
@@ -50,8 +47,6 @@ public abstract class AbstractDatabase implements Database {
 
     protected String schema;
 
-    private DataSource dataSource;
-
     private boolean alwaysNVarchar;
 
     private boolean alwaysTimestampZ;
@@ -67,7 +62,6 @@ public abstract class AbstractDatabase implements Database {
         this.alwaysNVarchar = false;
         this.alwaysTimestampZ = false;
         this.conn = dataSource.getConnection();
-        this.dataSource = dataSource;
         this.schema = this.conn.getSchema();
     }
 
@@ -87,7 +81,7 @@ public abstract class AbstractDatabase implements Database {
         this.alwaysTimestampZ = false;
         if (url != null) {
             this.conn = DriverManager.getConnection(url, user, pwd);
-            this.dataSource = createDataSource(driverName, url, user, pwd);
+            //this.dataSource = createDataSource(driverName, url, user, pwd);
             this.schema = schema;
             if (this.schema != null) {
                 this.conn.setSchema(schema);
@@ -130,11 +124,6 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public Connection getConnection() {
         return this.conn;
-    }
-
-    @Override
-    public Connection createConnection() throws SQLException {
-        return this.dataSource.getConnection();
     }
 
     @Override
@@ -343,6 +332,7 @@ public abstract class AbstractDatabase implements Database {
         }
     }
 
+    /**
     private DataSource createDataSource(String driverName, String connectUrl, String user, String pwd) {
         HikariConfig config = new HikariConfig();
         config.setDriverClassName(driverName);
@@ -356,4 +346,5 @@ public abstract class AbstractDatabase implements Database {
 
         return new HikariDataSource(config);
     }
+    */
 }

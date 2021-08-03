@@ -56,6 +56,10 @@ public class TableDao<T> {
         this.tableHelper = tableHelper;
     }
 
+    public String getSelectSql() {
+        return this.tableHelper.forSelect().getSql();
+    }
+
     public String getInsertSql() {
         return this.tableHelper.forInsert().getSql();
     }

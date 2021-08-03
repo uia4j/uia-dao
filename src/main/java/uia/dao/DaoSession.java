@@ -5,6 +5,12 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import uia.dao.where.Where;
 
 public class DaoSession implements Closeable {
 
@@ -12,9 +18,43 @@ public class DaoSession implements Closeable {
 
     private final DaoFactory factory;
 
-    DaoSession(DaoFactory factory, Connection conn) {
+    protected DaoSession(DaoFactory factory, Connection conn) {
         this.factory = factory;
         this.conn = conn;
+    }
+
+    public <T> List<T> all(Class<T> dtoTable) throws SQLException, DaoException {
+        return forTable(dtoTable).selectAll();
+    }
+
+    public <K, T> Map<K, List<T>> all(Class<T> dtoTable, Function<T, K> classifier) throws SQLException, DaoException {
+        return forTable(dtoTable).selectAll()
+                .stream()
+                .collect(Collectors.groupingBy(classifier));
+    }
+
+    public <T> List<T> where(Class<T> dtoTable, Where where) throws SQLException, DaoException {
+        return forTable(dtoTable).select(where);
+    }
+
+    public <T> List<T> where(Class<T> dtoTable, Where where, String orders) throws SQLException, DaoException {
+        return forTable(dtoTable).select(where, orders);
+    }
+
+    public <T> int insert(Class<T> dtoTable, T data) throws SQLException, DaoException {
+        return forTable(dtoTable).insert(data);
+    }
+
+    public <T> int update(Class<T> dtoTable, T data) throws SQLException, DaoException {
+        return forTable(dtoTable).update(data);
+    }
+
+    public <T> T one(Class<T> dtoTable, Object... pks) throws SQLException, DaoException {
+        return forTable(dtoTable).selectByPK(pks);
+    }
+
+    public <T> int delete(Class<T> dtoTable, Object... pks) throws SQLException, DaoException {
+        return forTable(dtoTable).deleteByPK(pks);
     }
 
     public Date toUTC(Date local) {

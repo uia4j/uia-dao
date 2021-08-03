@@ -236,8 +236,10 @@ public class Hana extends AbstractDatabase {
                         case Types.SMALLINT:                // SMALLINT
                         case Types.TINYINT:                 // TINYINT
                         case Types.INTEGER:                 // INTEGER
-                        case Types.BOOLEAN:					// BOOLEAN
                             ct.setDataType(DataType.INTEGER);
+                            break;
+                        case Types.BOOLEAN:					// BOOLEAN
+                            ct.setDataType(DataType.BOOLEAN);
                             break;
                         case Types.BIGINT:                  // BIGINT
                             ct.setDataType(DataType.LONG);
@@ -286,6 +288,9 @@ public class Hana extends AbstractDatabase {
     private String prepareColumnDef(ColumnType ct) {
         String type = "";
         switch (ct.getDataType()) {
+            case BOOLEAN:
+                type = "BOOLEAN";
+                break;
             case INTEGER:       // INTEGER, TINYINT, SMALLINT, BOOLEAN
                 type = "INTEGER";
                 break;
