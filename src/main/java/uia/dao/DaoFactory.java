@@ -35,7 +35,6 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.postgresql.util.PGobject;
-import org.reflections.Reflections;
 
 import uia.dao.ColumnType.DataType;
 import uia.dao.annotation.DaoInfo;
@@ -228,7 +227,7 @@ public final class DaoFactory {
      * @throws DaoException Failed to load.
      */
     public void load(String packageName) throws DaoException {
-        load(packageName, null);
+        load(packageName, Thread.currentThread().getContextClassLoader());
     }
 
     public TableType getTableType(Class<?> clz) {
@@ -254,19 +253,52 @@ public final class DaoFactory {
         }
 
         String name = null;
+        // Reflections version
+        /**
         try {
-            Reflections ref = new Reflections(packageName);
+            Reflections ref = new Reflections(packageName, loader);
             // tables
             Set<Class<?>> tables = ref.getTypesAnnotatedWith(TableInfo.class, true);
             for (Class<?> t : tables) {
+                TableInfo ti = t.getDeclaredAnnotation(TableInfo.class);
+                if (ti == null) {
+                    continue;
+                }
                 name = t.getName();
                 this.daoTables.put(t.getName(), new TableDaoHelper<>(this, t));
             }
             // views
             Set<Class<?>> views = ref.getTypesAnnotatedWith(ViewInfo.class, true);
             for (Class<?> v : views) {
+                ViewInfo vi = v.getDeclaredAnnotation(ViewInfo.class);
+                if (vi == null) {
+                    continue;
+                }
                 name = v.getName();
                 this.daoViews.put(v.getName(), new ViewDaoHelper<>(this, v));
+            }
+        }
+        catch (Exception ex) {
+            throw new DaoException(name + " failed, " + ex.getMessage(), ex);
+        }
+        */
+
+        // ClassUtils version
+        try {
+            // tables
+            Set<Class<?>> tvs = ClassUtils.getClassSet(packageName);
+            for (Class<?> tv : tvs) {
+                name = tv.getName();
+                TableInfo ti = tv.getDeclaredAnnotation(TableInfo.class);
+                if (ti != null) {
+                    this.daoTables.put(name, new TableDaoHelper<>(this, tv));
+                    continue;
+                }
+                ViewInfo vi = tv.getDeclaredAnnotation(ViewInfo.class);
+                if (vi != null) {
+                    this.daoViews.put(name, new ViewDaoHelper<>(this, tv));
+                    continue;
+                }
             }
         }
         catch (Exception ex) {
@@ -435,15 +467,18 @@ public final class DaoFactory {
     }
 
     private Object readShort(ResultSet rs, int index) throws SQLException {
-        return rs.getShort(index);
+        Object v = rs.getObject(index);
+        return v == null ? null : rs.getShort(index);
     }
 
     private Object readInt(ResultSet rs, int index) throws SQLException {
-        return rs.getInt(index);
+        Object v = rs.getObject(index);
+        return v == null ? null : rs.getInt(index);
     }
 
     private Object readLong(ResultSet rs, int index) throws SQLException {
-        return rs.getLong(index);
+        Object v = rs.getObject(index);
+        return v == null ? null : rs.getLong(index);
     }
 
     private Object readBigDecimal(ResultSet rs, int index) throws SQLException {

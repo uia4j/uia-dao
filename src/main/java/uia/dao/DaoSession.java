@@ -23,6 +23,10 @@ public class DaoSession implements Closeable {
         this.conn = conn;
     }
 
+    public <T> T one(Class<T> dtoTable, Object... pks) throws SQLException, DaoException {
+        return forTable(dtoTable).selectByPK(pks);
+    }
+
     public <T> List<T> all(Class<T> dtoTable) throws SQLException, DaoException {
         return forTable(dtoTable).selectAll();
     }
@@ -45,16 +49,24 @@ public class DaoSession implements Closeable {
         return forTable(dtoTable).insert(data);
     }
 
+    public <T> int[] insert(Class<T> dtoTable, List<T> data) throws SQLException, DaoException {
+        return forTable(dtoTable).insert(data);
+    }
+
     public <T> int update(Class<T> dtoTable, T data) throws SQLException, DaoException {
         return forTable(dtoTable).update(data);
     }
 
-    public <T> T one(Class<T> dtoTable, Object... pks) throws SQLException, DaoException {
-        return forTable(dtoTable).selectByPK(pks);
+    public <T> int[] update(Class<T> dtoTable, List<T> data) throws SQLException, DaoException {
+        return forTable(dtoTable).update(data);
     }
 
     public <T> int delete(Class<T> dtoTable, Object... pks) throws SQLException, DaoException {
         return forTable(dtoTable).deleteByPK(pks);
+    }
+
+    public <T> int deleteAll(Class<T> dtoTable) throws SQLException, DaoException {
+        return forTable(dtoTable).deleteAll();
     }
 
     public Date toUTC(Date local) {
