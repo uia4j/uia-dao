@@ -18,9 +18,7 @@
  *******************************************************************************/
 package uia.dao;
 
-import java.sql.Clob;
 import java.sql.Connection;
-import java.sql.NClob;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -365,13 +363,8 @@ public class ColumnType {
     public Object read(Connection conn, Object orig) throws SQLException {
         switch (this.dataType) {
             case CLOB:
-                Clob clob = conn.createClob();
-                clob.setString(1, orig.toString());
-                return orig;
             case NCLOB:
-                NClob nclob = conn.createNClob();
-                nclob.setString(1, orig.toString());
-                return orig;
+                return orig.toString();
             default:
                 return orig;
         }
