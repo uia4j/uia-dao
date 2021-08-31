@@ -217,4 +217,6 @@ public interface Database extends AutoCloseable {
      * @throws SQLException Failed to execute.
      */
     public int[] executeBatch(String sql, List<List<Object>> rows) throws SQLException;
+
+    public List<Object[]> query(String sql) throws SQLException;
 }

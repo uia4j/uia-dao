@@ -332,6 +332,23 @@ public abstract class AbstractDatabase implements Database {
         }
     }
 
+    @Override
+    public List<Object[]> query(String sql) throws SQLException {
+        ArrayList<Object[]> result = new ArrayList<>();
+        Statement stat = this.conn.createStatement();
+        try (ResultSet rs = stat.executeQuery(sql)) {
+            int c = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                Object[] values = new Object[c];
+                for (int i = 0; i < c; i++) {
+                    values[i] = rs.getObject(i + 1);
+                }
+                result.add(values);
+            }
+        }
+        return result;
+    }
+
     /**
     private DataSource createDataSource(String driverName, String connectUrl, String user, String pwd) {
         HikariConfig config = new HikariConfig();
