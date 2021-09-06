@@ -105,6 +105,22 @@ public class SimpleWhere extends Where {
         return this;
     }
 
+    public SimpleWhere likeEnd(String key, Object value) {
+        if (isEmpty(key) || isEmpty(value)) {
+            return this;
+        }
+        this.conds.add(new LikeType(key, "%" + value));
+        return this;
+    }
+
+    public SimpleWhere likeEndOrNull(String key, Object value) {
+        if (isEmpty(key)) {
+            return this;
+        }
+        this.conds.add(new LikeType(key, value != null ? "%" + value : null));
+        return this;
+    }
+
     public SimpleWhere between(String key, Object value1, Object value2) {
         if (isEmpty(key)) {
             return this;

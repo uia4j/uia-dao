@@ -19,7 +19,10 @@
 package uia.dao;
 
 import java.lang.reflect.Field;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 import uia.dao.ColumnType.DataType;
 import uia.dao.annotation.ColumnInfo;
@@ -241,6 +244,14 @@ public final class TableDaoHelper<T> {
      */
     public DaoMethod<T> forSelect() {
         return this.select;
+    }
+
+    public T toOne(ResultSet rs) throws SQLException, DaoException {
+        return this.select.toOne(rs);
+    }
+
+    public List<T> toList(ResultSet rs) throws SQLException, DaoException {
+        return this.select.toList(rs, null);
     }
 
     /**

@@ -161,8 +161,14 @@
 	</scm>
 	<distributionManagement>
 		<repository>
-			<id>my-jfrog</id>
-			<url>https://uia.jfrog.io/artifactory/default-maven-local</url>
+			<id>my-github</id>
+			<url>https://maven.pkg.github.com/uia4j/repos/</url>
+			<uniqueVersion>false</uniqueVersion>
 		</repository>
+		<snapshotRepository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>HTKS</id>
+			<url>http://10.160.1.56:17002/repository/sapme4j-snapshots/</url>
+		</snapshotRepository>
 	</distributionManagement>
 </project>
