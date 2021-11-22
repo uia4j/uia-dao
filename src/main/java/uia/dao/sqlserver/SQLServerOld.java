@@ -32,18 +32,18 @@ import uia.dao.ColumnType.DataType;
 import uia.dao.TableType;
 import uia.dao.pg.PostgreSQLColumnType;
 
-public class SQLServer extends AbstractDatabase {
+public class SQLServerOld extends AbstractDatabase {
 
-    public SQLServer() throws SQLException {
+    public SQLServerOld() throws SQLException {
         super(null, null, null, null, null);
     }
 
-    public SQLServer(String host, String port, String databaseName, String user, String pwd) throws SQLException {
-        super("com.microsoft.sqlserver.jdbc.SQLServerDriver", String.format("jdbc:sqlserver://%s:%s;databaseName=%s", host, port, databaseName), user, pwd, null);
+    public SQLServerOld(String host, String port, String databaseName, String user, String pwd) throws SQLException {
+        super("net.sourceforge.jtds.jdbc.Driver", String.format("jdbc:jtds:sqlserver://%s:%s/%s", host, port, databaseName), user, pwd, null);
     }
 
-    public SQLServer(String host, String port, String databaseName, String user, String pwd, String schema) throws SQLException {
-        super("com.microsoft.sqlserver.jdbc.SQLServerDriver", String.format("jdbc:sqlserver://%s:%s;databaseName=%s", host, port, databaseName), user, pwd, schema);
+    public SQLServerOld(String host, String port, String databaseName, String user, String pwd, String schema) throws SQLException {
+        super("net.sourceforge.jtds.jdbc.Driver", String.format("jdbc:jtds:sqlserver://%s:%s/%s", host, port, databaseName), user, pwd, schema);
     }
 
     @Override

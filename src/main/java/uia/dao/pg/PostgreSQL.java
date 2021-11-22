@@ -278,6 +278,9 @@ public class PostgreSQL extends AbstractDatabase {
                         case Types.TIME_WITH_TIMEZONE:  // timestamp with timezone
                             ct.setDataType(DataType.TIMESTAMPZ);
                             break;
+                        case Types.BIT:                 // bit
+                            ct.setDataType(DataType.BIT);
+                            break;
                         case 1111:						// JSON
                             ct.setDataType(DataType.JSON);
                             break;
@@ -370,6 +373,9 @@ public class PostgreSQL extends AbstractDatabase {
                 break;
             case JSON:
                 type = "json";
+                break;
+            case BIT:
+                type = "boolean";
                 break;
             default:
                 throw new NullPointerException(ct.getColumnName() + " type not found:" + ct.getDataTypeName());

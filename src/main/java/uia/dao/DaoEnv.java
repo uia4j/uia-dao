@@ -33,6 +33,7 @@ import uia.dao.env.HikariEnv;
 import uia.dao.env.OracleEnv;
 import uia.dao.env.PostgreSQLEnv;
 import uia.dao.env.SQLServerEnv;
+import uia.dao.env.SQLServerOldEnv;
 
 public abstract class DaoEnv {
 
@@ -45,6 +46,8 @@ public abstract class DaoEnv {
     public static final String ORACLE = "ORA";
 
     public static final String MSSQL = "MSSQL";
+
+    public static final String MSSQLOLD = "MSSQLOLD";
 
     public static final String POSTGRE = "PG";
 
@@ -217,6 +220,9 @@ public abstract class DaoEnv {
         else if (MSSQL.equals(this.envName)) {
             this.env = new SQLServerEnv(conn, user, pwd, schema);
         }
+        else if (MSSQLOLD.equals(this.envName)) {
+            this.env = new SQLServerOldEnv(conn, user, pwd, schema);
+        }
         else if (ORACLE.equals(this.envName)) {
             this.env = new OracleEnv(conn, user, pwd, schema);
         }
@@ -257,6 +263,9 @@ public abstract class DaoEnv {
         }
         else if (MSSQL.equals(this.envName)) {
             this.env = new SQLServerEnv(conn, user, pwd, schema);
+        }
+        else if (MSSQLOLD.equals(this.envName)) {
+            this.env = new SQLServerOldEnv(conn, user, pwd, schema);
         }
         else if (ORACLE.equals(this.envName)) {
             this.env = new OracleEnv(conn, user, pwd, schema);

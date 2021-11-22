@@ -77,6 +77,7 @@ public abstract class AbstractDatabase implements Database {
      */
     protected AbstractDatabase(String driverName, String url, String user, String pwd, String schema) throws SQLException {
         this.url = url;
+        System.out.println(this.url);
         this.alwaysNVarchar = false;
         this.alwaysTimestampZ = false;
         if (url != null) {
@@ -360,7 +361,7 @@ public abstract class AbstractDatabase implements Database {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "512");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
-
+    
         return new HikariDataSource(config);
     }
     */

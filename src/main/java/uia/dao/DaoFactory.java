@@ -93,8 +93,10 @@ public final class DaoFactory {
         this.dataTypes.put("date", dateToUTC ? DataType.TIMESTAMPZ : DataType.TIMESTAMP);
         this.dataTypes.put("clob", DataType.CLOB);
         this.dataTypes.put("nclob", DataType.NCLOB);
+        this.dataTypes.put("byte", DataType.BYTE);
         this.dataTypes.put("byte[]", DataType.BLOB);
         this.dataTypes.put("json", DataType.JSON);
+        this.dataTypes.put("bit", DataType.BIT);
 
         this.readers = new TreeMap<>();
         this.readers.put("boolean", this::readBoolean);
@@ -109,9 +111,11 @@ public final class DaoFactory {
         this.readers.put("date", dateToUTC ? this::readDateTz : this::readDate);
         this.readers.put("clob", this::readString);
         this.readers.put("nclob", this::readString);
+        this.readers.put("byte", this::readByte);
         this.readers.put("byte[]", this::readBytes);
         this.readers.put("json", this::readString);
         this.readers.put("object", this::readObject);
+        this.readers.put("bit", this::readBoolean);
 
         this.writers = new TreeMap<>();
         this.writers.put("boolean", this::writeBoolean);
@@ -126,9 +130,11 @@ public final class DaoFactory {
         this.writers.put("date", dateToUTC ? this::writeDateTz : this::writeDate);
         this.writers.put("clob", this::writeClob);
         this.writers.put("nclob", this::writeClob);
+        this.writers.put("byte", this::writeByte);
         this.writers.put("byte[]", this::writeBytes);
         this.writers.put("json", this::writeJson);
         this.writers.put("object", this::writeObject);
+        this.writers.put("bit", this::writeBoolean);
 
         this.daoTables = new TreeMap<>();
         this.daoViews = new TreeMap<>();
@@ -501,6 +507,11 @@ public final class DaoFactory {
         return rs.getObject(index);
     }
 
+    private Byte readByte(ResultSet rs, int index) throws SQLException {
+        Object v = rs.getObject(index);
+        return v == null ? null : rs.getByte(index);
+    }
+
     private Object readBytes(ResultSet rs, int index) throws SQLException {
         return rs.getBytes(index);
     }
@@ -559,6 +570,24 @@ public final class DaoFactory {
 
     private void writeObject(PreparedStatement ps, int index, Object value) throws SQLException {
         ps.setObject(index, value);
+    }
+
+    private void writeByte(PreparedStatement ps, int index, Object value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, Types.TINYINT);
+        }
+        else {
+            ps.setByte(index, (byte) value);
+        }
+    }
+
+    private void writeBit(PreparedStatement ps, int index, Object value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, Types.BIT);
+        }
+        else {
+            ps.setByte(index, (byte) value);
+        }
     }
 
     private void writeJson(PreparedStatement ps, int index, Object value) throws SQLException {

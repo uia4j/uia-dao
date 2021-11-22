@@ -18,7 +18,16 @@
  *******************************************************************************/
 package uia.dao.sqlserver;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
+
 import org.junit.Test;
+
+import uia.dao.DaoFactoryTool;
+import uia.dao.Database;
+import uia.dao.pg.PostgreSQL;
 
 /**
  *
@@ -29,8 +38,45 @@ public class SQLServerTest {
 
     @Test
     public void testExists() throws Exception {
-        try (SQLServer db = new SQLServer("localhost", "1433", "master", "sa", "sqlAdmin2019")) {
-            System.out.println(db.exists("Databases"));
+        try (Database db = new SQLServerOld("10.0.3.3", "1433", "Logistic", "redqiao", "123")) {
+            db.selectTableNames().forEach(System.out::println);
+        }
+    }
+
+    @Test
+    public void testGenerateTable() throws Exception {
+        try (Database db = new SQLServerOld("10.0.3.3", "1433", "Logistic", "redqiao", "123")) {
+            DaoFactoryTool tool = new DaoFactoryTool(db);
+            List<String> ts = db.selectTableNames();
+            for (String t : ts) {
+                try {
+                    tool.toDTO("D:/workspace/htks/mms/03.code/mms-mes-db/src/main/java", "mms.mes.db", t);
+                    System.out.println(t);
+                }
+                catch (Exception ex) {
+                    System.out.println(t + "failed, " + ex.getMessage());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testGenerateScripts() throws Exception {
+        try (PostgreSQL pg = new PostgreSQL()) {
+            try (SQLServerOld db = new SQLServerOld("10.0.3.3", "1433", "Logistic", "redqiao", "123")) {
+                StringBuilder sqls = new StringBuilder();
+                for (String tn : db.selectTableNames()) {
+                    try {
+                        String script = pg.generateCreateTableSQL(db.selectTable(tn, true));
+                        sqls.append(script);
+                        System.out.println(tn);
+                    }
+                    catch (Exception ex) {
+                        System.out.println(tn + "failed, " + ex.getMessage());
+                    }
+                }
+                Files.write(Paths.get("d:/temp/mms_pg2.sql"), sqls.toString().getBytes(), StandardOpenOption.CREATE);
+            }
         }
     }
 }

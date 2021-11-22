@@ -124,6 +124,16 @@ public class ColumnType {
         JSON(Types.OTHER),
 
         /**
+         * bit
+         */
+        BYTE(Types.TINYINT),
+
+        /**
+         * bit
+         */
+        BIT(Types.BIT),
+
+        /**
          * others
          */
         UNDEFINED(Types.NVARCHAR);
@@ -334,6 +344,7 @@ public class ColumnType {
      */
     public String getJavaTypeName() {
         switch (this.dataType) {
+            case BIT:
             case BOOLEAN:
                 return this.nullable ? "Boolean" : "boolean";
             case INTEGER:
@@ -355,6 +366,8 @@ public class ColumnType {
                 return "NClob";
             case BLOB:
                 return "byte[]";
+            case BYTE:
+                return "byte";
             default:
                 return "String";
         }
