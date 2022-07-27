@@ -177,7 +177,7 @@ public abstract class DaoEnv {
         return result;
     }
 
-    public synchronized Map<String, String> test() throws SQLException {
+    public Map<String, String> test() throws SQLException {
         if (this.factory == null) {
             return new TreeMap<>();
         }
@@ -186,11 +186,11 @@ public abstract class DaoEnv {
         }
     }
 
-    public synchronized String testConnString() {
+    public String testConnString() {
         return this.env.test();
     }
 
-    public synchronized DaoSession createSession() throws SQLException {
+    public DaoSession createSession() throws SQLException {
         return this.factory.createSession(create());
     }
 
