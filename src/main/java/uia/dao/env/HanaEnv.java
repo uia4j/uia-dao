@@ -30,25 +30,25 @@ public class HanaEnv implements Env {
     }
 
     public HanaEnv() {
-		this.hanaConn = "jdbc:sap://localhost:39015";
-		this.hanaUser = "SYS";
-		this.hanaPwd = "SYS";
+        this.hanaConn = "jdbc:sap://localhost:39015?connectTimeout=5000&communicationTimeout=5000";
+        this.hanaUser = "SYS";
+        this.hanaPwd = "SYS";
     }
 
     public HanaEnv(String conn, String user, String pwd, String schema) {
-    	if(conn == null) {
-    		this.hanaConn = "jdbc:sap://localhost:39015";
-    		this.hanaUser = "SYS";
-    		this.hanaPwd = "SYS";
-    	}
-    	else {
-    		this.hanaConn = conn;
-    		this.hanaUser = user;
-    		this.hanaPwd = pwd;
-    		this.hanaSchema = schema;
-    	}
+        if (conn == null) {
+            this.hanaConn = "jdbc:sap://localhost:39015?connectTimeout=5000&communicationTimeout=5000";
+            this.hanaUser = "SYS";
+            this.hanaPwd = "SYS";
+        }
+        else {
+            this.hanaConn = conn.contains("?") ? conn : conn + "?connectTimeout=5000&communicationTimeout=5000";
+            this.hanaUser = user;
+            this.hanaPwd = pwd;
+            this.hanaSchema = schema;
+        }
     }
-    
+
     @Override
     public String test() {
         return String.format("%s, user:%s, schema:%s", this.hanaConn, this.hanaUser, this.hanaSchema);

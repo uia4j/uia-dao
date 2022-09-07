@@ -22,7 +22,8 @@ public class HikariEnv implements Env {
         this.config.setJdbcUrl(conn);
         this.config.setUsername(user);
         this.config.setPassword(pwd);
-        // this.config.setMaximumPoolSize(5);
+        this.config.setMaximumPoolSize(50);
+        this.config.setConnectionTimeout(5000);
         this.config.setMinimumIdle(5);
         this.config.addDataSourceProperty("cachePrepStmts", "true");
         this.config.addDataSourceProperty("prepStmtCacheSize", "25");
@@ -36,13 +37,15 @@ public class HikariEnv implements Env {
         this.config.setJdbcUrl(conn);
         this.config.setUsername(user);
         this.config.setPassword(pwd);
-        this.config.setMaximumPoolSize(10);
+        this.config.setMaximumPoolSize(50);
+        this.config.setConnectionTimeout(5000);
         this.config.setMinimumIdle(5);
         this.config.setDataSourceProperties(dsProperties);
 
         this.ds = new HikariDataSource(this.config);
     }
 
+    @Override
     public void close() {
         this.ds.close();
     }

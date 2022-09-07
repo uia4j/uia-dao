@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.uia.solution</groupId>
 	<artifactId>uia-dao</artifactId>
-	<version>0.3.2</version>
+	<version>0.3.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>uia-dao</name>
 	<url>https://github.com/uia4j/uia-dao</url>
@@ -165,16 +165,4 @@
 		<developerConnection>Kyle K. Lin</developerConnection>
 		<url>https://github.com/uia4j/uia-dao</url>
 	</scm>
-	<distributionManagement>
-		<repository>
-			<id>my-github</id>
-			<url>https://maven.pkg.github.com/uia4j/repos/</url>
-			<uniqueVersion>false</uniqueVersion>
-		</repository>
-		<snapshotRepository>
-			<uniqueVersion>false</uniqueVersion>
-			<id>HTKS</id>
-			<url>http://10.160.1.56:17002/repository/sapme4j-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 </project>

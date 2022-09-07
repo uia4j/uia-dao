@@ -53,7 +53,7 @@ public class Hana extends AbstractDatabase {
 
     public Hana(String host, String port, String schema, String user, String pwd) throws SQLException {
         // jdbc:sap://host:port?reconnect=true
-        super("com.sap.db.jdbc.Driver", String.format("jdbc:sap://%s:%s", host, port), user, pwd, schema == null ? user : schema);
+        super("com.sap.db.jdbc.Driver", String.format("jdbc:sap://%s:%s?connectTimeout=5000&communicationTimeout=5000", host, port), user, pwd, schema == null ? user : schema);
     }
 
     @Override
