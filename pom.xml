@@ -167,9 +167,8 @@
 	</scm>
 	<distributionManagement>
 		<repository>
-			<id>my-github</id>
-			<url>https://maven.pkg.github.com/uia4j/repos/</url>
-			<uniqueVersion>false</uniqueVersion>
+			<id>HTKS</id>
+			<url>http://10.160.1.56:17002/repository/sapme4j-releases/</url>
 		</repository>
 		<snapshotRepository>
 			<uniqueVersion>false</uniqueVersion>
