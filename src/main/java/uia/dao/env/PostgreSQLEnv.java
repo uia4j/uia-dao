@@ -34,33 +34,33 @@ public class PostgreSQLEnv implements Env {
 
     static {
         try {
-        	DriverManager.registerDriver(new org.postgresql.Driver());
+            DriverManager.registerDriver(new org.postgresql.Driver());
         }
         catch (Exception ex) {
-
+            ex.printStackTrace();
         }
     }
-    
+
     public PostgreSQLEnv() {
-		this.pgConn = "jdbc:postgresql://localhost:5432/postgres";
-		this.pgUser = "postgres";
-		this.pgPwd = "postgres";
-		this.pgSchema = "public";
+        this.pgConn = "jdbc:postgresql://localhost:5432/postgres";
+        this.pgUser = "postgres";
+        this.pgPwd = "postgres";
+        this.pgSchema = "public";
     }
 
     public PostgreSQLEnv(String conn, String user, String pwd, String schema) {
-    	if(conn == null) {
-    		this.pgConn = "jdbc:postgresql://localhost:5432/postgres";
-    		this.pgUser = "postgres";
-    		this.pgPwd = "postgres";
-    		this.pgSchema = "public";
-    	}
-    	else {
-    		this.pgConn = conn;
-    		this.pgUser = user;
-    		this.pgPwd = pwd;
-    		this.pgSchema = schema;
-    	}
+        if (conn == null) {
+            this.pgConn = "jdbc:postgresql://localhost:5432/postgres";
+            this.pgUser = "postgres";
+            this.pgPwd = "postgres";
+            this.pgSchema = "public";
+        }
+        else {
+            this.pgConn = conn;
+            this.pgUser = user;
+            this.pgPwd = pwd;
+            this.pgSchema = schema;
+        }
     }
 
     @Override

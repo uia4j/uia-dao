@@ -357,6 +357,26 @@ public class TableDao<T> {
     }
 
     /**
+     * Selects one row with a criteria.
+     *
+     * @param where The where statement.
+     * @return One row meets the criteria.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public T selectOne(Where where, String orders) throws SQLException, DaoException {
+        DaoMethod<T> method = this.tableHelper.forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where)
+                .orderBy(orders);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toOne(rs);
+            }
+        }
+    }
+
+    /**
      * Deletes some rows with a criteria.
      *
      * @param where The where statement.
