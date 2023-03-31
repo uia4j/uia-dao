@@ -3,7 +3,10 @@ package uia.dao;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -105,10 +108,32 @@ public class DaoSession implements Closeable {
         return this.factory.proxyViewDao(daoClz, this.conn);
     }
 
+    public List<Object[]> query(String sql) throws SQLException {
+        ArrayList<Object[]> result = new ArrayList<>();
+        Statement stat = this.conn.createStatement();
+        try (ResultSet rs = stat.executeQuery(sql)) {
+            int c = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                Object[] values = new Object[c];
+                for (int i = 0; i < c; i++) {
+                    Object obj = rs.getObject(i + 1);
+                    if (obj instanceof Date) {
+                        obj = fromUTC((Date) obj);
+                    }
+                    values[i] = obj;
+                }
+                result.add(values);
+            }
+        }
+        return result;
+    }
+
     @Override
     public void close() throws IOException {
         try {
-            this.conn.close();
+            if (!this.conn.isClosed()) {
+                this.conn.close();
+            }
         }
         catch (SQLException e) {
             throw new IOException(e);
