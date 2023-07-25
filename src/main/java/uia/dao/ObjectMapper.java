@@ -27,6 +27,5 @@ public interface ObjectMapper<T> {
             }
             return values;
         }
-
     }
 }

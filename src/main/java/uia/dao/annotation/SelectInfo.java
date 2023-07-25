@@ -35,7 +35,6 @@ public @interface SelectInfo {
 
     int top() default 0;
 
-    @SuppressWarnings("rawtypes")
-    Class<? extends ObjectMapper> mapper() default ObjectMapper.Null.class;
+    Class<?> mapper() default ObjectMapper.Null.class;
 
 }

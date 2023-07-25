@@ -66,9 +66,16 @@ public final class ProxyDao {
         SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
         if (selectInfo != null) {
             boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
+            Class<?> mapperClz = selectInfo.mapper();
             DaoMethod<?> method = selectInfo.join()
                     ? dao.tableHelper.forSelectX()
                     : dao.tableHelper.forSelect();
+            if (!ObjectMapper.class.isAssignableFrom(mapperClz)) {
+                method = selectInfo.join()
+                        ? dao.tableHelper.getFactory().forTable(mapperClz).forSelectX()
+                        : dao.tableHelper.getFactory().forTable(mapperClz).forSelect();
+            }
+
             final String sql = method.getSql() + " " + selectInfo.sql();
             try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
                 int r = 1;
@@ -85,14 +92,16 @@ public final class ProxyDao {
                                 .write(ps, r++, v);
                     }
                 }
-                if (selectInfo.mapper() == ObjectMapper.Null.class) {
+                if (ObjectMapper.class.isAssignableFrom(mapperClz) && mapperClz != ObjectMapper.Null.class) {
+                    ObjectMapper mapper = (ObjectMapper) mapperClz.newInstance();
                     try (ResultSet rs = ps.executeQuery()) {
-                        return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
+                        return mapper.read(rs);
                     }
                 }
                 else {
-                    ObjectMapper mapper = selectInfo.mapper().newInstance();
-                    return mapper.read(ps.executeQuery());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
+                    }
                 }
             }
         }
@@ -136,10 +145,17 @@ public final class ProxyDao {
             return list ? new ArrayList<>() : null;
         }
 
+        Class<?> mapperClz = selectInfo.mapper();
         ViewDao dao = (ViewDao) self;
         DaoMethod<?> method = selectInfo.join()
                 ? dao.viewHelper.forSelectX()
                 : dao.viewHelper.forSelect();
+        if (!ObjectMapper.class.isAssignableFrom(mapperClz)) {
+            method = selectInfo.join()
+                    ? dao.viewHelper.getFactory().forView(mapperClz).forSelectX()
+                    : dao.viewHelper.getFactory().forView(mapperClz).forSelect();
+        }
+
         try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + " " + selectInfo.sql())) {
             int r = 1;
             Filter filter = Filter.ALL;
@@ -154,14 +170,16 @@ public final class ProxyDao {
                             .write(ps, r++, v);
                 }
             }
-            if (selectInfo.mapper() == ObjectMapper.Null.class) {
+            if (ObjectMapper.class.isAssignableFrom(mapperClz) && mapperClz != ObjectMapper.Null.class) {
+                ObjectMapper mapper = (ObjectMapper) mapperClz.newInstance();
                 try (ResultSet rs = ps.executeQuery()) {
-                    return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
+                    return mapper.read(rs);
                 }
             }
             else {
-                ObjectMapper mapper = selectInfo.mapper().newInstance();
-                return mapper.read(ps.executeQuery());
+                try (ResultSet rs = ps.executeQuery()) {
+                    return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
+                }
             }
         }
     }
