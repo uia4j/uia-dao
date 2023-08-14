@@ -68,7 +68,7 @@ public abstract class AbstractDatabase implements Database {
     /**
      * Constructor.
      *
-     * @param driverName The driver calss.
+     * @param driverName The driver class.
      * @param url The JDBC connection string.
      * @param user The user id.
      * @param pwd The password.
@@ -77,7 +77,6 @@ public abstract class AbstractDatabase implements Database {
      */
     protected AbstractDatabase(String driverName, String url, String user, String pwd, String schema) throws SQLException {
         this.url = url;
-        System.out.println(this.url);
         this.alwaysNVarchar = false;
         this.alwaysTimestampZ = false;
         if (url != null) {
@@ -286,7 +285,6 @@ public abstract class AbstractDatabase implements Database {
             for (String sql : sqls) {
                 sql = fix(sql);
                 if (sql != null) {
-                    System.out.println(sql);
                     state.addBatch(sql);
                 }
             }
@@ -361,7 +359,7 @@ public abstract class AbstractDatabase implements Database {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "512");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
-    
+
         return new HikariDataSource(config);
     }
     */

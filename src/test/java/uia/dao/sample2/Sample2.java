@@ -12,12 +12,12 @@ import uia.dao.annotation.TableInfo;
 
 /**
  * Table or View: uia_dto_test.
- * 
+ *
  * @author UIA
  */
-@TableInfo(name = "uia_dto_test")
+@TableInfo(name = "sample2")
 public class Sample2 {
-    
+
     public static final String KEY = "uia_dto_test";
 
     @ColumnInfo(name = "c1", primaryKey = true)
@@ -46,8 +46,8 @@ public class Sample2 {
      *
      */
     public Sample2() {
-    	this.c6 = new TreeMap<>();
-    }	
+        this.c6 = new TreeMap<>();
+    }
 
     /**
      * Constructor.
@@ -63,8 +63,8 @@ public class Sample2 {
         this.c6 = data.c6;
         this.c7 = data.c7;
 
-    }	
-    
+    }
+
     /**
      * Returns 主鍵.
      *
@@ -181,14 +181,13 @@ public class Sample2 {
         this.c7 = c7;
     }
 
-
     /**
      * Copies this instance.
      *
      * @return A new instance.
      */
     public Sample2 copy() {
-    	return new Sample2(this);
+        return new Sample2(this);
     }
 
     @Override
@@ -196,4 +195,3 @@ public class Sample2 {
         return this.c1;
     }
 }
-

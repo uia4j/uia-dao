@@ -36,30 +36,30 @@ public class WhereAndOrTest {
     @Test
     public void testOr() {
         Where and1 = Where.simpleAnd().eq("A", "A").eq("B", "B");
-        System.out.println("and1: " + and1.generate());
+        Assert.assertEquals("A=? and B=?", and1.generate());
+
         Where and2 = Where.simpleAnd().eq("C", "C").eq("D", "D");
-        System.out.println("and2: " + and2.generate());
+        Assert.assertEquals("C=? and D=?", and2.generate());
 
         Where where = Where.or(and1, and2);
-        System.out.println("(and) or (and): " + where.generate());
         Assert.assertEquals("(A=? and B=?) or (C=? and D=?)", where.generate());
     }
 
     @Test
     public void testAnd() {
         Where or1 = Where.simpleOr().eq("A", "A").eq("B", "B");
-        System.out.println("or1: " + or1.generate());
+        Assert.assertEquals("A=? or B=?", or1.generate());
+
         Where or2 = Where.simpleOr().eq("C", "C").eq("D", "D");
-        System.out.println("or2: " + or2.generate());
+        Assert.assertEquals("C=? or D=?", or2.generate());
+
         Where and3 = Where.simpleAnd().eq("E", "E").eq("F", "F");
-        System.out.println("and3: " + and3.generate());
+        Assert.assertEquals("E=? and F=?", and3.generate());
 
         Where where1 = Where.and(or1, or2);
-        System.out.println("(or) and (or):" + where1.generate());
         Assert.assertEquals("(A=? or B=?) and (C=? or D=?)", where1.generate());
 
         Where where2 = Where.or(where1, and3);
-        System.out.println("(...) or (and):" + where2.generate());
         Assert.assertEquals("((A=? or B=?) and (C=? or D=?)) or (E=? and F=?)", where2.generate());
     }
 

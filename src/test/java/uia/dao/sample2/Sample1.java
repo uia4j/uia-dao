@@ -7,7 +7,7 @@ import uia.dao.ColumnType.DataType;
 import uia.dao.annotation.ColumnInfo;
 import uia.dao.annotation.TableInfo;
 
-@TableInfo(name = "sample_table", remark = "Sample")
+@TableInfo(name = "sample1", remark = "Sample")
 public class Sample1 {
 
     @ColumnInfo(name = "key1", primaryKey = true, length = 64, remark = "key1")
