@@ -30,6 +30,7 @@ import uia.dao.env.AppSourceEnv;
 import uia.dao.env.Env;
 import uia.dao.env.HanaEnv;
 import uia.dao.env.HikariEnv;
+import uia.dao.env.MySQLEnv;
 import uia.dao.env.OracleEnv;
 import uia.dao.env.PostgreSQLEnv;
 import uia.dao.env.SQLServerEnv;
@@ -46,6 +47,8 @@ public abstract class DaoEnv {
     public static final String ORACLE = "ORA";
 
     public static final String MSSQL = "MSSQL";
+
+    public static final String MYSQL = "MYSQL";
 
     public static final String MSSQLOLD = "MSSQLOLD";
 
@@ -225,6 +228,9 @@ public abstract class DaoEnv {
         }
         else if (ORACLE.equals(this.envName)) {
             this.env = new OracleEnv(conn, user, pwd, schema);
+        }
+        else if (MYSQL.equals(this.envName)) {
+            this.env = new MySQLEnv(conn, user, pwd, schema);
         }
         else {
             this.env = new PostgreSQLEnv(conn, user, pwd, schema);
