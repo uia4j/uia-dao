@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import uia.dao.where.conditions.BetweenType;
@@ -196,6 +197,18 @@ public class SimpleWhere extends Where {
             return this;
         }
         this.conds.add(new InType(key, values));
+        return this;
+    }
+
+    public SimpleWhere in(String key, String... values) {
+        if (values.length == 0) {
+            return this;
+        }
+        TreeSet<String> set = new TreeSet<>();
+        for (String v : values) {
+            set.add(v);
+        }
+        this.conds.add(new InType(key, set));
         return this;
     }
 
