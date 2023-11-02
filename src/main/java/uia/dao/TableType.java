@@ -249,6 +249,10 @@ public class TableType {
             }
         }
 
+        if (pks.isEmpty()) {
+            throw new RuntimeException(this.tableName + " without PK");
+        }
+
         ArrayList<String> cs = new ArrayList<>();
         ArrayList<String> ws = new ArrayList<>();
         for (ColumnType column : this.columns) {
@@ -285,10 +289,14 @@ public class TableType {
             }
         }
 
+        if (pks.isEmpty()) {
+            throw new RuntimeException(this.tableName + " without PK");
+        }
+
         ArrayList<String> ws = new ArrayList<>();
         for (ColumnType column : this.columns) {
             String columnName = column.getColumnName().toLowerCase();
-            if (pks.isEmpty() || pks.contains(columnName)) {
+            if (pks.contains(columnName)) {
                 ws.add(columnName + "=?");
             }
         }

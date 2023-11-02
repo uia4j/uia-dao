@@ -56,6 +56,18 @@ public class ViewDao<T> {
         this.viewHelper = viewHelper;
     }
 
+    public DataStream<T> streamAll() throws SQLException, DaoException {
+        DaoMethod<T> method = this.viewHelper.forSelect();
+        String orderBy = this.viewHelper.getOrderBy();
+        if (!orderBy.isEmpty()) {
+            orderBy = " ORDER BY " + orderBy;
+        }
+
+        PreparedStatement ps = this.conn.prepareStatement(method.getSql() + orderBy);
+        ResultSet rs = ps.executeQuery();
+        return new ResultSetStream<>(method, ps, rs);
+    }
+
     /**
      * Selects all rows of the view.
      *

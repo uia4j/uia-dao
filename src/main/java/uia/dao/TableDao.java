@@ -189,6 +189,32 @@ public class TableDao<T> {
         }
     }
 
+    public DataStream<T> streamAll() throws SQLException, DaoException {
+        DaoMethod<T> method = this.tableHelper.forSelect();
+        String orderBy = this.tableHelper.getOrderBy();
+        if (!orderBy.isEmpty()) {
+            orderBy = " ORDER BY " + orderBy;
+        }
+
+        PreparedStatement ps = this.conn.prepareStatement(method.getSql() + orderBy);
+        ResultSet rs = ps.executeQuery();
+        return new ResultSetStream<>(method, ps, rs);
+    }
+
+    public DataStream<T> stream(Where where) throws SQLException, DaoException {
+        return stream(where, this.tableHelper.getOrderBy());
+    }
+
+    public DataStream<T> stream(Where where, String orders) throws SQLException, DaoException {
+        DaoMethod<T> method = this.tableHelper.forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where)
+                .orderBy(orders);
+        PreparedStatement ps = sql.prepare(this.conn);
+        ResultSet rs = ps.executeQuery();
+        return new ResultSetStream<>(method, ps, rs);
+    }
+
     /**
      * Selects all rows of the table.
      *
@@ -283,15 +309,7 @@ public class TableDao<T> {
      * @throws DaoException Failed to map to the DTO object.
      */
     public List<T> select(Where where) throws SQLException, DaoException {
-        DaoMethod<T> method = this.tableHelper.forSelect();
-        SelectStatement sql = new SelectStatement(method.getSql())
-                .where(where)
-                .orderBy(this.tableHelper.getOrderBy());
-        try (PreparedStatement ps = sql.prepare(this.conn)) {
-            try (ResultSet rs = ps.executeQuery()) {
-                return method.toList(rs, Filter.ALL);
-            }
-        }
+        return select(where, this.tableHelper.getOrderBy());
     }
 
     /**

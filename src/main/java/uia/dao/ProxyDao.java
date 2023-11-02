@@ -65,7 +65,6 @@ public final class ProxyDao {
         // select
         SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
         if (selectInfo != null) {
-            boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
             Class<?> mapperClz = selectInfo.mapper();
             DaoMethod<?> method = selectInfo.join()
                     ? dao.tableHelper.forSelectX()
@@ -77,6 +76,23 @@ public final class ProxyDao {
             }
 
             final String sql = method.getSql() + " " + selectInfo.sql();
+
+            // stream
+            boolean stream = DataStream.class.isAssignableFrom(proxyMethod.getReturnType());
+            if (stream) {
+                PreparedStatement ps = this.conn.prepareStatement(sql);
+                int r = 1;
+                for (int i = 0; i < args.length; i++) {
+                    Object v = args[i];
+                    dao.tableHelper.getFactory()
+                            .getColumnWriter(v == null ? "object" : v.getClass().getSimpleName())
+                            .write(ps, r++, v);
+                }
+                ResultSet rs = ps.executeQuery();
+                return new ResultSetStream<>(method, ps, rs);
+            }
+
+            // normal
             try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
                 int r = 1;
                 Filter filter = Filter.ALL;
@@ -99,6 +115,7 @@ public final class ProxyDao {
                     }
                 }
                 else {
+                    boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
                     try (ResultSet rs = ps.executeQuery()) {
                         return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
                     }
@@ -139,10 +156,12 @@ public final class ProxyDao {
 
     @SuppressWarnings("rawtypes")
     private Object runView(Object self, Method proxyMethod, Method proceed, Object[] args) throws Throwable {
+        boolean stream = DataStream.class.isAssignableFrom(proxyMethod.getReturnType());
         boolean list = List.class.isAssignableFrom(proxyMethod.getReturnType());
+
         SelectInfo selectInfo = proxyMethod.getDeclaredAnnotation(SelectInfo.class);
         if (selectInfo == null) {
-            return list ? new ArrayList<>() : null;
+            return stream ? DataStream.empty() : list ? new ArrayList<>() : null;
         }
 
         Class<?> mapperClz = selectInfo.mapper();
@@ -156,7 +175,24 @@ public final class ProxyDao {
                     : dao.viewHelper.getFactory().forView(mapperClz).forSelect();
         }
 
-        try (PreparedStatement ps = this.conn.prepareStatement(method.getSql() + " " + selectInfo.sql())) {
+        final String sql = method.getSql() + " " + selectInfo.sql();
+
+        // stream
+        if (stream) {
+            PreparedStatement ps = this.conn.prepareStatement(sql);
+            int r = 1;
+            for (int i = 0; i < args.length; i++) {
+                Object v = args[i];
+                dao.viewHelper.getFactory()
+                        .getColumnWriter(v == null ? "object" : v.getClass().getSimpleName())
+                        .write(ps, r++, v);
+            }
+            ResultSet rs = ps.executeQuery();
+            return new ResultSetStream<>(method, ps, rs);
+        }
+
+        // normal
+        try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
             int r = 1;
             Filter filter = Filter.ALL;
             for (int i = 0; i < args.length; i++) {

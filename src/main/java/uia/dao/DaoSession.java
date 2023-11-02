@@ -30,6 +30,10 @@ public class DaoSession implements Closeable {
         return forTable(dtoTable).selectByPK(pks);
     }
 
+    public <T> DataStream<T> streamAll(Class<T> dtoTable) throws SQLException, DaoException {
+        return forTable(dtoTable).streamAll();
+    }
+
     public <T> List<T> all(Class<T> dtoTable) throws SQLException, DaoException {
         return forTable(dtoTable).selectAll();
     }
@@ -38,6 +42,10 @@ public class DaoSession implements Closeable {
         return forTable(dtoTable).selectAll()
                 .stream()
                 .collect(Collectors.groupingBy(classifier));
+    }
+
+    public <T> List<T> allView(Class<T> dtoTable) throws SQLException, DaoException {
+        return forView(dtoTable).selectAll();
     }
 
     public <T> List<T> where(Class<T> dtoTable, Where where) throws SQLException, DaoException {
@@ -54,6 +62,26 @@ public class DaoSession implements Closeable {
 
     public <T> int[] insert(Class<T> dtoTable, List<T> data) throws SQLException, DaoException {
         return forTable(dtoTable).insert(data);
+    }
+
+    public <T> int insert(Class<T> dtoTable, DataStream<T> stream, int batchSize) throws SQLException, DaoException {
+        final List<T> cache = new ArrayList<>();
+        int q = 0;
+        T t = null;
+        while ((t = stream.next()) != null) {
+            cache.add(t);
+            if (cache.size() >= batchSize) {
+                forTable(dtoTable).insert(cache);
+                q += cache.size();
+                System.out.println("insert> stream> " + q);
+                cache.clear();
+            }
+        }
+
+        forTable(dtoTable).insert(cache);
+        q += cache.size();
+        cache.clear();
+        return q;
     }
 
     public <T> int update(Class<T> dtoTable, T data) throws SQLException, DaoException {
