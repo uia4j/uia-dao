@@ -56,6 +56,15 @@ public class ViewDao<T> {
         this.viewHelper = viewHelper;
     }
 
+    public long count() throws SQLException, DaoException {
+        try (PreparedStatement ps = this.conn.prepareStatement("select count(*) n from " + this.viewHelper.getViewName())) {
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getLong(1);
+            }
+        }
+    }
+
     public DataStream<T> streamAll() throws SQLException, DaoException {
         DaoMethod<T> method = this.viewHelper.forSelect();
         String orderBy = this.viewHelper.getOrderBy();

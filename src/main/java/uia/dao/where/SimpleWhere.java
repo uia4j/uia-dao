@@ -34,6 +34,7 @@ import uia.dao.where.conditions.LessThanType;
 import uia.dao.where.conditions.LikeType;
 import uia.dao.where.conditions.MoreThanType;
 import uia.dao.where.conditions.NotEqType;
+import uia.dao.where.conditions.NotInType;
 import uia.dao.where.conditions.NotNullType;
 import uia.dao.where.conditions.NullType;
 
@@ -193,15 +194,25 @@ public class SimpleWhere extends Where {
     }
 
     public SimpleWhere in(String key, Set<String> values) {
-        if (isEmpty(key) || values == null || values.isEmpty()) {
+        //if (isEmpty(key) || values == null || values.isEmpty()) {
+        //    return this;
+        //}
+        if (isEmpty(key)) {
             return this;
         }
+
+        if (values == null || values.isEmpty()) {
+            eq("1", "2");
+            return this;
+        }
+
         this.conds.add(new InType(key, values));
         return this;
     }
 
     public SimpleWhere in(String key, String... values) {
         if (values.length == 0) {
+            eq("1", "2");
             return this;
         }
         TreeSet<String> set = new TreeSet<>();
@@ -209,6 +220,23 @@ public class SimpleWhere extends Where {
             set.add(v);
         }
         this.conds.add(new InType(key, set));
+        return this;
+    }
+
+    public SimpleWhere notIn(String key, Set<String> values) {
+        //if (isEmpty(key) || values == null || values.isEmpty()) {
+        //    return this;
+        //}
+        if (isEmpty(key)) {
+            return this;
+        }
+
+        if (values == null || values.isEmpty()) {
+            eq("1", "2");
+            return this;
+        }
+
+        this.conds.add(new NotInType(key, values));
         return this;
     }
 

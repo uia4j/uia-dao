@@ -389,21 +389,21 @@ public final class DaoFactory {
         Map<String, String> result = new TreeMap<>();
         for (TableDaoHelper<?> helper : this.daoTables.values()) {
             try {
-                int size = new TableDao(conn, helper).selectAll().size();
-                result.put(helper.getTableName(), helper.getTableClassName() + ", rows:" + size);
+                long size = new TableDao(conn, helper).count();
+                result.put(helper.getTableName(), "" + size);
             }
             catch (Exception ex) {
-                result.put(helper.getTableName(), helper.getTableClassName() + ", failed:" + ex.getMessage());
+                result.put(helper.getTableName(), ex.getMessage());
             }
         }
         for (ViewDaoHelper<?> helper : this.daoViews.values()) {
             result.put(helper.getViewName(), helper.getViewClassName());
             try {
-                int size = new ViewDao(conn, helper).selectAll().size();
-                result.put(helper.getViewName(), helper.getViewClassName() + ", rows:" + size);
+                long size = new ViewDao(conn, helper).count();
+                result.put(helper.getViewName(), "" + size);
             }
             catch (Exception ex) {
-                result.put(helper.getViewName(), helper.getViewClassName() + ", failed:" + ex.getMessage());
+                result.put(helper.getViewName(), ex.getMessage());
             }
         }
         return result;
@@ -414,14 +414,14 @@ public final class DaoFactory {
         TableDaoHelper<?> helper1 = this.daoTables.get(clz.getName());
         if (helper1 != null) {
             System.out.println(helper1.forSelect().getSql());
-            System.out.println("  rows:" + new TableDao(conn, helper1).selectAll().size());
+            System.out.println("  rows:" + new TableDao(conn, helper1).count());
             return true;
         }
 
         ViewDaoHelper<?> helper2 = this.daoViews.get(clz.getName());
         if (helper2 != null) {
             System.out.println(helper2.forSelect().getSql());
-            System.out.println("  rows:" + new ViewDao(conn, helper2).selectAll().size());
+            System.out.println("  rows:" + new ViewDao(conn, helper2).count());
             return true;
         }
 
