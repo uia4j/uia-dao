@@ -19,10 +19,11 @@
 package uia.dao.hana;
 
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
+import uia.dao.AbstractDatabase.IndexInfo;
 import uia.dao.Database;
 import uia.dao.TableType;
 import uia.dao.ora.Oracle;
@@ -74,10 +75,31 @@ public class HanaSQLTest {
     }
 
     @Test
-    public void testSelectViewScript() throws Exception {
-        Database db = db();
-        System.out.println(db.selectViewScript("VIEW_DISPATCH_SFC"));
-        db.close();
+    public void testSelectIndexScripts() throws Exception {
+        Hana road = db();
+        Hana dsim = dbold();
+        road.selectTableNames().forEach(t -> {
+            try {
+                System.out.println("== " + t + " ==");
+                Map<String, IndexInfo> news = road.selectIndexScripts(t);
+                Map<String, IndexInfo> olds = dsim.selectIndexScripts(t);
+                olds.forEach((k, v) -> {
+                    IndexInfo ii = news.get(k);
+                    if (ii == null) {
+                        System.out.println(v.script());
+                    }
+                    else if (v.same(ii)) {
+                        System.out.println("DROP INDEX " + v.getIndexName() + ";");
+                        System.out.println(v.script());
+                    }
+                });
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+        dsim.close();
+        road.close();
     }
 
     @Test
@@ -102,18 +124,17 @@ public class HanaSQLTest {
     }
 
     @Test
-    public void testCase1() throws Exception {
+    public void testSelectIndex() throws Exception {
         Database db = db();
-        List<String> tns = db.selectTableNames("Z_");
-        for (String tn : tns) {
-            TableType table = db.selectTable(tn, false);
-            System.out.println(db.generateCreateTableSQL(table));
-        }
-
+        System.out.println(db.selectViewScript("VIEW_DISPATCH_SFC"));
         db.close();
     }
 
     private Hana db() throws SQLException {
-        return new Hana("192.168.137.245", "39015", null, "WIP", "Sap12345");
+        return new Hana("10.160.2.38", "30015", "ROAD", "ROAD", "Road12345");
+    }
+
+    private Hana dbold() throws SQLException {
+        return new Hana("10.160.2.20", "30015", "DSIM", "DSIM", "Dsim12345");
     }
 }

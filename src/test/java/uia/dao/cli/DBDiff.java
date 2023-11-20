@@ -42,6 +42,7 @@ public class DBDiff extends AbstractCmd {
                     target.executeBatch(Arrays.asList(sqls));
                 }
             }
+
         }
     }
 

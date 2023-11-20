@@ -26,6 +26,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.sql.DataSource;
 
@@ -311,6 +313,44 @@ public abstract class AbstractDatabase implements Database {
         return getClass().getSimpleName() + " url:" + this.url;
     }
 
+    @Override
+    public Map<String, IndexInfo> selectIndexScripts(String tableName) throws SQLException {
+        TreeMap<String, IndexInfo> scripts = new TreeMap<>();
+        try (ResultSet rs = this.conn.getMetaData().getIndexInfo(null, this.schema, upperOrLower(tableName), true, false)) {
+            while (rs.next()) {
+                String indexName = rs.getString("INDEX_NAME").toUpperCase();
+                boolean unique = !rs.getBoolean("NON_UNIQUE");
+                int pos = rs.getInt("ORDINAL_POSITION") - 1;
+                String colName = rs.getString("COLUMN_NAME").toUpperCase();
+                String order = rs.getString("ASC_OR_DESC").toUpperCase();
+
+                IndexInfo ii = scripts.get(indexName);
+                if (ii == null) {
+                    ii = new IndexInfo(tableName, indexName, unique);
+                    scripts.put(indexName, ii);
+                }
+                ii.addColumn(pos, colName, order);
+            }
+        }
+        try (ResultSet rs = this.conn.getMetaData().getIndexInfo(null, this.schema, upperOrLower(tableName), false, true)) {
+            while (rs.next()) {
+                String indexName = rs.getString("INDEX_NAME").toUpperCase();
+                boolean unique = !rs.getBoolean("NON_UNIQUE");
+                int pos = rs.getInt("ORDINAL_POSITION") - 1;
+                String colName = rs.getString("COLUMN_NAME").toUpperCase();
+                String order = rs.getString("ASC_OR_DESC").toUpperCase();
+
+                IndexInfo ii = scripts.get(indexName);
+                if (ii == null) {
+                    ii = new IndexInfo(tableName, indexName, unique);
+                    scripts.put(indexName, ii);
+                }
+                ii.addColumn(pos, colName, order);
+            }
+        }
+        return scripts;
+    }
+
     /**
      * Change value to upper case or lower case. Implementation for a database can change the value depending on its naming rule.
      *
@@ -359,8 +399,98 @@ public abstract class AbstractDatabase implements Database {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "512");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
-
+    
         return new HikariDataSource(config);
     }
     */
+
+    public static class IndexInfo {
+
+        public final String tableName;
+
+        public final String indexName;
+
+        public final boolean unique;
+
+        public final List<String> columns;
+
+        public final List<String> orders;
+
+        IndexInfo(String tableName, String indexName, boolean unique) {
+            this.tableName = tableName;
+            this.indexName = indexName;
+            this.unique = unique;
+            this.columns = new ArrayList<>();
+            this.orders = new ArrayList<>();
+        }
+
+        public String getTableName() {
+            return this.tableName;
+        }
+
+        public String getIndexName() {
+            return this.indexName;
+        }
+
+        public List<String> getOrders() {
+            return this.orders;
+        }
+
+        public boolean isUnique() {
+            return this.unique;
+        }
+
+        public List<String> getColumns() {
+            return this.columns;
+        }
+
+        public void addColumn(int index, String columnName, String orders) {
+            if (this.columns.contains(columnName)) {
+                return;
+            }
+            this.columns.add(index, columnName);
+            this.orders.add(index, orders);
+        }
+
+        public boolean same(IndexInfo ii) {
+            if (!this.tableName.equals(ii.getTableName())) {
+                return false;
+            }
+            if (!this.indexName.equals(ii.getIndexName())) {
+                return false;
+            }
+            if (!this.unique != ii.isUnique()) {
+                return false;
+            }
+            if (this.columns.toString().equals(ii.getColumns().toString())) {
+                return false;
+            }
+            if (this.orders.toString().equals(ii.getOrders().toString())) {
+                return false;
+            }
+            return true;
+        }
+
+        public String script() {
+            String cols = String.format("%s %s",
+                    this.columns.get(0),
+                    "D".equals(this.orders.get(0)) ? "DESC" : "A".equals(this.orders.get(0)) ? "ASC" : "");
+            for (int i = 1; i < this.columns.size(); i++) {
+                cols += ",";
+                cols += String.format("%s %s",
+                        this.columns.get(i),
+                        "D".equals(this.orders.get(i)) ? "DESC" : "A".equals(this.orders.get(i)) ? "ASC" : "");
+            }
+            return String.format("%s INDEX %s ON %s (%s);",
+                    this.unique ? "CREATE UNIQUE" : "CREATE",
+                    this.indexName,
+                    this.tableName,
+                    cols);
+        }
+
+        @Override
+        public String toString() {
+            return this.indexName + ":" + this.columns;
+        }
+    }
 }

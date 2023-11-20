@@ -36,6 +36,11 @@ public class ColumnType {
         /**
          * boolean
          */
+        CHAR(Types.CHAR),
+
+        /**
+         * boolean
+         */
         BOOLEAN(Types.BOOLEAN),
 
         /**

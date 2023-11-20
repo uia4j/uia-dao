@@ -3,6 +3,9 @@ package uia.dao.env;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
+
+import oracle.jdbc.driver.OracleConnection;
 
 /**
  * HANA helper.
@@ -70,6 +73,11 @@ public class OracleEnv implements Env {
 
     @Override
     public Connection create() throws SQLException {
-        return java.sql.DriverManager.getConnection(this.oraConn, this.oraUser, this.oraPwd);
+        Properties props = new Properties();
+        props.setProperty("user", this.oraUser);
+        props.setProperty("password", this.oraPwd);
+        props.setProperty(OracleConnection.CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT, "5000");
+        props.setProperty(OracleConnection.CONNECTION_PROPERTY_THIN_READ_TIMEOUT, "30000");
+        return java.sql.DriverManager.getConnection(this.oraConn, props);
     }
 }

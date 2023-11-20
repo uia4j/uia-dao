@@ -21,6 +21,9 @@ package uia.dao;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+
+import uia.dao.AbstractDatabase.IndexInfo;
 
 /**
  *
@@ -129,6 +132,15 @@ public interface Database extends AutoCloseable {
      * @throws SQLException Failed to execute.
      */
     public String selectViewScript(String viewName) throws SQLException;
+
+    /**
+     *Return index information.
+     *
+     * @param tableName
+     * @return The information.
+     * @throws SQLException Failed to execute.
+     */
+    public Map<String, IndexInfo> selectIndexScripts(String tableName) throws SQLException;
 
     /**
      * Generate script to create a view.

@@ -217,6 +217,9 @@ public class Hana extends AbstractDatabase {
                     ct.setRemark(rs.getString("REMARKS"));
 
                     switch (rs.getInt("DATA_TYPE")) {       // HANA TYPE
+                        case Types.CHAR:                    // CHAR
+                            ct.setDataType(DataType.CHAR);
+                            break;
                         case Types.VARCHAR:                 // VARCHAR
                             ct.setDataType(DataType.VARCHAR);
                             break;
@@ -320,6 +323,9 @@ public class Hana extends AbstractDatabase {
             case TIMESTAMP:     // TIMESTEMP
             case TIMESTAMPZ:
                 type = "TIMESTAMP";
+                break;
+            case CHAR:          // CHAR
+                type = "CHAR(" + (ct.getColumnSize() == 0 ? 32 : ct.getColumnSize()) + ")";
                 break;
             case NVARCHAR:      // NVARCHAR
             case NVARCHAR2:     // NVARCHAR
