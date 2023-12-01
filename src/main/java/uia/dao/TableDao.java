@@ -48,6 +48,15 @@ public class TableDao<T> {
     /**
      * Constructor.
      *
+     */
+    protected TableDao() {
+        this.conn = null;
+        this.tableHelper = null;
+    }
+
+    /**
+     * Constructor.
+     *
      * @param conn A JDBC connection.
      * @param tableHelper A DAO helper for a specific table.
      */
@@ -303,7 +312,7 @@ public class TableDao<T> {
     /**
      * Selects some rows with a criteria.
      *
-     * @param where The where statement.
+     * @param where The WHERE statement.
      * @return Rows meet the criteria.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
@@ -315,8 +324,8 @@ public class TableDao<T> {
     /**
      * Selects some rows with a criteria.
      *
-     * @param where The where statement.
-     * @param orders The orders.
+     * @param where The WHERE statement.
+     * @param orders The ORDER BY statement.
      * @return Rows meet the criteria.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
@@ -336,8 +345,8 @@ public class TableDao<T> {
     /**
      * Selects some rows with a criteria.
      *
-     * @param where The where statement.
-     * @param orders The orders.
+     * @param where The WHERE statement.
+     * @param orders The ORDER BY statement.
      * @param topN The max count of result.
      * @return Rows meet the criteria.
      * @throws SQLException Failed to execute the SQL statement.
@@ -358,7 +367,7 @@ public class TableDao<T> {
     /**
      * Selects one row with a criteria.
      *
-     * @param where The where statement.
+     * @param where The WHERE statement.
      * @return One row meets the criteria.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
@@ -377,7 +386,8 @@ public class TableDao<T> {
     /**
      * Selects one row with a criteria.
      *
-     * @param where The where statement.
+     * @param where The WHERE statement.
+     * @param orders The ORDER BY statement.
      * @return One row meets the criteria.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.

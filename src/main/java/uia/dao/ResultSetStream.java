@@ -27,7 +27,7 @@ import java.sql.SQLException;
  *
  * @author Kan
  *
- * @param <T>
+ * @param <T> The data type.
  */
 public class ResultSetStream<T> implements DataStream<T> {
 

@@ -26,7 +26,7 @@ import java.sql.SQLException;
  *
  * @author Kan
  *
- * @param <T>
+ * @param <T> The data type.
  */
 public interface DataStream<T> extends Closeable {
 

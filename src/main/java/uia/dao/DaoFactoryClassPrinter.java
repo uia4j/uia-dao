@@ -111,6 +111,9 @@ public class DaoFactoryClassPrinter {
         List<ColumnType> columnTypes = this.table.getColumns();
         for (int i = 0; i < columnTypes.size(); i++) {
             ColumnType ct = columnTypes.get(i);
+            if (ct.columnName.contains("/")) {
+                System.out.println();
+            }
             String propNameLower = CamelNaming.lower(ct.columnName);
             String propNameUpper = CamelNaming.upper(ct.columnName);
             String javaType = ct.getJavaTypeName();

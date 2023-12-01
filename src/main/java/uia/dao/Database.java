@@ -136,7 +136,7 @@ public interface Database extends AutoCloseable {
     /**
      *Return index information.
      *
-     * @param tableName
+     * @param tableName The table name.
      * @return The information.
      * @throws SQLException Failed to execute.
      */

@@ -48,6 +48,15 @@ public class ViewDao<T> {
     /**
      * Constructor.
      *
+     */
+    protected ViewDao() {
+        this.conn = null;
+        this.viewHelper = null;
+    }
+
+    /**
+     * Constructor.
+     *
      * @param conn A JDBC connection.
      * @param viewHelper A DAO helper for a specific view.
      */

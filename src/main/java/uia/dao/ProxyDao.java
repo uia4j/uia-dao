@@ -1,5 +1,7 @@
 package uia.dao;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.sql.Connection;
@@ -22,17 +24,33 @@ public final class ProxyDao {
     }
 
     @SuppressWarnings("unchecked")
-    <T> T bind(Class<T> absclz, Connection conn, TableDaoHelper<?> helper) throws DaoException {
+    <T> T bind(Class<T> absClz, Connection conn, TableDaoHelper<?> helper) throws DaoException {
         this.conn = conn;
         ProxyFactory factory = new ProxyFactory();
-        factory.setSuperclass(absclz);
+        factory.setSuperclass(absClz);
         factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
+        
 
         try {
             T result = (T) factory.create(
-                    new Class<?>[] { Connection.class, TableDaoHelper.class },
-                    new Object[] { conn, helper },
+                    new Class<?>[] {},
+                    new Object[] {},
                     this::runTable);
+
+            Class<?> clz = result.getClass();
+            while(clz != null && clz != TableDao.class) {
+            	clz = clz.getSuperclass();
+            }
+            if(clz == null) {
+            	return null;
+            }
+            Field f1 = clz.getDeclaredField("conn");
+            f1.setAccessible(true);
+            f1.set(result, conn);
+            Field f2 = clz.getDeclaredField("tableHelper");
+            f2.setAccessible(true);
+            f2.set(result, helper);
+            
             return result;
         }
         catch (Exception ex) {
@@ -41,17 +59,32 @@ public final class ProxyDao {
     }
 
     @SuppressWarnings("unchecked")
-    <T> T bind(Class<T> absclz, Connection conn, ViewDaoHelper<?> helper) throws DaoException {
+    <T> T bind(Class<T> absClz, Connection conn, ViewDaoHelper<?> helper) throws DaoException {
         this.conn = conn;
         ProxyFactory factory = new ProxyFactory();
-        factory.setSuperclass(absclz);
+        factory.setSuperclass(absClz);
         factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
 
         try {
-            return (T) factory.create(
-                    new Class<?>[] { Connection.class, ViewDaoHelper.class },
-                    new Object[] { conn, helper },
+            T result = (T) factory.create(
+                    new Class<?>[] {},
+                    new Object[] {},
                     this::runView);
+            
+            Class<?> clz = result.getClass();
+            while(clz != null && clz != ViewDao.class) {
+            	clz = clz.getSuperclass();
+            }
+            if(clz == null) {
+            	return null;
+            }
+            Field f1 = clz.getDeclaredField("conn");
+            f1.setAccessible(true);
+            f1.set(result, conn);
+            Field f2 = clz.getDeclaredField("viewHelper");
+            f2.setAccessible(true);
+            f2.set(result, helper);
+            return result;
         }
         catch (Exception ex) {
             throw new DaoException(ex);
