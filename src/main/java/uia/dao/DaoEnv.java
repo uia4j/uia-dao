@@ -27,6 +27,7 @@ import java.util.TreeSet;
 import java.util.concurrent.Executor;
 
 import uia.dao.env.AppSourceEnv;
+import uia.dao.env.DruidEnv;
 import uia.dao.env.Env;
 import uia.dao.env.HanaEnv;
 import uia.dao.env.HikariEnv;
@@ -54,6 +55,8 @@ public abstract class DaoEnv {
 
     public static final String POSTGRE = "PG";
 
+    public static final String DRUID = "DRUID";
+
     private final DaoFactory factory;
 
     private final String envName;
@@ -72,6 +75,16 @@ public abstract class DaoEnv {
 
     public static DaoEnv pool(final boolean dateToUTC, final String packageName) throws DaoException {
         return new DaoEnv(DATAPOOL, dateToUTC) {
+
+            @Override
+            protected void initialFactory(DaoFactory factory) throws Exception {
+                factory.load(packageName);
+            }
+        };
+    }
+
+    public static DaoEnv druid(final boolean dateToUTC, final String packageName) throws DaoException {
+        return new DaoEnv(DRUID, dateToUTC) {
 
             @Override
             protected void initialFactory(DaoFactory factory) throws Exception {
@@ -232,6 +245,9 @@ public abstract class DaoEnv {
         else if (MYSQL.equals(this.envName)) {
             this.env = new MySQLEnv(conn, user, pwd, schema);
         }
+        else if (DRUID.equals(this.envName)) {
+            this.env = new DruidEnv(conn, user, pwd);
+        }
         else {
             this.env = new PostgreSQLEnv(conn, user, pwd, schema);
         }
@@ -276,10 +292,18 @@ public abstract class DaoEnv {
         else if (ORACLE.equals(this.envName)) {
             this.env = new OracleEnv(conn, user, pwd, schema);
         }
+        else if (DRUID.equals(this.envName)) {
+            this.env = new DruidEnv(conn, user, pwd);
+        }
         else {
             this.env = new PostgreSQLEnv(conn, user, pwd, schema);
         }
         return this;
+    }
+    
+    public DaoEnv config(Env env) {
+    	this.env = env;
+    	return this;
     }
 
     /**
@@ -288,7 +312,7 @@ public abstract class DaoEnv {
      * @return A connection.
      * @throws SQLException Failed to execute.
      */
-    public synchronized Connection create() throws SQLException {
+    public Connection create() throws SQLException {
         return new ConnectionProxy(this.env.create());
     }
 
