@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import uia.dao.AbstractDatabase;
@@ -37,6 +38,8 @@ import uia.dao.TableType;
  *
  */
 public class Hana extends AbstractDatabase {
+
+    private static final List<String> funcs = Arrays.asList("CURRENT_UTCTIMESTAMP", "CURRENT_TIMESTAMP");
 
     static {
         try {
@@ -234,7 +237,15 @@ public class Hana extends AbstractDatabase {
                     ct.setNullable("1".equals(rs.getString("NULLABLE")));
                     ct.setColumnSize(rs.getInt("COLUMN_SIZE"));
                     ct.setRemark(rs.getString("REMARKS"));
-                    ct.setDefaultValue(rs.getString("COLUMN_DEF"));
+                    String cd = rs.getString("COLUMN_DEF");
+                    if (cd != null) {
+                        if (funcs.contains(cd.toUpperCase())) {
+                            ct.setDefaultValue(cd);
+                        }
+                        else {
+                            ct.setDefaultValue("'" + cd + "'");
+                        }
+                    }
 
                     switch (rs.getInt("DATA_TYPE")) {       // HANA TYPE
                         case Types.CHAR:                    // CHAR
@@ -383,7 +394,7 @@ public class Hana extends AbstractDatabase {
 
         String defaultValue = "";
         if (ct.getDefaultValue() != null) {
-            defaultValue = " DEFAULT '" + ct.getDefaultValue().toString() + "'";
+            defaultValue = " DEFAULT " + ct.getDefaultValue().toString();
         }
 
         return " \"" + ct.getColumnName().toUpperCase() + "\" " + type + nullable + defaultValue;
