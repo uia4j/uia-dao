@@ -237,16 +237,6 @@ public class Hana extends AbstractDatabase {
                     ct.setNullable("1".equals(rs.getString("NULLABLE")));
                     ct.setColumnSize(rs.getInt("COLUMN_SIZE"));
                     ct.setRemark(rs.getString("REMARKS"));
-                    String cd = rs.getString("COLUMN_DEF");
-                    if (cd != null) {
-                        if (funcs.contains(cd.toUpperCase())) {
-                            ct.setDefaultValue(cd);
-                        }
-                        else {
-                            ct.setDefaultValue("'" + cd + "'");
-                        }
-                    }
-
                     switch (rs.getInt("DATA_TYPE")) {       // HANA TYPE
                         case Types.CHAR:                    // CHAR
                             ct.setDataType(DataType.CHAR);
@@ -301,6 +291,18 @@ public class Hana extends AbstractDatabase {
                         default:
                             ct.setDataType(DataType.UNDEFINED);
                             break;
+                    }
+                    String cd = rs.getString("COLUMN_DEF");
+                    if (cd != null) {
+                        if (funcs.contains(cd.toUpperCase())) {
+                            ct.setDefaultValue(cd);
+                        }
+                        else if (ct.getDataType() == DataType.BOOLEAN) {
+                            ct.setDefaultValue("0".equals(cd) ? "TRUE" : "FALSE");
+                        }
+                        else {
+                            ct.setDefaultValue("'" + cd + "'");
+                        }
                     }
                     cts.add(ct);
                 }
