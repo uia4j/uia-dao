@@ -91,7 +91,7 @@ public class PostgreSQL extends AbstractDatabase {
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
+            comments.add(String.format("COMMENT ON TABLE %s is '%s';;%n",
                     table.getTableName().toLowerCase(),
                     table.getRemark()));
         }
@@ -103,7 +103,7 @@ public class PostgreSQL extends AbstractDatabase {
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null &&
                     ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';%n",
+                comments.add(String.format("COMMENT ON COLUMN %s.%s is '%s';;%n",
                         table.getTableName().toLowerCase(),
                         ct.getColumnName().toLowerCase(),
                         ct.getRemark()));
@@ -114,13 +114,13 @@ public class PostgreSQL extends AbstractDatabase {
         sb.append("CREATE TABLE \"" + table.getTableName().toLowerCase() + "\"\n(\n");
         sb.append(String.join(",\n", cols));
         if (pks.isEmpty()) {
-            sb.append("\n);\n");
+            sb.append("\n);;\n");
         }
         else {
             String pkSQL = String.format(",%n CONSTRAINT %s_pkey PRIMARY KEY (%s)%n",
                     table.getTableName().toLowerCase(),
                     String.join(",", pks));
-            sb.append(pkSQL).append(");\n");
+            sb.append(pkSQL).append(");;\n");
         }
 
         for (String comment : comments) {

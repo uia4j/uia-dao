@@ -119,13 +119,13 @@ public class SQLServer extends AbstractDatabase {
         sb.append("CREATE TABLE " + pref + table.getTableName().toUpperCase() + " (\n ");
         sb.append(String.join(",\n ", cols));
         if (pks.isEmpty()) {
-            sb.append("\n);\n");
+            sb.append("\n);;\n");
         }
         else {
             String pkSQL = String.format(",%n CONSTRAINT PK_%s PRIMARY KEY (%s)%n",
                     table.getTableName().toUpperCase(),
                     String.join(",", pks));
-            sb.append(pkSQL).append(");\n");
+            sb.append(pkSQL).append(");;\n");
         }
 
         for (String comment : comments) {

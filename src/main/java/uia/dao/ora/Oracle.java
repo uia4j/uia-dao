@@ -96,7 +96,7 @@ public class Oracle extends AbstractDatabase {
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE %s is '%s';%n",
+            comments.add(String.format("COMMENT ON TABLE %s is '%s';;%n",
                     tableName,
                     table.getRemark()));
         }
@@ -107,7 +107,7 @@ public class Oracle extends AbstractDatabase {
             }
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null && ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.\"%s\" is '%s';%n",
+                comments.add(String.format("COMMENT ON COLUMN %s.\"%s\" is '%s';;%n",
                         tableName,
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
@@ -118,13 +118,13 @@ public class Oracle extends AbstractDatabase {
         sb.append("CREATE TABLE " + tableName + " \n(\n");
         sb.append(String.join(",\n", cols));
         if (pks.isEmpty()) {
-            sb.append("\n);\n");
+            sb.append("\n);;\n");
         }
         else {
             String pkSQL = String.format(",%n CONSTRAINT \"%s_PKEY\" PRIMARY KEY (\"%s\")%n",
                     table.getTableName().toUpperCase(),
                     String.join("\",\"", pks));
-            sb.append(pkSQL).append(");\n");
+            sb.append(pkSQL).append(");;\n");
         }
 
         for (String comment : comments) {
