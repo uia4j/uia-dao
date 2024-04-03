@@ -52,13 +52,14 @@ public class HanaSQLTest {
 
     @Test
     public void testSelectTable() throws Exception {
-        Database db = db();
-        TableType table = db.selectTable("ZD_TEST", true);
+        Hana db = mes();
+        TableType table = db.selectTable("ZR_STDF_UPLOAD", false);
         System.out.println(table.getTableName());
         table.getColumns().forEach(System.out::println);
         System.out.println(table.generateInsertSQL());
         System.out.println(table.generateUpdateSQL());
         System.out.println(table.generateSelectSQL());
+        System.out.println(db.generateCreateTableSQL(table));
 
         db.close();
     }
@@ -124,9 +125,19 @@ public class HanaSQLTest {
     }
 
     @Test
-    public void testSelectIndex() throws Exception {
-        Database db = db();
+    public void testVeiwScript() throws Exception {
+        Database db = mes();
         System.out.println(db.selectViewScript("VIEW_DISPATCH_SFC"));
+        db.close();
+    }
+
+    @Test
+    public void testTriggerScripts() throws Exception {
+        Database db = mes();
+        db.selectTriggerScripts("resrce").forEach(s -> {
+            System.out.println("=======");
+            System.out.println(s);
+        });
         db.close();
     }
 
@@ -137,4 +148,9 @@ public class HanaSQLTest {
     private Hana dbold() throws SQLException {
         return new Hana("10.160.2.20", "30015", "DSIM", "DSIM", "Dsim12345");
     }
+
+    private Hana mes() throws SQLException {
+        return new Hana("10.160.2.20", "30015", "WIP", "WIP", "Sap12345");
+    }
+
 }

@@ -110,8 +110,8 @@ public interface Database extends AutoCloseable {
      * @param tableOrView Table name or view name.
      * @param firstAsPK Change first column to be primary key.
      * @return Table model.
-      * @throws SQLException Failed to execute.
-    */
+     * @throws SQLException Failed to execute.
+     */
     public TableType selectTable(String tableOrView, boolean firstAsPK) throws SQLException;
 
     /**
@@ -134,7 +134,18 @@ public interface Database extends AutoCloseable {
     public String selectViewScript(String viewName) throws SQLException;
 
     /**
-     *Return index information.
+     * Return trigger scripts.
+     *
+     * @param tableName The table name.
+     * @return Scripts.
+     * @throws SQLException Failed to execute.
+     */
+    public default List<String> selectTriggerScripts(String tableName) throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Return index information.
      *
      * @param tableName The table name.
      * @return The information.
@@ -203,21 +214,21 @@ public interface Database extends AutoCloseable {
     public int dropView(String viewName) throws SQLException;
 
     /**
-    * Execute a SQL command.
-    *
-    * @param sql A SQL command.
-    * @return Result.
-    * @throws SQLException Failed to execute.
-    */
+     * Execute a SQL command.
+     *
+     * @param sql A SQL command.
+     * @return Result.
+     * @throws SQLException Failed to execute.
+     */
     public boolean execute(String sql) throws SQLException;
 
     /**
-    * Execute SQL commands.
-    *
-    * @param sqls SQL commands.
-    * @return Result.
-    * @throws SQLException Failed to execute.
-    */
+     * Execute SQL commands.
+     *
+     * @param sqls SQL commands.
+     * @return Result.
+     * @throws SQLException Failed to execute.
+     */
     public int[] executeBatch(List<String> sqls) throws SQLException;
 
     /**

@@ -52,9 +52,8 @@ public class Hana extends AbstractDatabase {
     }
 
     public Hana(String host, String port, String schema, String user, String pwd) throws SQLException {
-    	this(host, port, schema, user, pwd, "connectTimeout=5000&communicationTimeout=5000");
+        this(host, port, schema, user, pwd, "connectTimeout=5000&communicationTimeout=5000");
     }
-
 
     public Hana(String host, String port, String schema, String user, String pwd, String props) throws SQLException {
         super("com.sap.db.jdbc.Driver", String.format("jdbc:sap://%s:%s?%s", host, port, props), user, pwd, schema == null ? user : schema);
@@ -77,6 +76,26 @@ public class Hana extends AbstractDatabase {
     }
 
     @Override
+    public List<String> selectTriggerScripts(String tableName) throws SQLException {
+        List<String> scripts = new ArrayList<>();
+        try (PreparedStatement ps = this.conn.prepareStatement("SELECT definition FROM TRIGGERS WHERE schema_name=? AND subject_table_name=? AND is_enabled='TRUE' AND is_valid='TRUE' ")) {
+            ps.setString(1, this.schema);
+            ps.setString(2, tableName.toUpperCase());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String definition = rs.getString(1);
+                    if (definition != null) {
+                        scripts.add(rs.getString(1));
+                    }
+                }
+            }
+
+        }
+        return scripts;
+    }
+
+    @Override
     public String generateCreateViewSQL(String viewName, String sql) {
         return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
     }
@@ -91,9 +110,7 @@ public class Hana extends AbstractDatabase {
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE '%s' IS '%s';%n",
-                    table.getTableName().toUpperCase(),
-                    table.getRemark()));
+            comments.add(String.format("COMMENT ON TABLE %s IS '%s';%n", table.getTableName().toUpperCase(), table.getRemark()));
         }
 
         for (ColumnType ct : table.getColumns()) {
@@ -102,7 +119,7 @@ public class Hana extends AbstractDatabase {
             }
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null && ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN '%s'.'%s' IS '%s';%n",
+                comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';\n",
                         table.getTableName().toUpperCase(),
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
@@ -119,11 +136,9 @@ public class Hana extends AbstractDatabase {
             sb.append(",\n PRIMARY KEY (\"" + String.join("\",\"", pks) + "\")\n);\n");
         }
 
-        /**
         for (String comment : comments) {
             sb.append(comment);
         }
-        */
 
         return sb.toString();
     }
@@ -203,7 +218,7 @@ public class Hana extends AbstractDatabase {
          * SCOPE_SCHEMA
          * SCOPE_TABLE
          * SOURCE_DATA_TYPE
-         * IS_AUTOINCREMENT         *
+         * IS_AUTOINCREMENT
          */
         List<ColumnType> cts = new ArrayList<>();
         try (ResultSet rs = this.conn.getMetaData().getColumns(null, this.schema, tableName, null)) {
@@ -219,6 +234,7 @@ public class Hana extends AbstractDatabase {
                     ct.setNullable("1".equals(rs.getString("NULLABLE")));
                     ct.setColumnSize(rs.getInt("COLUMN_SIZE"));
                     ct.setRemark(rs.getString("REMARKS"));
+                    ct.setDefaultValue(rs.getString("COLUMN_DEF"));
 
                     switch (rs.getInt("DATA_TYPE")) {       // HANA TYPE
                         case Types.CHAR:                    // CHAR
@@ -245,7 +261,7 @@ public class Hana extends AbstractDatabase {
                         case Types.INTEGER:                 // INTEGER
                             ct.setDataType(DataType.INTEGER);
                             break;
-                        case Types.BOOLEAN:					// BOOLEAN
+                        case Types.BOOLEAN:                 // BOOLEAN
                             ct.setDataType(DataType.BOOLEAN);
                             break;
                         case Types.BIGINT:                  // BIGINT
@@ -306,11 +322,7 @@ public class Hana extends AbstractDatabase {
                 break;
             case NUMERIC:       // DECIMAL, SMALLDECIMAL
                 long cs = ct.getColumnSize();
-                type = "DECIMAL("
-                        + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize())
-                        + ","
-                        + ct.getDecimalDigits()
-                        + ")";
+                type = "DECIMAL(" + (cs >= 38 || cs <= 0 ? 38 : ct.getColumnSize()) + "," + ct.getDecimalDigits() + ")";
                 break;
             case FLOAT:
                 type = "FLOAT";
@@ -350,7 +362,7 @@ public class Hana extends AbstractDatabase {
             case CLOB:          // CLOB
                 type = "CLOB";
                 break;
-            case JSON:			// JSON
+            case JSON:          // JSON
             case NCLOB:         // NCLOB
                 type = "NCLOB";
                 break;
@@ -369,6 +381,11 @@ public class Hana extends AbstractDatabase {
             nullable = " NULL";
         }
 
-        return " \"" + ct.getColumnName().toUpperCase() + "\" " + type + nullable;
+        String defaultValue = "";
+        if (ct.getDefaultValue() != null) {
+            defaultValue = " DEFAULT '" + ct.getDefaultValue().toString() + "'";
+        }
+
+        return " \"" + ct.getColumnName().toUpperCase() + "\" " + type + nullable + defaultValue;
     }
 }
