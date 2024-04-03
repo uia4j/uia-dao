@@ -100,7 +100,7 @@ public class Hana extends AbstractDatabase {
 
     @Override
     public String generateCreateViewSQL(String viewName, String sql) {
-        return String.format("CREATE VIEW \"%s\" AS %n%s", viewName.toUpperCase(), sql);
+        return String.format("CREATE VIEW \"%s\" AS \n%s", viewName.toUpperCase(), sql);
     }
 
     @Override
@@ -113,7 +113,7 @@ public class Hana extends AbstractDatabase {
         ArrayList<String> cols = new ArrayList<>();
         ArrayList<String> comments = new ArrayList<>();
         if (table.getRemark() != null) {
-            comments.add(String.format("COMMENT ON TABLE %s IS '%s';;%n", table.getTableName().toUpperCase(), table.getRemark()));
+            comments.add(String.format("COMMENT ON TABLE \"%s\" IS '%s';;\n", table.getTableName().toUpperCase(), table.getRemark()));
         }
 
         for (ColumnType ct : table.getColumns()) {
@@ -122,7 +122,7 @@ public class Hana extends AbstractDatabase {
             }
             cols.add(prepareColumnDef(ct));
             if (ct.getRemark() != null && ct.getRemark().trim().length() > 0) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';;\n",
+                comments.add(String.format("COMMENT ON COLUMN \"%s\".\"%s\" IS '%s';;\n",
                         table.getTableName().toUpperCase(),
                         ct.getColumnName().toUpperCase(),
                         ct.getRemark()));
