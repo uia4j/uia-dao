@@ -231,4 +231,8 @@ public interface Database extends AutoCloseable {
     public int[] executeBatch(String sql, List<List<Object>> rows) throws SQLException;
 
     public List<Object[]> query(String sql) throws SQLException;
+
+    public int copy(String tableName, Database to, int cache) throws SQLException;
+
+    public int copy(String tableName, Database to, int cache, String where) throws SQLException;
 }

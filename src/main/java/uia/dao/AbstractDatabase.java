@@ -387,23 +387,73 @@ public abstract class AbstractDatabase implements Database {
         }
         return result;
     }
-
-    /**
-    private DataSource createDataSource(String driverName, String connectUrl, String user, String pwd) {
-        HikariConfig config = new HikariConfig();
-        config.setDriverClassName(driverName);
-        config.setJdbcUrl(connectUrl);
-        config.setUsername(user);
-        config.setPassword(pwd);
-        config.setMaximumPoolSize(200);
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "512");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
     
-        return new HikariDataSource(config);
-    }
-    */
+    public int copy(String tableName, Database to, int cache) throws SQLException {
+    	cache = Math.min(Math.max(100, cache), 2000);
+    	
+    	TableType table = selectTable(tableName, false);
+    	String insertSQL = table.generateInsertSQL();
 
+    	Statement stat = getConnection().createStatement();
+    	try(ResultSet rs = stat.executeQuery(table.generateSelectSQL())) {
+        	to.execute("delete from " + tableName);
+
+        	int cols = rs.getMetaData().getColumnCount();
+        	int count = 0;
+            List<List<Object>> values = new ArrayList<>();
+            while (rs.next()) {
+            	count++;
+            	ArrayList<Object> row = new ArrayList<>();
+                for (int i = 1; i <= cols; i++) {
+                	row.add(rs.getObject(i));
+                }
+                values.add(row);
+                
+                if(values.size() == cache) {
+                    to.executeBatch(insertSQL, values);
+                    values.clear();
+                    System.out.println("exec:" + cache);
+                }
+            }
+            to.executeBatch(insertSQL, values);
+            System.out.println("exec:" + values.size());
+        	return count;
+    	}
+    }
+
+    public int copy(String tableName, Database to, int cache, String where) throws SQLException {
+    	cache = Math.min(Math.max(100, cache), 2000);
+    	
+    	TableType table = selectTable(tableName, false);
+    	String insertSQL = table.generateInsertSQL();
+
+    	Statement stat = getConnection().createStatement();
+    	try(ResultSet rs = stat.executeQuery(table.generateSelectSQL() + " " + where)) {
+        	to.execute("delete from " + tableName + " " + where);
+
+        	int cols = rs.getMetaData().getColumnCount();
+        	int count = 0;
+            List<List<Object>> values = new ArrayList<>();
+            while (rs.next()) {
+            	count++;
+            	ArrayList<Object> row = new ArrayList<>();
+                for (int i = 1; i <= cols; i++) {
+                	row.add(rs.getObject(i));
+                }
+                values.add(row);
+                
+                if(values.size() == cache) {
+                    to.executeBatch(insertSQL, values);
+                    values.clear();
+                    System.out.println("exec:" + cache);
+                }
+            }
+            to.executeBatch(insertSQL, values);
+            System.out.println("exec:" + values.size());
+        	return count;
+    	}
+    }
+    
     public static class IndexInfo {
 
         public final String tableName;

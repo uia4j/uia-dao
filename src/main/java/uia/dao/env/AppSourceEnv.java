@@ -2,6 +2,7 @@ package uia.dao.env;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -26,6 +27,15 @@ public class AppSourceEnv implements Env {
     }
 
     public AppSourceEnv(String sourceName) {
+    	if(sourceName == null) {
+        	this.sourceName = "jdbc/jts/daoPool";
+    	}
+    	else {
+    		this.sourceName = sourceName;
+    	}
+    }
+
+    public AppSourceEnv(String sourceName, Properties props) {
     	if(sourceName == null) {
         	this.sourceName = "jdbc/jts/daoPool";
     	}

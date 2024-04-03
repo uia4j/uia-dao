@@ -34,6 +34,14 @@ public class DaoSession implements Closeable {
         return forTable(dtoTable).streamAll();
     }
 
+    public <T> DataStream<T> stream(Class<T> dtoTable, Where where) throws SQLException, DaoException {
+        return forTable(dtoTable).stream(where);
+    }
+
+    public <T> DataStream<T> stream(Class<T> dtoTable, Where where, String orderBy) throws SQLException, DaoException {
+        return forTable(dtoTable).stream(where, orderBy);
+    }
+
     public <T> List<T> all(Class<T> dtoTable) throws SQLException, DaoException {
         return forTable(dtoTable).selectAll();
     }
