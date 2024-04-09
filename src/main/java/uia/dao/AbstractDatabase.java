@@ -390,7 +390,7 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public int copy(String tableName, Database to, int cache) throws SQLException {
-        cache = Math.min(Math.max(100, cache), 2000);
+        cache = Math.min(Math.max(100, cache), 10000);
 
         TableType table = selectTable(tableName, false);
         String insertSQL = table.generateInsertSQL();
