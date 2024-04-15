@@ -24,6 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -400,13 +401,23 @@ public abstract class AbstractDatabase implements Database {
             to.execute("delete from " + tableName);
 
             int cols = rs.getMetaData().getColumnCount();
+            int[] types = new int[cols];
+            for (int i = 0; i < types.length; i++) {
+                types[i] = rs.getMetaData().getColumnType(i + 1);
+            }
+
             int count = 0;
             List<List<Object>> values = new ArrayList<>();
             while (rs.next()) {
                 count++;
                 ArrayList<Object> row = new ArrayList<>();
                 for (int i = 1; i <= cols; i++) {
-                    row.add(rs.getObject(i));
+                    if (types[i - 1] == Types.NCLOB || types[i - 1] == Types.CLOB) {
+                        row.add(rs.getString(i));
+                    }
+                    else {
+                        row.add(rs.getObject(i));
+                    }
                 }
                 values.add(row);
 
@@ -434,13 +445,23 @@ public abstract class AbstractDatabase implements Database {
             to.execute("delete from " + tableName + " " + where);
 
             int cols = rs.getMetaData().getColumnCount();
+            int[] types = new int[cols];
+            for (int i = 0; i < types.length; i++) {
+                types[i] = rs.getMetaData().getColumnType(i + 1);
+            }
+
             int count = 0;
             List<List<Object>> values = new ArrayList<>();
             while (rs.next()) {
                 count++;
                 ArrayList<Object> row = new ArrayList<>();
                 for (int i = 1; i <= cols; i++) {
-                    row.add(rs.getObject(i));
+                    if (types[i - 1] == Types.NCLOB || types[i - 1] == Types.CLOB) {
+                        row.add(rs.getString(i));
+                    }
+                    else {
+                        row.add(rs.getObject(i));
+                    }
                 }
                 values.add(row);
 
