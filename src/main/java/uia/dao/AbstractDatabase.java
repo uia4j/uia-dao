@@ -532,13 +532,13 @@ public abstract class AbstractDatabase implements Database {
             if (!this.indexName.equals(ii.getIndexName())) {
                 return false;
             }
-            if (!this.unique != ii.isUnique()) {
+            if (this.unique != ii.isUnique()) {
                 return false;
             }
-            if (this.columns.toString().equals(ii.getColumns().toString())) {
+            if (!this.columns.toString().equals(ii.getColumns().toString())) {
                 return false;
             }
-            if (this.orders.toString().equals(ii.getOrders().toString())) {
+            if (!this.orders.toString().equals(ii.getOrders().toString())) {
                 return false;
             }
             return true;
