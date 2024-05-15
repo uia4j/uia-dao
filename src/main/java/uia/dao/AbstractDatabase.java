@@ -239,21 +239,13 @@ public abstract class AbstractDatabase implements Database {
         try (Statement st = this.conn.createStatement()) {
             return st.executeUpdate(script);
         }
-        catch (SQLException ex) {
-            System.out.println("failed to execute: " + script);
-            throw ex;
-        }
     }
 
     @Override
     public int createView(String viewName, String sql) throws SQLException {
-        String script = this.generateCreateViewSQL(viewName, sql);
+        String script = generateCreateViewSQL(viewName, sql);
         try (Statement st = this.conn.createStatement()) {
             return st.executeUpdate(script);
-        }
-        catch (SQLException ex) {
-            System.out.println("failed to execute: " + script);
-            throw ex;
         }
     }
 
@@ -262,10 +254,6 @@ public abstract class AbstractDatabase implements Database {
         String script = generateDropViewSQL(viewName);
         try (Statement st = this.conn.createStatement()) {
             return st.executeUpdate(script);
-        }
-        catch (SQLException ex) {
-            System.out.println("failed to execute: " + script);
-            throw ex;
         }
     }
 
@@ -391,14 +379,14 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public int copy(String tableName, Database to, int cache) throws SQLException {
-        cache = Math.min(Math.max(100, cache), 10000);
+        cache = Math.min(Math.max(100, cache), 20000);
 
         TableType table = selectTable(tableName, false);
-        String insertSQL = table.generateInsertSQL();
+        String insertSQL = table.generateInsertSQL();  // wired
 
         Statement stat = getConnection().createStatement();
         try (ResultSet rs = stat.executeQuery(table.generateSelectSQL())) {
-            to.execute("delete from " + tableName);
+            to.execute("TRUNCATE TABLE " + tableName);
 
             int cols = rs.getMetaData().getColumnCount();
             int[] types = new int[cols];
@@ -424,11 +412,9 @@ public abstract class AbstractDatabase implements Database {
                 if (values.size() == cache) {
                     to.executeBatch(insertSQL, values);
                     values.clear();
-                    System.out.println("exec:" + cache);
                 }
             }
             to.executeBatch(insertSQL, values);
-            System.out.println("exec:" + values.size());
             return count;
         }
     }
@@ -468,11 +454,9 @@ public abstract class AbstractDatabase implements Database {
                 if (values.size() == cache) {
                     to.executeBatch(insertSQL, values);
                     values.clear();
-                    System.out.println("exec:" + cache);
                 }
             }
             to.executeBatch(insertSQL, values);
-            System.out.println("exec:" + values.size());
             return count;
         }
     }

@@ -217,6 +217,15 @@ public class TableType {
         return String.format("SELECT %s FROM %s", String.join(",", cs), this.tableName.toLowerCase());
     }
 
+    public String generateSelectSQLw() {    // wired
+        ArrayList<String> cs = new ArrayList<>();
+        for (ColumnType column : this.columns) {
+            cs.add("\"" + column.getColumnName().toLowerCase() + "\"");
+        }
+
+        return String.format("SELECT %s FROM %s", String.join(",", cs), this.tableName.toLowerCase());
+    }
+
     /**
      * Generates INSERT statement for this table.
      *
@@ -233,6 +242,16 @@ public class TableType {
         return String.format("INSERT INTO %s(%s) VALUES (%s)",
                 this.tableName.toLowerCase(),
                 String.join(",", cs),
+                String.join(",", ps));
+    }
+
+    public String generateInsertSQLw() {
+        ArrayList<String> ps = new ArrayList<>();
+        for (int i = 0; i < this.columns.size(); i++) {
+            ps.add("?");
+        }
+        return String.format("INSERT INTO %s VALUES (%s)",
+                this.tableName.toLowerCase(),
                 String.join(",", ps));
     }
 
@@ -262,6 +281,7 @@ public class TableType {
                 ws.add(columnName + "=?");
             }
             else {
+                cs.add(columnName);
                 cs.add(columnName + "=?");
             }
         }
