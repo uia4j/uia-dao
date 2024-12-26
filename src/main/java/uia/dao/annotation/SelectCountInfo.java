@@ -18,32 +18,15 @@
  *******************************************************************************/
 package uia.dao.annotation;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-
-import uia.dao.ColumnType.DataType;;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ColumnInfo {
+@Target({ ElementType.METHOD })
+public @interface SelectCountInfo {
 
-    String name();
-
-    boolean primaryKey() default false;
-
-    String converter() default "";
-
-    DataType sqlType() default DataType.UNDEFINED;
-
-    boolean inView() default true;
-
-    int length() default 128;
-
-    int scale() default 0;
-
-    String remark() default "";
-
-    boolean production() default true;
-    
-    boolean readonly() default false;
+    String sql();
 
 }

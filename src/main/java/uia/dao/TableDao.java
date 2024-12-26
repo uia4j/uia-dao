@@ -227,7 +227,7 @@ public class TableDao<T> {
     /**
      * Selects all rows of the table.
      *
-     * @return All rows of the table.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -248,7 +248,7 @@ public class TableDao<T> {
      * Selects all rows of the table and return a specific count.
      *
      * @param topN The max count of records to be returned.
-     * @return All rows of the table.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -272,12 +272,12 @@ public class TableDao<T> {
     /**
      * Selects all rows of the table.
      *
-     * @return All rows of the table.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
     public long count() throws SQLException, DaoException {
-        try (PreparedStatement ps = this.conn.prepareStatement("select count(*) n from " + this.tableHelper.getTableName())) {
+        try (PreparedStatement ps = this.conn.prepareStatement("SELECT count(*) n FROM " + this.tableHelper.getTableName())) {
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 return rs.getLong(1);
@@ -286,10 +286,28 @@ public class TableDao<T> {
     }
 
     /**
+     * Selects some rows with a criteria.
+     *
+     * @param where The WHERE statement.
+     * @return count.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public int count(Where where) throws SQLException, DaoException {
+        SelectStatement sql = new SelectStatement(String.format("SELECT count(*) n FROM %s ", this.tableHelper.getTableName()))
+                .where(where);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(0) : 0;
+            }
+        }
+    }
+
+    /**
      * Selects a row of the table.
      *
      * @param pks Values of primary keys.
-     * @return A row of the table.
+     * @return The result.
      * @throws SQLException Failed to update.
      * @throws DaoException Failed or ORM.
      */
@@ -313,7 +331,7 @@ public class TableDao<T> {
      * Selects some rows with a criteria.
      *
      * @param where The WHERE statement.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -326,7 +344,7 @@ public class TableDao<T> {
      *
      * @param where The WHERE statement.
      * @param orders The ORDER BY statement.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -343,12 +361,35 @@ public class TableDao<T> {
     }
 
     /**
+     * Selects one row with a criteria.
+     *
+     * @param where The WHERE statement.
+     * @param orders The ORDER BY statement.
+     * @param mapperClz The mapping class.
+     * @param <Z> The return type.
+     * @return The result.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public <Z> List<Z> select(Where where, String orders, Class<Z> mapperClz) throws SQLException, DaoException {
+        DaoMethod<Z> method = this.tableHelper.getFactory().forTable(mapperClz).forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where)
+                .orderBy(orders);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toList(rs, Filter.ALL);
+            }
+        }
+    }
+
+    /**
      * Selects some rows with a criteria.
      *
      * @param where The WHERE statement.
      * @param orders The ORDER BY statement.
      * @param topN The max count of result.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -368,7 +409,7 @@ public class TableDao<T> {
      * Selects one row with a criteria.
      *
      * @param where The WHERE statement.
-     * @return One row meets the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -388,12 +429,35 @@ public class TableDao<T> {
      *
      * @param where The WHERE statement.
      * @param orders The ORDER BY statement.
-     * @return One row meets the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
     public T selectOne(Where where, String orders) throws SQLException, DaoException {
         DaoMethod<T> method = this.tableHelper.forSelect();
+        SelectStatement sql = new SelectStatement(method.getSql())
+                .where(where)
+                .orderBy(orders);
+        try (PreparedStatement ps = sql.prepare(this.conn)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return method.toOne(rs);
+            }
+        }
+    }
+
+    /**
+     * Selects one row with a criteria.
+     *
+     * @param where The WHERE statement.
+     * @param orders The ORDER BY statement.
+     * @param mapperClz The mapping class.
+     * @param <Z> The return type.
+     * @return The result.
+     * @throws SQLException Failed to execute the SQL statement.
+     * @throws DaoException Failed to map to the DTO object.
+     */
+    public <Z> Z selectOne(Where where, String orders, Class<Z> mapperClz) throws SQLException, DaoException {
+        DaoMethod<Z> method = this.tableHelper.getFactory().forTable(mapperClz).forSelect();
         SelectStatement sql = new SelectStatement(method.getSql())
                 .where(where)
                 .orderBy(orders);

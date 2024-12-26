@@ -18,6 +18,7 @@
  *******************************************************************************/
 package uia.dao;
 
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -289,7 +290,12 @@ public abstract class AbstractDatabase implements Database {
             for (List<Object> row : rows) {
                 int i = 1;
                 for (Object col : row) {
-                    ps.setObject(i++, col);
+                    if (col instanceof Blob) {
+                        ps.setBlob(i++, (Blob) col);
+                    }
+                    else {
+                        ps.setObject(i++, col);
+                    }
                 }
                 ps.addBatch();
             }
@@ -444,6 +450,9 @@ public abstract class AbstractDatabase implements Database {
                 for (int i = 1; i <= cols; i++) {
                     if (types[i - 1] == Types.NCLOB || types[i - 1] == Types.CLOB) {
                         row.add(rs.getString(i));
+                    }
+                    else if (types[i - 1] == Types.BLOB) {
+                        row.add(rs.getBlob(i));
                     }
                     else {
                         row.add(rs.getObject(i));

@@ -1,6 +1,5 @@
 package uia.dao;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -11,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uia.dao.annotation.DeleteInfo;
+import uia.dao.annotation.SelectCountInfo;
 import uia.dao.annotation.SelectInfo;
 import uia.dao.annotation.UpdateInfo;
 
@@ -29,7 +29,6 @@ public final class ProxyDao {
         ProxyFactory factory = new ProxyFactory();
         factory.setSuperclass(absClz);
         factory.setFilter(m -> Modifier.isAbstract(m.getModifiers()));
-        
 
         try {
             T result = (T) factory.create(
@@ -38,11 +37,11 @@ public final class ProxyDao {
                     this::runTable);
 
             Class<?> clz = result.getClass();
-            while(clz != null && clz != TableDao.class) {
-            	clz = clz.getSuperclass();
+            while (clz != null && clz != TableDao.class) {
+                clz = clz.getSuperclass();
             }
-            if(clz == null) {
-            	return null;
+            if (clz == null) {
+                return null;
             }
             Field f1 = clz.getDeclaredField("conn");
             f1.setAccessible(true);
@@ -50,7 +49,7 @@ public final class ProxyDao {
             Field f2 = clz.getDeclaredField("tableHelper");
             f2.setAccessible(true);
             f2.set(result, helper);
-            
+
             return result;
         }
         catch (Exception ex) {
@@ -70,13 +69,13 @@ public final class ProxyDao {
                     new Class<?>[] {},
                     new Object[] {},
                     this::runView);
-            
+
             Class<?> clz = result.getClass();
-            while(clz != null && clz != ViewDao.class) {
-            	clz = clz.getSuperclass();
+            while (clz != null && clz != ViewDao.class) {
+                clz = clz.getSuperclass();
             }
-            if(clz == null) {
-            	return null;
+            if (clz == null) {
+                return null;
             }
             Field f1 = clz.getDeclaredField("conn");
             f1.setAccessible(true);
@@ -152,6 +151,23 @@ public final class ProxyDao {
                     try (ResultSet rs = ps.executeQuery()) {
                         return list ? method.toList(rs, filter, selectInfo.top()) : method.toOne(rs);
                     }
+                }
+            }
+        }
+
+        SelectCountInfo countInfo = proxyMethod.getDeclaredAnnotation(SelectCountInfo.class);
+        if (countInfo != null) {
+            final String sql = String.format("SELECT count(*) n FROM %s %s", dao.tableHelper.getTableName(), countInfo.sql());
+            try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+                int r = 1;
+                for (int i = 0; i < args.length; i++) {
+                    Object v = args[i];
+                    dao.tableHelper.getFactory()
+                            .getColumnWriter(v == null ? "object" : v.getClass().getSimpleName())
+                            .write(ps, r++, v);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? rs.getInt(0) : 0;
                 }
             }
         }

@@ -42,7 +42,7 @@ public class InType implements ConditionType {
     @Override
     public String getStatement() {
         String[] args = new String[this.values.size()];
-        Arrays.fill(args, "?");;
+        Arrays.fill(args, "?");
         return this.key + " in(" + String.join(",", args) + " )";
     }
 

@@ -61,7 +61,7 @@ public final class TableDaoHelper<T> {
     private final TableType tableType;
 
     TableDaoHelper(DaoFactory factory, Class<T> clz) {
-        this.factory = factory;;
+        this.factory = factory;
         TableInfo ti = clz.getDeclaredAnnotation(TableInfo.class);
         if (ti == null) {
             throw new NullPointerException(clz.getName() + ": @TableInfo annotation not found");
@@ -79,7 +79,8 @@ public final class TableDaoHelper<T> {
         this.primaryKeys = new ArrayList<>();
 
         ArrayList<String> prikeyColNames = new ArrayList<>();
-        ArrayList<String> insertColNames = new ArrayList<>();
+        ArrayList<String> insertColNs = new ArrayList<>();
+        ArrayList<String> insertColQs = new ArrayList<>();
         ArrayList<String> updateColNames = new ArrayList<>();
         ArrayList<String> selectColNames = new ArrayList<>();
         Field[] fs = clz.getDeclaredFields();
@@ -88,8 +89,11 @@ public final class TableDaoHelper<T> {
         ArrayList<DaoColumn> pks = new ArrayList<>();
         for (Field f : fs) {
             ColumnInfo ci = f.getDeclaredAnnotation(ColumnInfo.class);
-
             if (ci != null) {
+                if (this.factory.isProduction() && !ci.production()) {
+                    continue;
+                }
+
                 String cvrtName = ci.converter();
                 if (cvrtName.isEmpty()) {
                     if (ci.sqlType() == DataType.JSON) {
@@ -135,14 +139,19 @@ public final class TableDaoHelper<T> {
                     pks.add(column);
                 }
                 else {
-                    this.update.addColumn(column);
-                    updateColNames.add(ci.name() + "=?");
+                    if(!ci.readonly()) {
+	                    this.update.addColumn(column);
+	                    updateColNames.add(ci.name() + "=?");
+                    }
                 }
-                this.insert.addColumn(column);
                 this.select.addColumn(column);
                 this.selectWithAlias.addColumn(column);
 
-                insertColNames.add("?");
+                if(!ci.readonly()) {
+                    insertColNs.add(ci.name());
+                    insertColQs.add("?");
+                    this.insert.addColumn(column);
+                }
                 selectColNames.add(ci.name());
 
             }
@@ -154,8 +163,8 @@ public final class TableDaoHelper<T> {
         this.tableType = new TableType(ti.name(), ti.remark(), cts, true);
         this.insert.setSql(String.format("INSERT INTO %s(%s) VALUES (%s)",
                 this.tableName,
-                String.join(",", selectColNames),
-                String.join(",", insertColNames)));
+                String.join(",", insertColNs),
+                String.join(",", insertColQs)));
         if (!updateColNames.isEmpty()) {
             this.update.setSql(String.format("UPDATE %s SET %s WHERE %s",
                     this.tableName,

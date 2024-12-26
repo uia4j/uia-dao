@@ -13,12 +13,23 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 	</properties>
 	<dependencies>
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-jdbc</artifactId>
+            <version>0.287</version>
+        </dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>[4.13.1,)</version>
+			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.9</version>
+            <scope>test</scope>
+        </dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -68,12 +79,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.8.9</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
 			<version>0.9.12</version>
@@ -98,6 +103,15 @@
 				<version>2.12.4</version>
 				<configuration>
 					<skipTests>true</skipTests>
+					<excludes>
+						<exclude>uia/dao/cli/*.java</exclude>
+						<exclude>uia/dao/hana/*.java</exclude>
+						<exclude>uia/dao/ora/*.java</exclude>
+						<exclude>uia/dao/pg/*.java</exclude>
+						<exclude>uia/dao/pms/*.java</exclude>
+						<exclude>uia/dao/sqlite/*.java</exclude>
+						<exclude>uia/dao/sqlserver/*.java</exclude>
+					</excludes>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -109,22 +123,6 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.4</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.12.4</version>
-				<configuration>
-					<excludes>
-						<exclude>uia/dao/cli/*.java</exclude>
-						<exclude>uia/dao/hana/*.java</exclude>
-						<exclude>uia/dao/ora/*.java</exclude>
-						<exclude>uia/dao/pg/*.java</exclude>
-						<exclude>uia/dao/pms/*.java</exclude>
-						<exclude>uia/dao/sqlite/*.java</exclude>
-						<exclude>uia/dao/sqlserver/*.java</exclude>
-					</excludes>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

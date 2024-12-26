@@ -72,6 +72,8 @@ public final class DaoFactory {
 
     private final boolean dateToUTC;
 
+    private final boolean production;
+
     /**
      * Constructor.
      *
@@ -79,6 +81,17 @@ public final class DaoFactory {
      *
      */
     public DaoFactory(boolean dateToUTC) {
+        this(dateToUTC, true);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param dateToUTC Convert date with UTC time.
+     * @param production The production environment or not.
+     *
+     */
+    public DaoFactory(boolean dateToUTC, boolean production) {
         this.dateToUTC = dateToUTC;
         this.dataTypes = new TreeMap<>();
         this.dataTypes.put("boolean", DataType.BOOLEAN);
@@ -138,10 +151,15 @@ public final class DaoFactory {
 
         this.daoTables = new TreeMap<>();
         this.daoViews = new TreeMap<>();
+        this.production = production;
     }
 
     public DaoSession createSession(Connection conn) {
         return new DaoSession(this, conn);
+    }
+
+    public boolean isProduction() {
+        return this.production;
     }
 
     public Date fromUTC(Date utc) {

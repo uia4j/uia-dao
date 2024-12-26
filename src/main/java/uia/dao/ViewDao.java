@@ -89,7 +89,7 @@ public class ViewDao<T> {
     /**
      * Selects all rows of the view.
      *
-     * @return All rows of the view.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -111,7 +111,7 @@ public class ViewDao<T> {
      * Selects rows of the view.
      *
      * @param filter The filter.
-     * @return Rows.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -133,7 +133,7 @@ public class ViewDao<T> {
      * Selects some rows with a criteria.
      *
      * @param where The where statement.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -159,7 +159,7 @@ public class ViewDao<T> {
      *
      * @param where The where statement.
      * @param orders The orders.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -179,7 +179,7 @@ public class ViewDao<T> {
      *
      * @param where The where statement.
      * @param filter The filter.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */
@@ -206,7 +206,7 @@ public class ViewDao<T> {
      * @param where The where statement.
      * @param filter The filter.
      * @param orders The orders.
-     * @return Rows meet the criteria.
+     * @return The result.
      * @throws SQLException Failed to execute the SQL statement.
      * @throws DaoException Failed to map to the DTO object.
      */

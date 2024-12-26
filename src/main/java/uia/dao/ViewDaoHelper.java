@@ -71,6 +71,10 @@ public final class ViewDaoHelper<T> {
             for (Field f : fs) {
                 ColumnInfo ci = f.getDeclaredAnnotation(ColumnInfo.class);
                 if (ci != null && ci.inView()) {
+                    if (this.factory.isProduction() && !ci.production()) {
+                        continue;
+                    }
+
                     String cvrtName = ci.converter();
                     if (cvrtName.isEmpty()) {
                         cvrtName = f.getType().getSimpleName();
@@ -97,17 +101,17 @@ public final class ViewDaoHelper<T> {
             }
         }
 
-        if(this.code != null && !this.code.trim().isEmpty()) {
-        	this.select.setSql(this.code);
-        	this.selectWithAlias.setSql(this.code);
+        if (this.code != null && !this.code.trim().isEmpty()) {
+            this.select.setSql(this.code);
+            this.selectWithAlias.setSql(this.code);
         }
         else {
-	        this.select.setSql(String.format("SELECT %s FROM %s ",
-	                String.join(",", selectColNames),
-	                this.viewName));
-	        this.selectWithAlias.setSql(String.format("SELECT x.%s FROM %s AS x ",
-	                String.join(",x.", selectColNames),
-	                this.viewName));
+            this.select.setSql(String.format("SELECT %s FROM %s ",
+                    String.join(",", selectColNames),
+                    this.viewName));
+            this.selectWithAlias.setSql(String.format("SELECT x.%s FROM %s AS x ",
+                    String.join(",x.", selectColNames),
+                    this.viewName));
         }
     }
 

@@ -141,6 +141,25 @@ public abstract class DaoEnv {
         }
     }
 
+    /**
+     * The constructor.
+     *
+     * @param envName One of 'DATASOURCE','HANA','ORA','PG'.
+     * @param dateToUTC Convert date with UTC time.
+     * @param production The environment is a production or not.
+     * @throws DaoException Failed to initial factory.
+     */
+    public DaoEnv(String envName, boolean dateToUTC, boolean production) throws DaoException {
+        this.envName = envName;
+        this.factory = new DaoFactory(dateToUTC, production);
+        try {
+            initialFactory(this.factory);
+        }
+        catch (Exception ex) {
+            throw new DaoException(ex);
+        }
+    }
+
     public DaoFactory getDaoFactory() {
         return this.factory;
     }
@@ -300,10 +319,10 @@ public abstract class DaoEnv {
         }
         return this;
     }
-    
+
     public DaoEnv config(Env env) {
-    	this.env = env;
-    	return this;
+        this.env = env;
+        return this;
     }
 
     /**
